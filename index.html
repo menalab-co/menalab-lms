@@ -596,21 +596,14 @@ let chatHistory=[],msgCount=0;
 function renderQuickQs(){const el=document.getElementById('quick-qs');if(!el)return;el.innerHTML=QUICK_QS.map(q=>`<div class="quick-q" onclick="askQ('${q.replace(/'/g,"\\'")}')">${q}</div>`).join('');}
 async function sendMsg(){
   const inp=document.getElementById('chat-inp');const text=inp.value.trim();if(!text)return;
-  let apiKey=localStorage.getItem('ml_key');
-  if(!apiKey){
-    apiKey=prompt('أدخل مفتاح Anthropic API (يبدأ بـ sk-ant-)\nاحصل عليه من: console.anthropic.com');
-    if(!apiKey)return;
-    localStorage.setItem('ml_key',apiKey.trim());
-  }
   inp.value='';inp.style.height='36px';addChatMsg(text,'user');msgCount++;
   document.getElementById('send-btn-el').disabled=true;showTyping();
   chatHistory.push({role:'user',content:text});
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey.trim(),'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:SYSTEM_PROMPT,messages:chatHistory.slice(-12)})});
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:SYSTEM_PROMPT,messages:chatHistory.slice(-12)})});
     removeTyping();
-    if(res.status===401){localStorage.removeItem('ml_key');addChatMsg('المفتاح غير صحيح — سيُطلب منك إدخاله مجدداً.','ai');document.getElementById('send-btn-el').disabled=false;return;}
     const data=await res.json();
-    if(!res.ok){addChatMsg('خطأ: '+(data.error?.message||res.status),'ai');document.getElementById('send-btn-el').disabled=false;return;}
+    if(!res.ok){addChatMsg('خطأ: '+(data.error||res.status),'ai');document.getElementById('send-btn-el').disabled=false;return;}
     const reply=data.content.map(b=>b.text||'').join('');
     chatHistory.push({role:'assistant',content:reply});addChatMsg(reply,'ai');
   }catch(e){removeTyping();addChatMsg('خطأ في الاتصال: '+e.message,'ai');}
