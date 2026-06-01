@@ -7,14 +7,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const key = process.env.ANTHROPIC_API_KEY;
-
-  if (!key) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set in Vercel environment variables' });
-  }
+  if (!key) return res.status(500).json({ error: 'API key not configured' });
 
   try {
     const { messages, system } = req.body;
-
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -29,15 +25,8 @@ export default async function handler(req, res) {
         messages
       })
     });
-
     const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || 'Anthropic API error', details: data });
-    }
-
-    return res.status(200).json(data);
-
+    return res.status(response.status).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
