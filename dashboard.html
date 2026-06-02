@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MenaLab — لوحة التحكم</title>
+<title>MenaLab — منصة التعلم</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#1a1a2e;--surface:#fff;--surface2:#f8f7f4;--surface3:#f0ede8;--accent:#e05c2a;--accent2:#f4a03c;--teal:#1a9e7a;--blue:#2461b8;--purple:#6b47d4;--border:rgba(26,26,46,0.1);--border2:rgba(26,26,46,0.18);--text:#1a1a2e;--text2:#5a5870;--text3:#9896a8;--r:10px;--r2:16px;--shadow:0 2px 12px rgba(0,0,0,0.07);--shadow2:0 8px 32px rgba(0,0,0,0.12)}
@@ -229,7 +229,7 @@ nav{padding:12px 10px;flex:1;overflow-y:auto}
       <div class="nav-item" id="nav-map" onclick="showView('map')"><span class="nav-icon">🗺️</span> خريطة الفاب لابات</div>
       <div class="nav-item" id="nav-chat" onclick="showView('chat')"><span class="nav-icon">🤖</span> المساعد الذكي</div>
     </div>
-    <div style="padding:10px;border-top:1px solid rgba(255,255,255,0.06);margin-top:auto">
+    <div style="padding:10px;border-top:1px solid rgba(255,255,255,0.06);margin-top:4px">
       <div class="nav-item" onclick="logout()" style="color:rgba(255,120,120,0.7)">
         <span class="nav-icon">🚪</span> تسجيل الخروج
       </div>
@@ -365,13 +365,12 @@ nav{padding:12px 10px;flex:1;overflow-y:auto}
 </div>
 
 <script>
-// Auth guard
+
 (function(){
   const u = localStorage.getItem('ml_user');
   if(!u){ window.location.href = '/'; return; }
   window.__mlUser = JSON.parse(u);
 })();
-
 
 const MODULES=[{id:'all',label:'جميع الوحدات'},{id:'dt',label:'🧠 التفكير التصميمي'},{id:'cad',label:'🖥️ Fusion 360'},{id:'3dp',label:'🖨️ الطباعة ثلاثية الأبعاد'},{id:'cnc',label:'⚙️ CNC'},{id:'laser',label:'🔆 قطع الليزر'},{id:'elec',label:'💡 الإلكترونيات'}];
 const LESSONS=[
@@ -611,14 +610,14 @@ async function sendMsg(){
   const inp=document.getElementById('chat-inp');const text=inp.value.trim();if(!text)return;
   inp.value='';inp.style.height='36px';addChatMsg(text,'user');msgCount++;
   document.getElementById('send-btn-el').disabled=true;showTyping();
-  chatHistory.push({role:'user',content:text});
+  chatHistory.push({role:'user',content:text});saveChatHistory();
   try{
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:SYSTEM_PROMPT,messages:chatHistory.slice(-12)})});
     removeTyping();
     if(!res.ok)throw new Error('API Error');
     const data=await res.json();
     const reply=data.content.map(b=>b.text||'').join('');
-    chatHistory.push({role:'assistant',content:reply});addChatMsg(reply,'ai');
+    chatHistory.push({role:'assistant',content:reply});addChatMsg(reply,'ai');saveChatHistory();
   }catch(e){removeTyping();addChatMsg('عذراً، حدث خطأ. تأكد من إضافة مفتاح Anthropic API.','ai');}
   document.getElementById('send-btn-el').disabled=false;
 }
@@ -633,20 +632,45 @@ function removeTyping(){const e=document.getElementById('typing-el');if(e)e.remo
 function askQ(q){document.getElementById('chat-inp').value=q;sendMsg();}
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
 function autoSize(el){el.style.height='36px';el.style.height=Math.min(el.scrollHeight,90)+'px';}
-function clearChat(){chatHistory=[];document.getElementById('chat-msgs').innerHTML=`<div class="msg ai"><div class="m-av ai">🤖</div><div><div class="m-bubble">محادثة جديدة! كيف يمكنني مساعدتك؟</div><div class="m-time">الآن</div></div></div>`;}
+function clearChat(){chatHistory=[];localStorage.removeItem('ml_chat');document.getElementById('chat-msgs').innerHTML=`<div class="msg ai"><div class="m-av ai">🤖</div><div><div class="m-bubble">محادثة جديدة! كيف يمكنني مساعدتك؟</div><div class="m-time">الآن</div></div></div>`;}
 renderDashboard();renderLessons();renderMap();renderQuickQs();
-if(window.__mlUser){
-  const nameEl=document.querySelector('.user-info .name');
-  if(nameEl) nameEl.textContent=window.__mlUser.name||'مستخدم';
-  const av=document.querySelector('.avatar');
-  const n=window.__mlUser.name||'م';
-  if(av) av.textContent=n.split(' ').slice(0,2).map(w=>w[0]).join('');
-}
 
 function logout(){
   localStorage.removeItem('ml_user');
   window.location.href = '/';
 }
+
+// ── Persistent chat history ──────────────────────────────
+function saveChatHistory(){
+  try{ localStorage.setItem('ml_chat', JSON.stringify(chatHistory.slice(-40))); }catch(e){}
+}
+function loadChatHistory(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('ml_chat')||'[]');
+    if(!saved.length) return;
+    chatHistory = saved;
+    const msgs = document.getElementById('chat-msgs');
+    saved.forEach(function(m){
+      const div = document.createElement('div');
+      div.className = 'msg ' + m.role.replace('assistant','ai');
+      const t = new Date();
+      div.innerHTML = '<div class="m-av '+(m.role==='user'?'user':'ai')+'">'+(m.role==='user'?'أح':'🤖')+'</div><div><div class="m-bubble">'+m.content.replace(/\n/g,'<br>')+'</div></div>';
+      msgs.appendChild(div);
+    });
+    msgs.scrollTop = msgs.scrollHeight;
+  }catch(e){}
+}
+
+// Show user name
+if(window.__mlUser){
+  const nameEl=document.querySelector('.user-info .name');
+  if(nameEl) nameEl.textContent=window.__mlUser.name||'مستخدم';
+  const av=document.querySelector('.avatar');
+  const n=window.__mlUser.name||'م';
+  if(av) av.textContent=n.split(' ').slice(0,2).map(function(w){return w[0];}).join('');
+}
+// Load chat history after DOM is ready
+loadChatHistory();
 
 </script>
 </body>
