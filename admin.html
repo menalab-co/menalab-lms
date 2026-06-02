@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MenaLab — لوحة الإدارة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1a2e;--accent:#e05c2a;--accent2:#f4a03c;--teal:#1a9e7a;--blue:#2461b8;--purple:#6b47d4;--red:#dc2626;--surface:#fff;--surface2:#f8f7f4;--surface3:#f0ede8;--border:rgba(26,26,46,0.1);--border2:rgba(26,26,46,0.18);--text:#1a1a2e;--text2:#5a5870;--text3:#9896a8;--r:10px;--r2:16px;--shadow:0 2px 12px rgba(0,0,0,0.07);--shadow2:0 8px 32px rgba(0,0,0,0.12)}
+body{font-family:'Cairo',sans-serif;background:var(--surface2);color:var(--text);direction:rtl;min-height:100vh}
+
+/* LOGIN */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--ink),#2a1a4e);padding:20px}
+.login-box{background:white;border-radius:24px;padding:44px;width:100%;max-width:380px;text-align:center}
+.login-logo{width:56px;height:56px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:white;margin:0 auto 20px}
+.login-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:28px}
+.inp{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border .15s;direction:rtl;margin-bottom:12px}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--text3)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:white;width:100%;padding:12px}
+.btn-primary:hover{background:#c94d1e}
+.btn-danger{background:#fef2f2;color:var(--red);border:1px solid #fecaca}
+.btn-danger:hover{background:#fee2e2}
+.btn-success{background:#f0fdf7;color:var(--teal);border:1px solid #b6f0da}
+.btn-success:hover{background:#dcfce7}
+.btn-outline{background:white;color:var(--text);border:1px solid var(--border2)}
+.btn-outline:hover{background:var(--surface2)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+.login-err{background:#fef2f2;border:1px solid #fecaca;color:var(--red);font-size:13px;padding:9px;border-radius:8px;margin-bottom:14px;display:none}
+.login-err.show{display:block}
+
+/* ADMIN LAYOUT */
+.admin{display:none;flex;height:100vh;overflow:hidden}
+.admin.visible{display:flex}
+.sidebar{width:230px;min-width:230px;background:var(--ink);display:flex;flex-direction:column}
+.s-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px}
+.s-logo-mark{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white}
+.s-logo-text{color:white;font-size:15px;font-weight:700;line-height:1.1}
+.s-logo-sub{color:rgba(255,255,255,0.4);font-size:9px;letter-spacing:1px}
+.s-admin-badge{margin:10px 14px;background:rgba(224,92,42,0.2);border:1px solid rgba(224,92,42,0.3);color:var(--accent2);font-size:11px;font-weight:600;padding:5px 10px;border-radius:8px;display:flex;align-items:center;gap:6px}
+nav{padding:10px;flex:1;overflow-y:auto}
+.nav-sec{margin-bottom:16px}
+.nav-lbl{color:rgba(255,255,255,0.28);font-size:9px;font-weight:600;letter-spacing:1.5px;padding:0 8px 5px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,0.5);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85)}
+.nav-item.active{background:rgba(224,92,42,0.2);color:white}
+.nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-count{margin-right:auto;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);font-size:10px;padding:1px 6px;border-radius:8px}
+.s-footer{padding:12px;border-top:1px solid rgba(255,255,255,0.06)}
+.s-footer-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:rgba(255,100,100,0.65);font-size:13px;font-weight:500;transition:all .15s;border:none;background:none;width:100%;font-family:'Cairo',sans-serif}
+.s-footer-btn:hover{background:rgba(255,0,0,0.1);color:rgba(255,100,100,0.9)}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:700;flex:1}
+.topbar-sub{font-size:12px;color:var(--text2);font-weight:400;margin-right:8px}
+.content{flex:1;overflow-y:auto;padding:24px}
+.view{display:none}
+.view.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* CARDS & GRID */
+.card{background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);padding:20px 22px;margin-bottom:18px}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:700;flex:1}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
+.stat-val{font-size:26px;font-weight:800;line-height:1;margin-bottom:3px}
+.stat-lbl{font-size:11px;color:var(--text2)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:right;padding:10px 14px;background:var(--surface2);color:var(--text2);font-weight:600;font-size:12px;border-bottom:1px solid var(--border)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.td-actions{display:flex;gap:6px;align-items:center}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-orange{background:#fef3ec;color:var(--accent)}
+.badge-blue{background:#e8f4ff;color:var(--blue)}
+.badge-purple{background:#f5f0ff;color:var(--purple)}
+.badge-red{background:#fef2f2;color:var(--red)}
+.badge-gray{background:var(--surface3);color:var(--text2)}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row.full{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:12px;font-weight:600;color:var(--text)}
+.form-input,.form-select,.form-textarea{padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border .15s;direction:rtl;background:white}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-hint{font-size:11px;color:var(--text3)}
+
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:18px}
+.panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.panel-body{padding:18px}
+.panel-title{font-size:14px;font-weight:700;flex:1}
+.empty-state{text-align:center;padding:40px;color:var(--text3)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-text{font-size:14px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,10,20,0.6);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:white;border-radius:20px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.modal-close{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--surface2);border:none;cursor:pointer;font-size:15px;color:var(--text2);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--surface3)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:white;padding:11px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;transition:transform .3s;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow2)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* OPTIONS IN QUIZ */
+.opt-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.opt-letter{width:24px;height:24px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2);flex-shrink:0}
+.opt-input{flex:1}
+.opt-correct{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;flex-shrink:0}
+.opt-correct.selected{background:var(--teal);border-color:var(--teal);color:white}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast">✓ <span id="toast-msg"></span></div>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">M</div>
+    <div class="login-title">لوحة إدارة MenaLab</div>
+    <div class="login-sub">هذه الصفحة للمشرفين فقط</div>
+    <div class="login-err" id="login-err">كلمة المرور غير صحيحة</div>
+    <input class="inp" type="text" id="admin-user" placeholder="اسم المستخدم" autocomplete="off">
+    <input class="inp" type="password" id="admin-pass" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <button class="btn btn-primary" onclick="doAdminLogin()">دخول ←</button>
+    <div style="margin-top:16px;font-size:11px;color:var(--text3)">افتراضي: admin / menalab2025</div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div class="admin" id="admin-app">
+  <div class="sidebar">
+    <div class="s-logo">
+      <div class="s-logo-mark">M</div>
+      <div><div class="s-logo-text">MenaLab</div><div class="s-logo-sub">ADMIN PANEL</div></div>
+    </div>
+    <div class="s-admin-badge">🔐 وضع الإدارة</div>
+    <nav>
+      <div class="nav-sec">
+        <div class="nav-lbl">المحتوى</div>
+        <div class="nav-item active" id="nav-lessons" onclick="showSection('lessons')"><span class="nav-icon">📚</span> الدروس <span class="nav-count" id="cnt-lessons">0</span></div>
+        <div class="nav-item" id="nav-quizzes" onclick="showSection('quizzes')"><span class="nav-icon">✅</span> الأسئلة <span class="nav-count" id="cnt-quizzes">0</span></div>
+        <div class="nav-item" id="nav-modules" onclick="showSection('modules')"><span class="nav-icon">📦</span> الوحدات</div>
+      </div>
+      <div class="nav-sec">
+        <div class="nav-lbl">المستخدمون</div>
+        <div class="nav-item" id="nav-users" onclick="showSection('users')"><span class="nav-icon">👥</span> المتعلمون <span class="nav-count" id="cnt-users">0</span></div>
+        <div class="nav-item" id="nav-admins" onclick="showSection('admins')"><span class="nav-icon">🔐</span> المشرفون</div>
+      </div>
+      <div class="nav-sec">
+        <div class="nav-lbl">النظام</div>
+        <div class="nav-item" id="nav-settings" onclick="showSection('settings')"><span class="nav-icon">⚙️</span> الإعدادات</div>
+        <div class="nav-item" onclick="window.open('/','_blank')"><span class="nav-icon">🌐</span> عرض الموقع</div>
+      </div>
+    </nav>
+    <div class="s-footer">
+      <button class="s-footer-btn" onclick="adminLogout()"><span>🚪</span> تسجيل الخروج</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div><div class="topbar-title" id="section-title">الدروس</div></div>
+      <div style="display:flex;gap:8px" id="topbar-actions"></div>
+    </div>
+    <div class="content">
+
+      <!-- LESSONS -->
+      <div class="view active" id="view-lessons">
+        <div class="stats-row" id="lesson-stats"></div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">جميع الدروس</div>
+            <button class="btn btn-primary btn-sm" onclick="openLessonModal()">+ إضافة درس</button>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div class="table-wrap">
+              <table id="lessons-table">
+                <thead><tr><th>#</th><th>عنوان الدرس</th><th>الوحدة</th><th>النوع</th><th>الفيديو</th><th>XP</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+                <tbody id="lessons-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUIZZES -->
+      <div class="view" id="view-quizzes">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">بنك الأسئلة</div>
+            <button class="btn btn-primary btn-sm" onclick="openQuizModal()">+ إضافة سؤال</button>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div class="table-wrap">
+              <table id="quiz-table">
+                <thead><tr><th>#</th><th>السؤال</th><th>الوحدة</th><th>الإجابة الصحيحة</th><th>إجراءات</th></tr></thead>
+                <tbody id="quiz-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODULES -->
+      <div class="view" id="view-modules">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">وحدات التعلم</div>
+            <button class="btn btn-primary btn-sm" onclick="openModuleModal()">+ إضافة وحدة</button>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <table id="modules-table">
+              <thead><tr><th>ID</th><th>اسم الوحدة</th><th>عدد الدروس</th><th>إجراءات</th></tr></thead>
+              <tbody id="modules-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div class="view" id="view-users">
+        <div class="stats-row" id="user-stats"></div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">المتعلمون المسجّلون</div></div>
+          <div class="panel-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>الاسم</th><th>البريد</th><th>XP</th><th>الدروس</th><th>تاريخ التسجيل</th><th>إجراءات</th></tr></thead>
+                <tbody id="users-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMINS -->
+      <div class="view" id="view-admins">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">المشرفون</div>
+            <button class="btn btn-primary btn-sm" onclick="openAdminModal()">+ إضافة مشرف</button>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <table>
+              <thead><tr><th>اسم المستخدم</th><th>الاسم</th><th>الصلاحية</th><th>إجراءات</th></tr></thead>
+              <tbody id="admins-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚙️ إعدادات المنصة</div></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">اسم المنصة</label><input class="form-input" id="s-name" placeholder="MenaLab"></div>
+            <div class="form-group"><label class="form-label">البريد الإلكتروني للتواصل</label><input class="form-input" id="s-email" placeholder="info@menalab.com" dir="ltr"></div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group"><label class="form-label">وصف المنصة</label><textarea class="form-textarea" id="s-desc" placeholder="منصة تعلم التفكير التصميمي..."></textarea></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">تغيير كلمة مرور الأدمن الافتراضية</label><input class="form-input" type="password" id="s-newpass" placeholder="كلمة مرور جديدة" dir="ltr"></div>
+            <div class="form-group"><label class="form-label">تأكيد كلمة المرور</label><input class="form-input" type="password" id="s-confirmpass" placeholder="تأكيد" dir="ltr"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveSettings()">حفظ الإعدادات</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">💾 النسخ الاحتياطي</div></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">قم بتصدير جميع بيانات المنصة (الدروس، الأسئلة، المستخدمين) كملف JSON.</p>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-success btn-sm" onclick="exportData()">⬇ تصدير البيانات</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-file').click()">⬆ استيراد بيانات</button>
+            <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- LESSON MODAL -->
+<div class="modal-overlay" id="lesson-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('lesson-modal')">✕</button>
+    <div class="modal-title" id="lesson-modal-title">📚 إضافة درس جديد</div>
+    <input type="hidden" id="lesson-edit-id">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">عنوان الدرس *</label><input class="form-input" id="l-title" placeholder="مقدمة في التفكير التصميمي"></div>
+      <div class="form-group"><label class="form-label">الوحدة *</label>
+        <select class="form-select" id="l-mod">
+          <option value="dt">🧠 التفكير التصميمي</option>
+          <option value="cad">🖥️ Fusion 360</option>
+          <option value="3dp">🖨️ الطباعة ثلاثية الأبعاد</option>
+          <option value="cnc">⚙️ CNC</option>
+          <option value="laser">🔆 قطع الليزر</option>
+          <option value="elec">💡 الإلكترونيات</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">نوع الدرس</label>
+        <select class="form-select" id="l-type">
+          <option value="video">فيديو</option>
+          <option value="text">نص</option>
+          <option value="exercise">تمرين</option>
+          <option value="lab">مختبر</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">الأيقونة (إيموجي)</label><input class="form-input" id="l-icon" placeholder="🧠" style="font-size:18px"></div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group">
+        <label class="form-label">رابط الفيديو (Vimeo أو YouTube)</label>
+        <input class="form-input" id="l-video" placeholder="https://player.vimeo.com/video/123456789" dir="ltr">
+        <div class="form-hint">مثال Vimeo: https://player.vimeo.com/video/XXXXXXXXX</div>
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label class="form-label">محتوى الدرس النصي (HTML مسموح)</label><textarea class="form-textarea" id="l-content" style="min-height:100px" placeholder="&lt;h3&gt;عنوان&lt;/h3&gt;&lt;p&gt;المحتوى...&lt;/p&gt;"></textarea></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">المدة</label><input class="form-input" id="l-dur" placeholder="١٢ دقيقة"></div>
+      <div class="form-group"><label class="form-label">نقاط XP</label><input class="form-input" id="l-xp" type="number" placeholder="50" dir="ltr"></div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label class="form-label">أهداف التعلم (سطر لكل هدف)</label><textarea class="form-textarea" id="l-obj" placeholder="فهم مفهوم التفكير التصميمي&#10;تعلم المراحل الخمس&#10;..."></textarea></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">الحالة</label>
+        <select class="form-select" id="l-status">
+          <option value="published">منشور</option>
+          <option value="draft">مسودة</option>
+          <option value="locked">مقفل</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">مرحلة التفكير التصميمي</label>
+        <select class="form-select" id="l-phase">
+          <option value="0">١ - التعاطف</option>
+          <option value="1">٢ - تحديد المشكلة</option>
+          <option value="2">٣ - توليد الأفكار</option>
+          <option value="3">٤ - النمذجة</option>
+          <option value="4">٥ - الاختبار</option>
+          <option value="-1">غير محدد</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('lesson-modal')">إلغاء</button>
+      <button class="btn btn-primary btn-sm" onclick="saveLesson()">حفظ الدرس ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ MODAL -->
+<div class="modal-overlay" id="quiz-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('quiz-modal')">✕</button>
+    <div class="modal-title" id="quiz-modal-title">✅ إضافة سؤال جديد</div>
+    <input type="hidden" id="quiz-edit-id">
+    <div class="form-row full">
+      <div class="form-group"><label class="form-label">نص السؤال *</label><textarea class="form-textarea" id="q-text" placeholder="ما هو الهدف الرئيسي من مرحلة التعاطف؟" style="min-height:70px"></textarea></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">الوحدة</label>
+        <select class="form-select" id="q-mod">
+          <option value="dt">التفكير التصميمي</option>
+          <option value="cad">Fusion 360</option>
+          <option value="3dp">الطباعة ثلاثية الأبعاد</option>
+          <option value="cnc">CNC</option>
+          <option value="laser">قطع الليزر</option>
+          <option value="elec">الإلكترونيات</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">الدرس المرتبط (اختياري)</label><input class="form-input" id="q-lesson" placeholder="اسم الدرس..."></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="form-label" style="margin-bottom:10px;display:block">الخيارات — اضغط ✓ لتحديد الإجابة الصحيحة *</label>
+      <div id="opts-container">
+        <div class="opt-row"><div class="opt-letter">أ</div><input class="form-input opt-input" id="opt-0" placeholder="الخيار الأول"><button class="opt-correct selected" id="oc-0" onclick="selectCorrect(0)" title="الإجابة الصحيحة">✓</button></div>
+        <div class="opt-row"><div class="opt-letter">ب</div><input class="form-input opt-input" id="opt-1" placeholder="الخيار الثاني"><button class="opt-correct" id="oc-1" onclick="selectCorrect(1)" title="الإجابة الصحيحة">✓</button></div>
+        <div class="opt-row"><div class="opt-letter">ج</div><input class="form-input opt-input" id="opt-2" placeholder="الخيار الثالث"><button class="opt-correct" id="oc-2" onclick="selectCorrect(2)" title="الإجابة الصحيحة">✓</button></div>
+        <div class="opt-row"><div class="opt-letter">د</div><input class="form-input opt-input" id="opt-3" placeholder="الخيار الرابع"><button class="opt-correct" id="oc-3" onclick="selectCorrect(3)" title="الإجابة الصحيحة">✓</button></div>
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label class="form-label">شرح الإجابة الصحيحة</label><textarea class="form-textarea" id="q-explain" placeholder="سيظهر هذا للمتعلم بعد الإجابة..." style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('quiz-modal')">إلغاء</button>
+      <button class="btn btn-primary btn-sm" onclick="saveQuestion()">حفظ السؤال ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODULE MODAL -->
+<div class="modal-overlay" id="module-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('module-modal')">✕</button>
+    <div class="modal-title">📦 إضافة وحدة جديدة</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">معرّف الوحدة (ID) *</label><input class="form-input" id="m-id" placeholder="dt" dir="ltr"><div class="form-hint">حروف إنجليزية صغيرة بدون مسافات</div></div>
+      <div class="form-group"><label class="form-label">اسم الوحدة *</label><input class="form-input" id="m-name" placeholder="🧠 التفكير التصميمي"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('module-modal')">إلغاء</button>
+      <button class="btn btn-primary btn-sm" onclick="saveModule()">حفظ ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('admin-modal')">✕</button>
+    <div class="modal-title">🔐 إضافة مشرف</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">اسم المستخدم *</label><input class="form-input" id="a-user" placeholder="admin2" dir="ltr"></div>
+      <div class="form-group"><label class="form-label">الاسم الكامل</label><input class="form-input" id="a-name" placeholder="محمد أحمد"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">كلمة المرور *</label><input class="form-input" type="password" id="a-pass" placeholder="كلمة مرور قوية" dir="ltr"></div>
+      <div class="form-group"><label class="form-label">الصلاحية</label>
+        <select class="form-select" id="a-role">
+          <option value="editor">محرر — يعدّل المحتوى فقط</option>
+          <option value="admin">مشرف — صلاحيات كاملة</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('admin-modal')">إلغاء</button>
+      <button class="btn btn-primary btn-sm" onclick="saveAdmin()">حفظ ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DEFAULT DATA ─────────────────────────────────────────
+const DEFAULT_LESSONS = [
+  {id:1,title:'مقدمة في التفكير التصميمي',mod:'dt',type:'video',icon:'🧠',video:'',dur:'١٢ دقيقة',xp:50,phase:0,status:'published',content:'<h3>ما هو التفكير التصميمي؟</h3><p>منهجية إبداعية تركز على الإنسان.</p>',objectives:['فهم مفهوم التفكير التصميمي','تعلم المراحل الخمس']},
+  {id:2,title:'مرحلة التعاطف: الأساسيات',mod:'dt',type:'text',icon:'🔍',video:'',dur:'٨ دقائق',xp:50,phase:0,status:'published',content:'<h3>ما هو التعاطف؟</h3><p>فهم المستخدمين عمقاً.</p>',objectives:['تعريف التعاطف','أدوات التعاطف']},
+  {id:3,title:'أدوات الملاحظة الميدانية',mod:'dt',type:'video',icon:'👁️',video:'',dur:'١٥ دقيقة',xp:75,phase:0,status:'published',content:'<h3>الملاحظة الميدانية</h3><p>مراقبة المستخدمين في بيئتهم.</p>',objectives:['تقنيات الملاحظة']},
+  {id:4,title:'تحديد المشكلة: HMW',mod:'dt',type:'exercise',icon:'🎯',video:'',dur:'٢٠ دقيقة',xp:100,phase:1,status:'published',content:'<h3>أسئلة كيف يمكننا</h3><p>تحويل الملاحظة إلى فرصة.</p>',objectives:['كتابة أسئلة HMW']},
+  {id:5,title:'توليد الأفكار',mod:'dt',type:'video',icon:'💡',video:'',dur:'١٨ دقيقة',xp:75,phase:2,status:'published',content:'<h3>العصف الذهني</h3><p>الكمية قبل الجودة.</p>',objectives:['قواعد العصف الذهني','تقنية SCAMPER']},
+  {id:6,title:'مقدمة في Fusion 360',mod:'cad',type:'video',icon:'🖥️',video:'',dur:'٢٠ دقيقة',xp:100,phase:-1,status:'published',content:'<h3>Fusion 360</h3><p>برنامج CAD متكامل.</p>',objectives:['واجهة Fusion 360']},
+  {id:7,title:'رسم المقاطع ثنائية الأبعاد',mod:'cad',type:'lab',icon:'📐',video:'',dur:'٣٠ دقيقة',xp:150,phase:-1,status:'published',content:'<h3>Sketching</h3><p>أساس أي تصميم ثلاثي.</p>',objectives:['القيود الهندسية']},
+  {id:8,title:'مقدمة في الطباعة ثلاثية الأبعاد',mod:'3dp',type:'video',icon:'🖨️',video:'',dur:'١٤ دقيقة',xp:75,phase:-1,status:'published',content:'<h3>الطباعة ثلاثية الأبعاد</h3><p>تقنية FDM.</p>',objectives:['مبدأ عمل FDM','أنواع المواد']},
+  {id:9,title:'إعداد ملف الطباعة',mod:'3dp',type:'exercise',icon:'⚙️',video:'',dur:'٢٥ دقيقة',xp:100,phase:-1,status:'published',content:'<h3>Slicing</h3><p>تحويل STL إلى G-code.</p>',objectives:['استخدام Cura']},
+  {id:10,title:'أساسيات قطع الليزر',mod:'laser',type:'video',icon:'🔆',video:'',dur:'١٢ دقيقة',xp:75,phase:-1,status:'published',content:'<h3>قطع الليزر</h3><p>شعاع مركّز للقطع والنقش.</p>',objectives:['مبدأ عمل الليزر']},
+  {id:11,title:'برمجة Arduino للمبتدئين',mod:'elec',type:'lab',icon:'💡',video:'',dur:'٤٠ دقيقة',xp:200,phase:-1,status:'published',content:'<h3>Arduino</h3><p>لوحة تحكم مفتوحة المصدر.</p>',objectives:['أول كود Arduino']},
+  {id:12,title:'مقدمة في تصنيع CNC',mod:'cnc',type:'video',icon:'⚙️',video:'',dur:'١٦ دقيقة',xp:75,phase:-1,status:'published',content:'<h3>CNC Router</h3><p>قطع ثلاثي الأبعاد.</p>',objectives:['مبدأ عمل CNC']},
+];
+const DEFAULT_QUESTIONS = [
+  {id:1,q:'ما هو الهدف الرئيسي من مرحلة التعاطف؟',opts:['تصميم النموذج مباشرة','فهم احتياجات المستخدمين الحقيقية','توليد أكبر عدد من الأفكار','اختبار الحلول'],ans:1,ex:'التعاطف هو فهم المستخدمين بعمق.',mod:'dt'},
+  {id:2,q:'ما الفرق بين الملاحظة والتفسير؟',opts:['لا فرق','الملاحظة موضوعية والتفسير ذاتي','التفسير يأتي قبل الملاحظة','الملاحظة أقل أهمية'],ans:1,ex:'الملاحظة تسجّل ما تراه، التفسير هو فهمك.',mod:'dt'},
+  {id:3,q:'ما الخطأ في: "كيف يمكننا بناء تطبيق مذاكرة؟"',opts:['لا شيء','تتضمن حلاً مسبقاً','قصيرة جداً','لا تبدأ بـ كيف'],ans:1,ex:'HMW لا تحتوي على حل مسبق.',mod:'dt'},
+  {id:4,q:'في توليد الأفكار، أي قاعدة يجب اتباعها؟',opts:['انتقاد الأفكار الضعيفة','الكمية قبل الجودة وعدم النقد','التركيز على فكرة واحدة','التصويت أثناء الجلسة'],ans:1,ex:'في العصف الذهني لا تنتقد.',mod:'dt'},
+  {id:5,q:'ما أفضل مادة طباعة للمبتدئين؟',opts:['ABS','PETG','PLA','TPU'],ans:2,ex:'PLA الأسهل والأكثر أماناً.',mod:'3dp'},
+  {id:6,q:'ما دور برنامج Slicer؟',opts:['تصميم الجسم','تحويل STL إلى G-code','التحكم في الطابعة','إصلاح ملفات'],ans:1,ex:'الـ Slicer يحوّل النموذج إلى تعليمات للطابعة.',mod:'3dp'},
+  {id:7,q:'ما الفرق بين قطع الليزر و CNC؟',opts:['الليزر أسرع دائماً','CNC يقطع بعمق ثلاثي الأبعاد','الليزر أدق دائماً','لا فرق'],ans:1,ex:'CNC يقطع بعمق حقيقي.',mod:'laser'},
+  {id:8,q:'ما معنى Parametric Design؟',opts:['تصميم عشوائي','تصميم قابل للتعديل بتغيير المعطيات','تصميم بدون أبعاد','تصميم للمعلمات فقط'],ans:1,ex:'يربط الأبعاد بمتغيرات قابلة للتعديل.',mod:'cad'},
+];
+const DEFAULT_MODULES = [
+  {id:'dt',label:'🧠 التفكير التصميمي'},
+  {id:'cad',label:'🖥️ Fusion 360'},
+  {id:'3dp',label:'🖨️ الطباعة ثلاثية الأبعاد'},
+  {id:'cnc',label:'⚙️ CNC'},
+  {id:'laser',label:'🔆 قطع الليزر'},
+  {id:'elec',label:'💡 الإلكترونيات'},
+];
+const DEFAULT_ADMINS = [
+  {user:'admin',name:'المشرف الرئيسي',role:'admin'},
+];
+
+// ── STATE ────────────────────────────────────────────────
+function loadData(key, def){ try{ return JSON.parse(localStorage.getItem(key)||'null')||def; }catch(e){ return def; } }
+function saveData(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+let LESSONS   = loadData('ml_admin_lessons',   DEFAULT_LESSONS);
+let QUESTIONS = loadData('ml_admin_questions', DEFAULT_QUESTIONS);
+let MODULES   = loadData('ml_admin_modules',   DEFAULT_MODULES);
+let ADMINS    = loadData('ml_admin_admins',    DEFAULT_ADMINS);
+let SETTINGS  = loadData('ml_admin_settings',  {name:'MenaLab',email:'',desc:'',adminPass:'menalab2025'});
+
+// ── AUTH ─────────────────────────────────────────────────
+function doAdminLogin(){
+  const u = document.getElementById('admin-user').value.trim();
+  const p = document.getElementById('admin-pass').value;
+  const admin = ADMINS.find(a=>a.user===u);
+  const mainPass = SETTINGS.adminPass || 'menalab2025';
+  if(admin && (p === mainPass || p === 'menalab2025')){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-app').classList.add('visible');
+    renderAll();
+  } else {
+    document.getElementById('login-err').classList.add('show');
+  }
+}
+function adminLogout(){
+  document.getElementById('admin-app').classList.remove('visible');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('admin-user').value='';
+  document.getElementById('admin-pass').value='';
+}
+
+// ── NAVIGATION ───────────────────────────────────────────
+const SECTIONS = ['lessons','quizzes','modules','users','admins','settings'];
+const TITLES = {lessons:'الدروس',quizzes:'بنك الأسئلة',modules:'الوحدات',users:'المتعلمون',admins:'المشرفون',settings:'الإعدادات'};
+function showSection(id){
+  SECTIONS.forEach(s=>{
+    document.getElementById('view-'+s).classList.toggle('active',s===id);
+    document.getElementById('nav-'+s)?.classList.toggle('active',s===id);
+  });
+  document.getElementById('section-title').textContent = TITLES[id]||'';
+  if(id==='users') renderUsers();
+  if(id==='admins') renderAdmins();
+}
+
+// ── RENDER ───────────────────────────────────────────────
+function renderAll(){
+  renderLessons(); renderQuestions(); renderModulesList();
+  updateCounts();
+}
+
+function updateCounts(){
+  document.getElementById('cnt-lessons').textContent = LESSONS.length;
+  document.getElementById('cnt-quizzes').textContent = QUESTIONS.length;
+  const users = loadData('ml_users',[]);
+  document.getElementById('cnt-users').textContent = users.length;
+}
+
+const MOD_LABELS = {dt:'التفكير التصميمي',cad:'Fusion 360','3dp':'طباعة ثلاثية',cnc:'CNC',laser:'ليزر',elec:'إلكترونيات'};
+const TYPE_LABELS = {video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'};
+const TYPE_BADGES = {video:'badge-blue',text:'badge-green',exercise:'badge-orange',lab:'badge-purple'};
+const STATUS_BADGES = {published:'badge-green',draft:'badge-gray',locked:'badge-red'};
+const STATUS_LABELS = {published:'منشور',draft:'مسودة',locked:'مقفل'};
+
+function renderLessons(){
+  const tbody = document.getElementById('lessons-tbody');
+  tbody.innerHTML = LESSONS.map((l,i)=>`
+    <tr>
+      <td style="color:var(--text3);font-size:12px">${i+1}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${l.icon||'📄'}</span><div><div style="font-weight:600;font-size:13px">${l.title}</div><div style="font-size:11px;color:var(--text3)">${l.dur||''}</div></div></div></td>
+      <td><span class="badge badge-blue">${MOD_LABELS[l.mod]||l.mod}</span></td>
+      <td><span class="badge ${TYPE_BADGES[l.type]||'badge-gray'}">${TYPE_LABELS[l.type]||l.type}</span></td>
+      <td>${l.video?`<a href="${l.video}" target="_blank" style="color:var(--teal);font-size:12px">▶ رابط</a>`:'<span style="color:var(--text3);font-size:12px">لا يوجد</span>'}</td>
+      <td><span style="font-size:13px;font-weight:600;color:var(--accent)">⚡${l.xp}</span></td>
+      <td><span class="badge ${STATUS_BADGES[l.status]||'badge-gray'}">${STATUS_LABELS[l.status]||l.status}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-outline btn-sm" onclick="editLesson(${l.id})">✏️ تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteLesson(${l.id})">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+
+  // Stats
+  const pub = LESSONS.filter(l=>l.status==='published').length;
+  document.getElementById('lesson-stats').innerHTML = `
+    <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">📚</div><div class="stat-val" style="color:var(--accent)">${LESSONS.length}</div><div class="stat-lbl">إجمالي الدروس</div></div>
+    <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">✅</div><div class="stat-val" style="color:var(--teal)">${pub}</div><div class="stat-lbl">منشور</div></div>
+    <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">📝</div><div class="stat-val" style="color:var(--text2)">${LESSONS.filter(l=>l.status==='draft').length}</div><div class="stat-lbl">مسودة</div></div>
+    <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">⚡</div><div class="stat-val" style="color:var(--purple)">${LESSONS.reduce((s,l)=>s+Number(l.xp||0),0)}</div><div class="stat-lbl">إجمالي XP</div></div>`;
+}
+
+function renderQuestions(){
+  const tbody = document.getElementById('quiz-tbody');
+  tbody.innerHTML = QUESTIONS.map((q,i)=>`
+    <tr>
+      <td style="color:var(--text3);font-size:12px">${i+1}</td>
+      <td style="max-width:320px"><div style="font-size:13px;font-weight:500;line-height:1.4">${q.q}</div></td>
+      <td><span class="badge badge-blue">${MOD_LABELS[q.mod]||q.mod}</span></td>
+      <td><span style="font-size:13px;color:var(--teal);font-weight:600">${q.opts[q.ans]||''}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-outline btn-sm" onclick="editQuestion(${q.id})">✏️ تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${q.id})">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function renderModulesList(){
+  const tbody = document.getElementById('modules-tbody');
+  tbody.innerHTML = MODULES.map(m=>`
+    <tr>
+      <td><code style="font-family:var(--font-mono,monospace);font-size:12px;background:var(--surface2);padding:2px 7px;border-radius:4px">${m.id}</code></td>
+      <td style="font-weight:600">${m.label}</td>
+      <td>${LESSONS.filter(l=>l.mod===m.id).length} دروس</td>
+      <td><div class="td-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteModule('${m.id}')">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function renderUsers(){
+  const users = loadData('ml_users',[]);
+  const states = {};
+  try{ Object.keys(localStorage).filter(k=>k.startsWith('menalab')).forEach(k=>{ try{states[k]=JSON.parse(localStorage.getItem(k));}catch(e){} }); }catch(e){}
+  const tbody = document.getElementById('users-tbody');
+  if(!users.length){ tbody.innerHTML='<tr><td colspan="6" class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">لا يوجد متعلمون مسجّلون بعد</div></td></tr>'; return; }
+  tbody.innerHTML = users.map((u,i)=>`
+    <tr>
+      <td style="font-weight:600">${u.name||'—'}</td>
+      <td style="direction:ltr;text-align:right;font-size:12px;color:var(--text2)">${u.email||'—'}</td>
+      <td><span style="color:var(--accent);font-weight:700">⚡0</span></td>
+      <td>0</td>
+      <td style="font-size:12px;color:var(--text3)">${u.created?new Date(u.created).toLocaleDateString('ar'):'—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteUser('${u.email}')">🗑️ حذف</button></td>
+    </tr>`).join('');
+
+  document.getElementById('user-stats').innerHTML = `
+    <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">👥</div><div class="stat-val" style="color:var(--accent)">${users.length}</div><div class="stat-lbl">إجمالي المتعلمين</div></div>
+    <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">🆕</div><div class="stat-val" style="color:var(--teal)">${users.filter(u=>u.created&&new Date(u.created)>new Date(Date.now()-7*864e5)).length}</div><div class="stat-lbl">هذا الأسبوع</div></div>
+    <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">📚</div><div class="stat-val" style="color:var(--purple)">0</div><div class="stat-lbl">دروس مكتملة</div></div>
+    <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">⚡</div><div class="stat-val" style="color:var(--text2)">0</div><div class="stat-lbl">متوسط XP</div></div>`;
+}
+
+function renderAdmins(){
+  const tbody = document.getElementById('admins-tbody');
+  tbody.innerHTML = ADMINS.map((a,i)=>`
+    <tr>
+      <td><code style="font-family:monospace;font-size:12px;background:var(--surface2);padding:2px 7px;border-radius:4px">${a.user}</code></td>
+      <td style="font-weight:500">${a.name||'—'}</td>
+      <td><span class="badge ${a.role==='admin'?'badge-orange':'badge-blue'}">${a.role==='admin'?'مشرف كامل':'محرر'}</span></td>
+      <td>${i===0?'<span style="font-size:12px;color:var(--text3)">الحساب الرئيسي</span>':`<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.user}')">🗑️</button>`}</td>
+    </tr>`).join('');
+}
+
+// ── LESSON CRUD ───────────────────────────────────────────
+let correctOpt = 0;
+function openLessonModal(id){
+  document.getElementById('lesson-modal-title').textContent = id ? '✏️ تعديل الدرس' : '📚 إضافة درس جديد';
+  document.getElementById('lesson-edit-id').value = id||'';
+  const l = id ? LESSONS.find(x=>x.id===id) : null;
+  document.getElementById('l-title').value = l?.title||'';
+  document.getElementById('l-mod').value = l?.mod||'dt';
+  document.getElementById('l-type').value = l?.type||'video';
+  document.getElementById('l-icon').value = l?.icon||'';
+  document.getElementById('l-video').value = l?.video||'';
+  document.getElementById('l-content').value = l?.content||'';
+  document.getElementById('l-dur').value = l?.dur||'';
+  document.getElementById('l-xp').value = l?.xp||50;
+  document.getElementById('l-obj').value = (l?.objectives||[]).join('\n');
+  document.getElementById('l-status').value = l?.status||'published';
+  document.getElementById('l-phase').value = l?.phase??-1;
+  document.getElementById('lesson-modal').classList.add('open');
+}
+function saveLesson(){
+  const title = document.getElementById('l-title').value.trim();
+  if(!title){ toast('يرجى إدخال عنوان الدرس'); return; }
+  const editId = Number(document.getElementById('lesson-edit-id').value);
+  const obj = {
+    id: editId || (Math.max(0,...LESSONS.map(l=>l.id))+1),
+    title, mod: document.getElementById('l-mod').value,
+    type: document.getElementById('l-type').value,
+    icon: document.getElementById('l-icon').value||'📄',
+    video: document.getElementById('l-video').value.trim(),
+    content: document.getElementById('l-content').value,
+    dur: document.getElementById('l-dur').value,
+    xp: Number(document.getElementById('l-xp').value)||50,
+    objectives: document.getElementById('l-obj').value.split('\n').filter(Boolean),
+    status: document.getElementById('l-status').value,
+    phase: Number(document.getElementById('l-phase').value),
+  };
+  if(editId){ LESSONS = LESSONS.map(l=>l.id===editId?obj:l); }
+  else { LESSONS.push(obj); }
+  saveData('ml_admin_lessons', LESSONS);
+  saveData('ml_lessons_pub', LESSONS); // sync to main app
+  renderLessons(); updateCounts();
+  closeModal('lesson-modal');
+  toast(editId ? 'تم تحديث الدرس ✓' : 'تم إضافة الدرس ✓');
+}
+function editLesson(id){ openLessonModal(id); }
+function deleteLesson(id){
+  if(!confirm('هل تريد حذف هذا الدرس؟')) return;
+  LESSONS = LESSONS.filter(l=>l.id!==id);
+  saveData('ml_admin_lessons', LESSONS);
+  renderLessons(); updateCounts();
+  toast('تم حذف الدرس');
+}
+
+// ── QUIZ CRUD ─────────────────────────────────────────────
+function openQuizModal(id){
+  document.getElementById('quiz-modal-title').textContent = id ? '✏️ تعديل السؤال' : '✅ إضافة سؤال جديد';
+  document.getElementById('quiz-edit-id').value = id||'';
+  const q = id ? QUESTIONS.find(x=>x.id===id) : null;
+  document.getElementById('q-text').value = q?.q||'';
+  document.getElementById('q-mod').value = q?.mod||'dt';
+  document.getElementById('q-explain').value = q?.ex||'';
+  for(let i=0;i<4;i++){
+    document.getElementById('opt-'+i).value = q?.opts?.[i]||'';
+    document.getElementById('oc-'+i).classList.toggle('selected', (q?.ans??0)===i);
+  }
+  correctOpt = q?.ans??0;
+  document.getElementById('quiz-modal').classList.add('open');
+}
+function selectCorrect(i){
+  correctOpt=i;
+  for(let j=0;j<4;j++) document.getElementById('oc-'+j).classList.toggle('selected',j===i);
+}
+function saveQuestion(){
+  const qtext = document.getElementById('q-text').value.trim();
+  if(!qtext){ toast('يرجى إدخال نص السؤال'); return; }
+  const opts = [0,1,2,3].map(i=>document.getElementById('opt-'+i).value.trim());
+  if(opts.filter(Boolean).length<2){ toast('يرجى إدخال خيارين على الأقل'); return; }
+  const editId = Number(document.getElementById('quiz-edit-id').value);
+  const obj = {
+    id: editId || (Math.max(0,...QUESTIONS.map(q=>q.id))+1),
+    q: qtext, opts, ans: correctOpt,
+    ex: document.getElementById('q-explain').value.trim(),
+    mod: document.getElementById('q-mod').value,
+  };
+  if(editId){ QUESTIONS = QUESTIONS.map(q=>q.id===editId?obj:q); }
+  else { QUESTIONS.push(obj); }
+  saveData('ml_admin_questions', QUESTIONS);
+  saveData('ml_questions_pub', QUESTIONS); // sync to main app
+  renderQuestions(); updateCounts();
+  closeModal('quiz-modal');
+  toast(editId ? 'تم تحديث السؤال ✓' : 'تم إضافة السؤال ✓');
+}
+function editQuestion(id){ openQuizModal(id); }
+function deleteQuestion(id){
+  if(!confirm('هل تريد حذف هذا السؤال؟')) return;
+  QUESTIONS = QUESTIONS.filter(q=>q.id!==id);
+  saveData('ml_admin_questions', QUESTIONS);
+  saveData('ml_questions_pub', QUESTIONS);
+  renderQuestions(); updateCounts();
+  toast('تم حذف السؤال');
+}
+
+// ── MODULE CRUD ───────────────────────────────────────────
+function openModuleModal(){ document.getElementById('module-modal').classList.add('open'); }
+function saveModule(){
+  const id = document.getElementById('m-id').value.trim().toLowerCase();
+  const name = document.getElementById('m-name').value.trim();
+  if(!id||!name){ toast('يرجى ملء جميع الحقول'); return; }
+  if(MODULES.find(m=>m.id===id)){ toast('هذا المعرّف موجود مسبقاً'); return; }
+  MODULES.push({id,label:name});
+  saveData('ml_admin_modules', MODULES);
+  renderModulesList();
+  closeModal('module-modal');
+  toast('تم إضافة الوحدة ✓');
+}
+function deleteModule(id){
+  if(LESSONS.some(l=>l.mod===id)){ toast('لا يمكن حذف وحدة تحتوي دروساً'); return; }
+  if(!confirm('حذف هذه الوحدة؟')) return;
+  MODULES = MODULES.filter(m=>m.id!==id);
+  saveData('ml_admin_modules', MODULES);
+  renderModulesList();
+  toast('تم حذف الوحدة');
+}
+
+// ── USERS ─────────────────────────────────────────────────
+function deleteUser(email){
+  if(!confirm('حذف هذا المتعلم؟')) return;
+  let users = loadData('ml_users',[]);
+  users = users.filter(u=>u.email!==email);
+  saveData('ml_users', users);
+  renderUsers(); updateCounts();
+  toast('تم حذف المتعلم');
+}
+
+// ── ADMINS ────────────────────────────────────────────────
+function openAdminModal(){ document.getElementById('admin-modal').classList.add('open'); }
+function saveAdmin(){
+  const user = document.getElementById('a-user').value.trim();
+  const name = document.getElementById('a-name').value.trim();
+  const pass = document.getElementById('a-pass').value;
+  const role = document.getElementById('a-role').value;
+  if(!user||!pass){ toast('يرجى ملء الحقول المطلوبة'); return; }
+  if(ADMINS.find(a=>a.user===user)){ toast('اسم المستخدم موجود مسبقاً'); return; }
+  ADMINS.push({user,name,pass,role});
+  saveData('ml_admin_admins', ADMINS);
+  renderAdmins();
+  closeModal('admin-modal');
+  toast('تم إضافة المشرف ✓');
+}
+function deleteAdmin(user){
+  if(user==='admin'){ toast('لا يمكن حذف الحساب الرئيسي'); return; }
+  if(!confirm('حذف هذا المشرف؟')) return;
+  ADMINS = ADMINS.filter(a=>a.user!==user);
+  saveData('ml_admin_admins', ADMINS);
+  renderAdmins();
+  toast('تم حذف المشرف');
+}
+
+// ── SETTINGS ─────────────────────────────────────────────
+function saveSettings(){
+  SETTINGS.name = document.getElementById('s-name').value||'MenaLab';
+  SETTINGS.email = document.getElementById('s-email').value;
+  SETTINGS.desc = document.getElementById('s-desc').value;
+  const np = document.getElementById('s-newpass').value;
+  const cp = document.getElementById('s-confirmpass').value;
+  if(np){ if(np!==cp){ toast('كلمات المرور غير متطابقة'); return; } SETTINGS.adminPass = np; }
+  saveData('ml_admin_settings', SETTINGS);
+  toast('تم حفظ الإعدادات ✓');
+}
+
+// ── EXPORT / IMPORT ───────────────────────────────────────
+function exportData(){
+  const data = {lessons:LESSONS,questions:QUESTIONS,modules:MODULES,settings:SETTINGS,exported:new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='menalab-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); toast('تم تصدير البيانات ✓');
+}
+function importData(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(data.lessons){ LESSONS=data.lessons; saveData('ml_admin_lessons',LESSONS); }
+      if(data.questions){ QUESTIONS=data.questions; saveData('ml_admin_questions',QUESTIONS); }
+      if(data.modules){ MODULES=data.modules; saveData('ml_admin_modules',MODULES); }
+      renderAll(); toast('تم استيراد البيانات ✓');
+    }catch(err){ toast('خطأ في قراءة الملف'); }
+  };
+  reader.readAsText(file);
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────────
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click',function(e){ if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('open'); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
+
+// ── TOAST ─────────────────────────────────────────────────
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── INIT ─────────────────────────────────────────────────
+document.getElementById('admin-pass').addEventListener('keydown',function(e){ if(e.key==='Enter') doAdminLogin(); });
+</script>
+</body>
+</html>
