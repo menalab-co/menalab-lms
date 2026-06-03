@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "updatedAt": "2026-06-03T16:37:07.826Z",
+  "version": 4,
+  "updatedAt": "2026-06-03T16:47:52.522Z",
   "lessons": [
     {
       "id": 1,
@@ -8,7 +8,7 @@
       "mod": "dt",
       "type": "video",
       "icon": "🧠",
-      "video": "https://www.youtube.com/embed/-6t4LSB4Fo8?si=ig-2iKbGacchoRrj",
+      "video": "https://www.youtube.com/embed/-jy41q6W2ag?si=HSBfdxIBg-ycg81Y",
       "content": "<h3>ما هو التفكير التصميمي؟</h3><p>منهجية إبداعية تركز على الإنسان.</p>\nهنا يتم إضافة المحتوى - نادين ",
       "dur": "١٢ دقيقة",
       "xp": 50,
