@@ -270,9 +270,9 @@ nav{padding:12px 10px;flex:1;overflow-y:auto}
       </div>
       <div class="player-layout">
         <div>
-          <div class="video-box">
-            <div class="vid-ph"><div style="font-size:52px;margin-bottom:10px" id="pl-icon">🎬</div><div style="font-size:15px;color:white;font-weight:600;margin-bottom:5px" id="pl-title"></div><div style="font-size:12px;opacity:.5" id="pl-dur"></div></div>
-            <div class="vid-controls">
+          <div class="video-box" id="video-box">
+            <div class="vid-ph" id="vid-placeholder"><div style="font-size:52px;margin-bottom:10px" id="pl-icon">🎬</div><div style="font-size:15px;color:white;font-weight:600;margin-bottom:5px" id="pl-title"></div><div style="font-size:12px;opacity:.5" id="pl-dur"></div></div>
+            <div class="vid-controls" id="vid-controls">
               <button class="ctrl" id="pp-btn" onclick="togglePlay()">▶</button>
               <div class="prog-track" onclick="seekVid(event)"><div class="prog-fill" id="vid-prog"></div></div>
               <span class="ctrl-time" id="vid-time">0:00 / 0:00</span>
@@ -547,9 +547,36 @@ function openLesson(id){
   const l=LESSONS.find(x=>x.id===id);if(!l)return;
   const mn={dt:'التفكير التصميمي',cad:'Fusion 360','3dp':'الطباعة ثلاثية الأبعاد',laser:'قطع الليزر',elec:'الإلكترونيات',cnc:'تصنيع CNC'};
   document.getElementById('player-bc').textContent=mn[l.mod]+' › '+l.title;
-  document.getElementById('pl-icon').textContent=l.icon;
-  document.getElementById('pl-title').textContent=l.title;
-  document.getElementById('pl-dur').textContent='مدة: '+l.dur;
+  // Video: show iframe if URL exists, otherwise show placeholder
+  const videoBox = document.getElementById('video-box');
+  const placeholder = document.getElementById('vid-placeholder');
+  const controls = document.getElementById('vid-controls');
+  const existingIframe = document.getElementById('lesson-iframe');
+  if(existingIframe) existingIframe.remove();
+  if(l.video && l.video.trim()){
+    // Inject iframe
+    const iframe = document.createElement('iframe');
+    iframe.id = 'lesson-iframe';
+    iframe.src = l.video.trim();
+    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:var(--r2)';
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media';
+    iframe.allowFullscreen = true;
+    iframe.setAttribute('allowfullscreen','');
+    console.log('Loading video:', l.video.trim());
+    videoBox.style.position = 'relative';
+    videoBox.style.padding = '0';
+    videoBox.style.overflow = 'hidden';
+    videoBox.appendChild(iframe);
+    if(placeholder) placeholder.style.display='none';
+    if(controls) controls.style.display='none';
+    videoBox.style.background = '#000';
+  } else {
+    if(placeholder) placeholder.style.display='flex';
+    if(controls) controls.style.display='flex';
+    document.getElementById('pl-icon').textContent=l.icon;
+    document.getElementById('pl-title').textContent=l.title;
+    document.getElementById('pl-dur').textContent='مدة: '+l.dur;
+  }
   document.getElementById('player-xp-badge').textContent='+'+toAr(l.xp)+' XP عند الإكمال';
   document.getElementById('lesson-text-area').innerHTML=l.content;
   document.getElementById('lesson-objectives').innerHTML=l.objectives.map(o=>`<li>${o}</li>`).join('');
