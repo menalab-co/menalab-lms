@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "updatedAt": "2026-06-03T16:47:52.522Z",
+  "version": 1,
+  "updatedAt": "2026-06-03T16:52:34.657Z",
   "lessons": [
     {
       "id": 1,
@@ -8,13 +8,13 @@
       "mod": "dt",
       "type": "video",
       "icon": "🧠",
-      "video": "https://www.youtube.com/embed/-jy41q6W2ag?si=HSBfdxIBg-ycg81Y",
-      "content": "<h3>ما هو التفكير التصميمي؟</h3><p>منهجية إبداعية تركز على الإنسان.</p>\nهنا يتم إضافة المحتوى - نادين ",
+      "video": "https://player.vimeo.com/video/471716887?h=5443ed47ba",
+      "content": "<h3>ما هو التفكير التصميمي؟</h3><p>منهجية إبداعية تركز على الإنسان.</p>",
       "dur": "١٢ دقيقة",
       "xp": 50,
       "objectives": [
         "فهم مفهوم التفكير التصميمي",
-        "تعلم المراحل الخمس الأساسية "
+        "تعلم المراحل الخمس"
       ],
       "status": "published",
       "phase": 0
