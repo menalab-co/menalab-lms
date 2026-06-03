@@ -289,11 +289,28 @@ tr:hover td{background:var(--surface2)}
           </div>
           <button class="btn btn-primary btn-sm" onclick="saveSettings()">حفظ الإعدادات</button>
         </div>
+        <div class="card" style="border:2px solid var(--teal);background:#f0fdf7;margin-bottom:18px">
+          <div class="card-header"><div class="card-title" style="color:var(--teal)">🚀 نشر المحتوى للموقع</div></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+            بعد تعديل الدروس أو الأسئلة، اضغط الزر لتحميل ملف <code style="background:var(--surface3);padding:1px 6px;border-radius:4px;font-family:monospace">content.json</code>، ثم ارفعه على GitHub. كل المتعلمين سيرون التغييرات تلقائياً خلال 30 ثانية.
+          </p>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+            <button class="btn btn-sm" onclick="publishContent()" style="background:var(--teal);color:white;padding:10px 22px;font-size:13px;border-radius:9px">🚀 تحميل content.json للنشر</button>
+            <div style="font-size:12px;color:var(--text2)">← ثم ارفعه على GitHub</div>
+          </div>
+          <div style="padding:10px 12px;background:white;border-radius:8px;border:1px solid #b6f0da;font-size:12px;color:var(--text2);line-height:1.7">
+            <strong>الخطوات بعد التحميل:</strong><br>
+            1️⃣ افتح GitHub → menalab-lms repo<br>
+            2️⃣ اضغط "Add file" → "Upload files"<br>
+            3️⃣ ارفع ملف content.json<br>
+            4️⃣ اضغط "Commit changes" — Vercel ينشر تلقائياً ✓
+          </div>
+        </div>
         <div class="card">
           <div class="card-header"><div class="card-title">💾 النسخ الاحتياطي</div></div>
-          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">قم بتصدير جميع بيانات المنصة (الدروس، الأسئلة، المستخدمين) كملف JSON.</p>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">تصدير واستيراد بيانات المنصة كاملة.</p>
           <div style="display:flex;gap:10px">
-            <button class="btn btn-success btn-sm" onclick="exportData()">⬇ تصدير البيانات</button>
+            <button class="btn btn-success btn-sm" onclick="exportData()">⬇ تصدير نسخة احتياطية</button>
             <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-file').click()">⬆ استيراد بيانات</button>
             <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
           </div>
@@ -854,6 +871,24 @@ function toast(msg){
   t.classList.add('show');
   clearTimeout(toastT);
   toastT=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+
+function publishContent(){
+  const data = {
+    version: (loadData('ml_content_version',0)+1),
+    updatedAt: new Date().toISOString(),
+    lessons: LESSONS.filter(l=>l.status==='published'),
+    questions: QUESTIONS,
+    modules: MODULES
+  };
+  saveData('ml_content_version', data.version);
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'content.json';
+  a.click();
+  toast('تم تحميل content.json — ارفعه الآن على GitHub ✓');
 }
 
 // ── INIT ─────────────────────────────────────────────────
