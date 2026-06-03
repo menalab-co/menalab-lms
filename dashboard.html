@@ -372,6 +372,35 @@ nav{padding:12px 10px;flex:1;overflow-y:auto}
   window.__mlUser = JSON.parse(u);
 })();
 
+// ── Load live content from content.json (published by admin) ──
+async function loadLiveContent(){
+  try{
+    const res = await fetch('/content.json?v='+Date.now());
+    if(!res.ok) return; // fall back to hardcoded defaults
+    const data = await res.json();
+    if(data.lessons && data.lessons.length){
+      // Merge with hardcoded: live content wins
+      data.lessons.forEach(function(l){
+        const idx = LESSONS.findIndex(function(x){return x.id===l.id;});
+        if(idx>=0) LESSONS[idx]=l; else LESSONS.push(l);
+      });
+    }
+    if(data.questions && data.questions.length){
+      QUESTIONS_BANK.length = 0;
+      data.questions.forEach(function(q){ QUESTIONS_BANK.push(q); });
+    }
+    if(data.modules && data.modules.length){
+      MODULES.length = 0;
+      data.modules.forEach(function(m){ MODULES.push(m); });
+    }
+    // Re-render everything with live content
+    renderDashboard();
+    renderLessons();
+  }catch(e){
+    // Silently fall back to defaults if fetch fails
+  }
+}
+
 const MODULES=[{id:'all',label:'جميع الوحدات'},{id:'dt',label:'🧠 التفكير التصميمي'},{id:'cad',label:'🖥️ Fusion 360'},{id:'3dp',label:'🖨️ الطباعة ثلاثية الأبعاد'},{id:'cnc',label:'⚙️ CNC'},{id:'laser',label:'🔆 قطع الليزر'},{id:'elec',label:'💡 الإلكترونيات'}];
 const LESSONS=[
   {id:1,title:'مقدمة في التفكير التصميمي',type:'video',mod:'dt',icon:'🧠',dur:'١٢ دقيقة',xp:50,objectives:['فهم مفهوم التفكير التصميمي','تعلم المراحل الخمس الأساسية','التمييز بين التفكير الخطي والتصميمي'],content:`<h3>ما هو التفكير التصميمي؟</h3><p>التفكير التصميمي هو منهجية إبداعية تركز على الإنسان لحل المشكلات المعقدة.</p><div class="callout"><p>💡 <strong>المبدأ الأساسي:</strong> ابدأ بفهم الإنسان، وليس بالحل.</p></div>`},
@@ -633,7 +662,7 @@ function askQ(q){document.getElementById('chat-inp').value=q;sendMsg();}
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
 function autoSize(el){el.style.height='36px';el.style.height=Math.min(el.scrollHeight,90)+'px';}
 function clearChat(){chatHistory=[];localStorage.removeItem('ml_chat');document.getElementById('chat-msgs').innerHTML=`<div class="msg ai"><div class="m-av ai">🤖</div><div><div class="m-bubble">محادثة جديدة! كيف يمكنني مساعدتك؟</div><div class="m-time">الآن</div></div></div>`;}
-renderDashboard();renderLessons();renderMap();renderQuickQs();
+renderDashboard();renderLessons();renderMap();renderQuickQs();loadLiveContent();
 
 function logout(){
   localStorage.removeItem('ml_user');
