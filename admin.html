@@ -170,6 +170,10 @@ tr:hover td{background:var(--surface2)}
         <div class="nav-item" id="nav-admins" onclick="showSection('admins')"><span class="nav-icon">🔐</span> المشرفون</div>
       </div>
       <div class="nav-sec">
+        <div class="nav-lbl">الأدوات</div>
+        <div class="nav-item" id="nav-video" onclick="showSection('video')"><span class="nav-icon">🎬</span> منشئ الفيديو</div>
+      </div>
+      <div class="nav-sec">
         <div class="nav-lbl">النظام</div>
         <div class="nav-item" id="nav-settings" onclick="showSection('settings')"><span class="nav-icon">⚙️</span> الإعدادات</div>
         <div class="nav-item" onclick="window.open('/','_blank')"><span class="nav-icon">🌐</span> عرض الموقع</div>
@@ -313,6 +317,106 @@ tr:hover td{background:var(--surface2)}
             <button class="btn btn-success btn-sm" onclick="exportData()">⬇ تصدير نسخة احتياطية</button>
             <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-file').click()">⬆ استيراد بيانات</button>
             <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDEO GENERATOR -->
+      <div class="view" id="view-video">
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">🎬</div><div class="stat-val" style="color:var(--accent)" id="vid-count">0</div><div class="stat-lbl">فيديو مولَّد</div></div>
+          <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">🎙️</div><div class="stat-val" style="color:var(--teal)">TTS</div><div class="stat-lbl">تعليق صوتي عربي</div></div>
+          <div class="stat-card"><div style="font-size:20px;margin-bottom:6px">📤</div><div class="stat-val" style="color:var(--purple)" id="export-count">0</div><div class="stat-lbl">تم تصديره</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">
+          <!-- INPUT -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">✏️ محتوى الفيديو</div></div>
+            <div class="panel-body">
+              <div class="form-row full"><div class="form-group">
+                <label class="form-label">عنوان الدرس *</label>
+                <input class="form-input" id="vg-title" placeholder="مثال: مقدمة في التفكير التصميمي">
+              </div></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">المادة</label>
+                  <select class="form-select" id="vg-subject">
+                    <option>التفكير التصميمي</option><option>Fusion 360</option>
+                    <option>الطباعة ثلاثية الأبعاد</option><option>CNC</option>
+                    <option>قطع الليزر</option><option>الإلكترونيات</option>
+                  </select>
+                </div>
+                <div class="form-group"><label class="form-label">المستوى</label>
+                  <select class="form-select" id="vg-level">
+                    <option>ابتدائي</option><option selected>إعدادي</option>
+                    <option>ثانوي</option><option>جامعي</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row full"><div class="form-group">
+                <label class="form-label">السكريبت / نص الدرس *</label>
+                <textarea class="form-textarea" id="vg-script" style="min-height:160px" placeholder="الصق نص الدرس هنا..."></textarea>
+              </div></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">نمط الفيديو</label>
+                  <select class="form-select" id="vg-style">
+                    <option value="presenter">مقدم + رسوم</option>
+                    <option value="animated">رسوم متحركة</option>
+                    <option value="whiteboard">لوح أبيض</option>
+                  </select>
+                </div>
+                <div class="form-group"><label class="form-label">عدد المشاهد: <span id="vg-count-val">5</span></label>
+                  <input type="range" min="3" max="8" value="5" id="vg-count" style="width:100%;margin-top:8px" oninput="document.getElementById('vg-count-val').textContent=this.value">
+                </div>
+              </div>
+              <button class="btn btn-primary" id="vg-gen-btn" onclick="generateAdminVideo()" style="width:100%;padding:12px;font-size:14px;border-radius:10px;margin-top:4px">🎬 توليد الفيديو</button>
+              <div id="vg-status" style="display:none;margin-top:12px;padding:10px 14px;background:var(--surface2);border-radius:9px;font-size:13px;color:var(--text2)"></div>
+            </div>
+          </div>
+          <!-- PLAYER -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">▶️ معاينة الفيديو</div>
+              <button class="btn btn-outline btn-sm" onclick="vgExport()" id="vg-export-btn" style="display:none">📥 تصدير JSON</button>
+              <button class="btn btn-primary btn-sm" onclick="vgAddToLesson()" id="vg-add-lesson-btn" style="display:none">➕ إضافة إلى درس</button>
+            </div>
+            <div class="panel-body" style="padding:14px">
+              <div id="vg-voice-bar" style="display:none;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:9px;flex-wrap:wrap">
+                <span style="font-size:12px;color:var(--text2)">🎙️ الصوت</span>
+                <select id="vg-voice-sel" style="flex:1;min-width:100px;padding:3px 8px;border:1px solid var(--border);border-radius:7px;font-size:11px;font-family:'Cairo',sans-serif;direction:rtl;background:white"></select>
+                <input type="range" id="vg-rate" min="0.6" max="1.4" step="0.1" value="0.9" style="width:55px" oninput="document.getElementById('vg-rate-val').textContent=parseFloat(this.value).toFixed(1)+'×'">
+                <span id="vg-rate-val" style="font-size:11px;min-width:26px;color:var(--text2)">0.9×</span>
+                <div id="vg-wave" style="display:flex;gap:2px;align-items:center;height:16px">
+                  <span class="vg-bar" style="width:3px;background:var(--teal);border-radius:2px;height:4px;display:block"></span>
+                  <span class="vg-bar" style="width:3px;background:var(--teal);border-radius:2px;height:4px;display:block"></span>
+                  <span class="vg-bar" style="width:3px;background:var(--teal);border-radius:2px;height:4px;display:block"></span>
+                  <span class="vg-bar" style="width:3px;background:var(--teal);border-radius:2px;height:4px;display:block"></span>
+                  <span class="vg-bar" style="width:3px;background:var(--teal);border-radius:2px;height:4px;display:block"></span>
+                </div>
+              </div>
+              <div id="vg-player" style="background:#1a1a2e;border-radius:12px;min-height:200px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:10px;transition:background .5s">
+                <div style="position:absolute;inset:0;opacity:0.04;background-image:radial-gradient(circle,#fff 1px,transparent 1px);background-size:24px 24px"></div>
+                <div id="vg-canvas" style="width:100%;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 1.5rem 3rem;text-align:center;direction:rtl;position:relative;z-index:1">
+                  <div style="font-size:12px;color:rgba(255,255,255,0.3)">اضغط "توليد الفيديو" للبدء</div>
+                </div>
+                <div id="vg-avatar" style="display:none;position:absolute;bottom:0;right:10px;width:40px;height:60px;align-items:flex-end">
+                  <div id="vg-abody" style="width:36px;height:54px;border-radius:18px 18px 5px 5px;background:#1D9E75;position:relative">
+                    <div style="position:absolute;top:-14px;left:5px;width:24px;height:24px;border-radius:50%;background:#FAC775"></div>
+                  </div>
+                </div>
+                <div id="vg-subbar"></div>
+              </div>
+              <div style="height:3px;background:var(--surface3);border-radius:2px;margin-bottom:10px;overflow:hidden">
+                <div id="vg-prog" style="height:100%;background:var(--teal);border-radius:2px;width:0%;transition:width 0.4s ease"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-outline btn-sm" onclick="vgPrev()">◀</button>
+                <button class="btn btn-outline btn-sm" id="vg-play-btn" onclick="vgTogglePlay()">▶ تشغيل</button>
+                <button class="btn btn-outline btn-sm" onclick="vgNext()">▶</button>
+                <button class="btn btn-sm" id="vg-voice-btn" onclick="vgToggleVoice()" style="background:var(--surface2);border:1px solid var(--border);display:none">🔊 صوت</button>
+                <span id="vg-counter" style="font-size:11px;color:var(--text3);margin-right:auto"></span>
+              </div>
+              <div id="vg-scene-list" style="margin-top:12px;display:flex;flex-direction:column;gap:5px"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -546,8 +650,8 @@ function adminLogout(){
 }
 
 // ── NAVIGATION ───────────────────────────────────────────
-const SECTIONS = ['lessons','quizzes','modules','users','admins','settings'];
-const TITLES = {lessons:'الدروس',quizzes:'بنك الأسئلة',modules:'الوحدات',users:'المتعلمون',admins:'المشرفون',settings:'الإعدادات'};
+const SECTIONS = ['lessons','quizzes','modules','users','admins','settings','video'];
+const TITLES = {lessons:'الدروس',quizzes:'بنك الأسئلة',modules:'الوحدات',users:'المتعلمون',admins:'المشرفون',settings:'الإعدادات',video:'منشئ الفيديو التعليمي'};
 function showSection(id){
   SECTIONS.forEach(s=>{
     document.getElementById('view-'+s).classList.toggle('active',s===id);
@@ -859,7 +963,14 @@ function importData(e){
 }
 
 // ── MODAL HELPERS ─────────────────────────────────────────
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='lesson-modal'){
+    const hint = document.getElementById('vg-lesson-hint');
+    if(hint) hint.remove();
+    document.getElementById('lesson-modal-title').textContent = '📚 إضافة درس جديد';
+  }
+}
 document.addEventListener('click',function(e){ if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('open'); });
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
 
@@ -890,6 +1001,247 @@ function publishContent(){
   a.click();
   toast('تم تحميل content.json — ارفعه الآن على GitHub ✓');
 }
+
+// ── VIDEO GENERATOR ───────────────────────────────────────
+let vgScenes = [], vgCur = 0, vgPlaying = false, vgTimer = null, vgVoiceOn = true, vgVoices = [], vgSelVoice = null, vgGenCount = 0, vgExportCount = 0;
+
+function loadVgVoices(){
+  vgVoices = window.speechSynthesis.getVoices();
+  const sel = document.getElementById('vg-voice-sel');
+  if(!sel) return;
+  const ar = vgVoices.filter(v=>v.lang.startsWith('ar'));
+  const list = ar.length ? ar : vgVoices;
+  sel.innerHTML = list.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+  vgSelVoice = ar[0] || vgVoices[0] || null;
+  sel.onchange = function(){ vgSelVoice = vgVoices[parseInt(this.value)] || null; };
+}
+if(speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVgVoices;
+setTimeout(loadVgVoices, 400);
+
+function vgSetStatus(msg, visible=true){
+  const el = document.getElementById('vg-status');
+  el.style.display = visible ? 'block' : 'none';
+  el.textContent = msg;
+}
+
+async function generateAdminVideo(){
+  const title = document.getElementById('vg-title').value.trim();
+  const script = document.getElementById('vg-script').value.trim();
+  if(!title || !script){ toast('يرجى إدخال العنوان والسكريبت'); return; }
+  const subject = document.getElementById('vg-subject').value;
+  const level = document.getElementById('vg-level').value;
+  const count = document.getElementById('vg-count').value;
+  const btn = document.getElementById('vg-gen-btn');
+  btn.disabled = true; btn.textContent = '⏳ جارٍ التوليد...';
+  vgSetStatus('🤖 يحلل الذكاء الاصطناعي المحتوى...');
+
+  // Build scenes locally using the script content (no API needed)
+  const sentences = script.replace(/\n+/g,' ').split(/[.!؟،]/g).map(s=>s.trim()).filter(s=>s.length>10);
+  const n = Math.min(parseInt(count), Math.max(3, sentences.length));
+  const types = ['intro','content','content','content','example','content','summary'];
+  const graphics = ['💡','🎯','🔍','🧠','🛠️','🔄','🌟','📚','✅','🔆'];
+  const bgColors = ['#1a1a2e','#0d2137','#1b2a1b','#1e1535','#1f1500','#001a2c','#0a1628','#14121f'];
+
+  const chunkSize = Math.ceil(sentences.length / n);
+  const scenes = [];
+  for(let i=0;i<n;i++){
+    const chunk = sentences.slice(i*chunkSize, (i+1)*chunkSize);
+    const body = chunk.slice(0,2).join('. ') + (chunk.length>0?'.':'');
+    const bullets = i>0 && i<n-1 ? chunk.slice(0,3).map(s=>s.length>60?s.slice(0,60)+'...':s) : [];
+    scenes.push({
+      id: i+1,
+      type: types[Math.min(i, types.length-1)],
+      title: i===0 ? title : i===n-1 ? 'الخلاصة' : `${subject} — ${i+1}/${n-1}`,
+      body: body || chunk[0] || '',
+      voiceText: chunk.join('. '),
+      bullets: bullets,
+      graphic: graphics[i % graphics.length],
+      bgColor: bgColors[i % bgColors.length],
+      subtitle: i===0 ? `${subject} | ${level}` : body.slice(0,60)+'...',
+      duration: 7
+    });
+  }
+  // Fix first and last scene titles
+  if(scenes.length){ scenes[0].title = title; scenes[0].type='intro'; }
+  if(scenes.length>1){ scenes[scenes.length-1].type='summary'; scenes[scenes.length-1].title='الخلاصة والملخص'; }
+
+  vgScenes = scenes;
+  vgGenCount++;
+  document.getElementById('vid-count').textContent = vgGenCount;
+  vgSetStatus('✅ تم توليد '+scenes.length+' مشاهد بنجاح!');
+  setTimeout(()=>{ vgSetStatus('', false); }, 1500);
+  btn.disabled = false; btn.textContent = '🎬 توليد الفيديو';
+  document.getElementById('vg-export-btn').style.display = 'inline-flex';
+  document.getElementById('vg-add-lesson-btn').style.display = 'inline-flex';
+  document.getElementById('vg-voice-btn').style.display = 'inline-flex';
+  document.getElementById('vg-voice-bar').style.display = 'flex';
+  const style = document.getElementById('vg-style').value;
+  document.getElementById('vg-avatar').style.display = style==='presenter' ? 'flex' : 'none';
+  vgCur = 0;
+  vgRenderScene(0);
+  vgBuildList();
+  toast('تم توليد الفيديو ✓');
+}
+
+const VG_TYPE_LABELS = {intro:'مقدمة',content:'محتوى',example:'مثال',summary:'ملخص'};
+
+function vgRenderScene(idx){
+  if(!vgScenes.length) return;
+  const s = vgScenes[idx];
+  document.getElementById('vg-player').style.background = s.bgColor || '#1a1a2e';
+  const bullets = s.bullets&&s.bullets.length
+    ? `<ul style="list-style:none;width:100%;max-width:380px;margin-top:.75rem;text-align:right">${s.bullets.map(b=>`<li style="font-size:12px;color:rgba(255,255,255,.9);padding:5px 0;border-bottom:.5px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:6px"><span style="color:#5DCAA5;font-size:9px">◈</span>${b}</li>`).join('')}</ul>` : '';
+  document.getElementById('vg-canvas').innerHTML =
+    `<div style="font-size:44px;margin-bottom:.75rem;animation:vgBounce .5s ease">${s.graphic||'📚'}</div>
+     <div style="font-size:17px;font-weight:600;color:#fff;margin-bottom:.5rem;line-height:1.5;animation:vgFade .5s ease">${s.title}</div>
+     <div style="font-size:13px;color:rgba(255,255,255,.85);line-height:1.8;max-width:420px;animation:vgFade .5s ease .1s both">${s.body}</div>${bullets}`;
+  document.getElementById('vg-subbar').innerHTML = s.subtitle
+    ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.72);padding:8px 14px;font-size:12px;color:#fff;text-align:center;direction:rtl;line-height:1.6">${s.subtitle}</div>` : '';
+  document.getElementById('vg-prog').style.width = ((idx+1)/vgScenes.length*100)+'%';
+  document.getElementById('vg-counter').textContent = (idx+1)+' / '+vgScenes.length;
+  document.querySelectorAll('.vg-scene-item').forEach((el,i)=>el.style.borderColor = i===idx?'var(--teal)':'var(--border)');
+  vgSpeak(s.voiceText || s.body);
+}
+
+function vgBuildList(){
+  document.getElementById('vg-scene-list').innerHTML = vgScenes.map((s,i)=>`
+    <div class="vg-scene-item" onclick="vgJump(${i})" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${i===0?'var(--teal)':'var(--border)'};cursor:pointer;background:var(--surface);transition:border-color .1s">
+      <div style="width:20px;height:20px;border-radius:50%;background:${i===0?'var(--teal)':'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:${i===0?'white':'var(--text2)'};flex-shrink:0">${i+1}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:var(--text)">${s.title}</div><div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.body}</div></div>
+      <span style="font-size:10px;padding:2px 6px;border-radius:5px;font-weight:600;background:#E1F5EE;color:#085041;flex-shrink:0">${VG_TYPE_LABELS[s.type]||s.type}</span>
+    </div>`).join('');
+}
+
+function vgJump(i){ vgStopSpeech(); vgCur=i; vgRenderScene(i); }
+function vgPrev(){ vgStopSpeech(); if(vgCur>0){ vgCur--; vgRenderScene(vgCur); } }
+function vgNext(){ vgStopSpeech(); if(vgCur<vgScenes.length-1){ vgCur++; vgRenderScene(vgCur); } else vgStopPlay(); }
+
+function vgTogglePlay(){
+  vgPlaying ? vgStopPlay() : vgStartPlay();
+}
+function vgStartPlay(){
+  vgPlaying=true;
+  document.getElementById('vg-play-btn').textContent='⏸ إيقاف';
+  vgAdvance();
+}
+function vgStopPlay(){
+  vgPlaying=false; clearTimeout(vgTimer);
+  document.getElementById('vg-play-btn').textContent='▶ تشغيل';
+}
+function vgAdvance(){
+  if(!vgPlaying) return;
+  vgTimer = setTimeout(()=>{
+    if(vgCur<vgScenes.length-1){ vgCur++; vgRenderScene(vgCur); vgAdvance(); }
+    else vgStopPlay();
+  }, (vgScenes[vgCur]?.duration||7)*1000);
+}
+
+function vgToggleVoice(){
+  vgVoiceOn = !vgVoiceOn;
+  const btn = document.getElementById('vg-voice-btn');
+  if(vgVoiceOn){ btn.textContent='🔊 صوت'; vgSpeak(vgScenes[vgCur]?.voiceText||''); }
+  else { btn.textContent='🔇 صامت'; vgStopSpeech(); }
+}
+function vgSpeak(text){
+  if(!vgVoiceOn) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='ar-SA';
+  if(vgSelVoice) u.voice=vgSelVoice;
+  u.rate=parseFloat(document.getElementById('vg-rate')?.value||0.9);
+  u.onstart=()=>{ document.querySelectorAll('.vg-bar').forEach((b,i)=>{ b.style.animation=`vgWave .4s ease ${i*0.1}s infinite alternate`; }); };
+  u.onend=u.onerror=()=>{ document.querySelectorAll('.vg-bar').forEach(b=>{ b.style.animation='none'; b.style.height='4px'; }); };
+  window.speechSynthesis.speak(u);
+}
+function vgStopSpeech(){
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.vg-bar').forEach(b=>{ b.style.animation='none'; b.style.height='4px'; });
+}
+
+function vgExport(){
+  if(!vgScenes.length){ toast('ولّد فيديو أولاً'); return; }
+  const data = {title:document.getElementById('vg-title').value, scenes:vgScenes, generatedAt:new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='video-'+data.title.replace(/\s+/g,'-').slice(0,30)+'.json'; a.click();
+  vgExportCount++;
+  document.getElementById('export-count').textContent=vgExportCount;
+  toast('تم تصدير الفيديو ✓');
+}
+
+function vgAddToLesson(){
+  if(!vgScenes.length){ toast('ولّد فيديو أولاً'); return; }
+
+  const title  = document.getElementById('vg-title').value.trim();
+  const subject = document.getElementById('vg-subject').value;
+  const level  = document.getElementById('vg-level').value;
+
+  // Map subject name → module id
+  const subjectToMod = {
+    'التفكير التصميمي':'dt', 'Fusion 360':'cad',
+    'الطباعة ثلاثية الأبعاد':'3dp', 'CNC':'cnc',
+    'قطع الليزر':'laser', 'الإلكترونيات':'elec'
+  };
+  const mod = subjectToMod[subject] || 'dt';
+
+  // Build HTML content from scenes
+  const contentHtml = vgScenes.map(s=>{
+    const bullets = s.bullets&&s.bullets.length
+      ? '<ul style="margin:.5rem 0 .5rem 1rem">'+s.bullets.map(b=>`<li>${b}</li>`).join('')+'</ul>' : '';
+    return `<h3>${s.graphic} ${s.title}</h3><p>${s.body}</p>${bullets}`;
+  }).join('\n');
+
+  // Build objectives from scene titles (skip intro/summary)
+  const objectives = vgScenes
+    .filter(s=>s.type==='content'||s.type==='example')
+    .map(s=>s.title);
+
+  // Estimate duration (7s per scene → convert to Arabic minutes string)
+  const totalMins = Math.round(vgScenes.length * 7 / 60) || 1;
+  const arabicNums = {'0':'٠','1':'١','2':'٢','3':'٣','4':'٤','5':'٥','6':'٦','7':'٧','8':'٨','9':'٩'};
+  const toArabicNum = n => String(n).split('').map(c=>arabicNums[c]||c).join('');
+  const dur = toArabicNum(totalMins) + ' دقائق';
+
+  // Switch to lessons section first, then open modal pre-filled
+  showSection('lessons');
+
+  setTimeout(()=>{
+    // Reset modal to new-lesson state
+    openLessonModal();
+
+    // Pre-fill fields
+    document.getElementById('l-title').value   = title;
+    document.getElementById('l-mod').value     = mod;
+    document.getElementById('l-type').value    = 'video';
+    document.getElementById('l-icon').value    = vgScenes[0]?.graphic || '🎬';
+    document.getElementById('l-content').value = contentHtml;
+    document.getElementById('l-dur').value     = dur;
+    document.getElementById('l-xp').value      = Math.max(50, vgScenes.length * 15);
+    document.getElementById('l-obj').value     = objectives.join('\n');
+    document.getElementById('l-status').value  = 'draft';
+
+    // Add a visual hint inside the modal
+    const hint = document.createElement('div');
+    hint.style.cssText = 'background:#f0fdf7;border:1px solid #b6f0da;border-radius:9px;padding:10px 14px;font-size:12px;color:#085041;margin-bottom:14px;display:flex;align-items:center;gap:8px';
+    hint.innerHTML = '🎬 <span>تم ملء هذا الدرس تلقائياً من الفيديو المولَّد. أضف رابط الفيديو وعدّل ما تشاء ثم احفظ.</span>';
+    const modalTitle = document.getElementById('lesson-modal-title');
+    modalTitle.textContent = '🎬 درس من الفيديو المولَّد';
+    // Insert hint after title if not already there
+    if(!document.getElementById('vg-lesson-hint')){
+      hint.id = 'vg-lesson-hint';
+      modalTitle.parentNode.insertBefore(hint, modalTitle.nextSibling);
+    }
+  }, 300);
+
+  toast('جارٍ فتح نموذج الدرس...');
+}
+
+// inject animation keyframes for video generator
+(function(){
+  const s=document.createElement('style');
+  s.textContent=`@keyframes vgBounce{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}@keyframes vgFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@keyframes vgWave{from{height:4px}to{height:14px}}`;
+  document.head.appendChild(s);
+})();
 
 // ── INIT ─────────────────────────────────────────────────
 document.getElementById('admin-pass').addEventListener('keydown',function(e){ if(e.key==='Enter') doAdminLogin(); });
