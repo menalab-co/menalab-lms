@@ -587,6 +587,22 @@ nav{padding:12px 10px;flex:1;overflow-y:auto}
   }
 })();
 
+
+// ── Clear stale localStorage data from old versions ──────
+(function(){
+  var SITE_VERSION = '3.0';
+  var storedVersion = localStorage.getItem('ml_version');
+  if(storedVersion !== SITE_VERSION){
+    // Keep user account but clear all stale state
+    var user = localStorage.getItem('ml_user');
+    var users = localStorage.getItem('ml_users');
+    localStorage.clear();
+    if(user) localStorage.setItem('ml_user', user);
+    if(users) localStorage.setItem('ml_users', users);
+    localStorage.setItem('ml_version', SITE_VERSION);
+  }
+})();
+
 // ── Load live content from content.json (published by admin) ──
 async function loadLiveContent(){
   try{
@@ -761,21 +777,32 @@ function save(){try{sessionStorage.setItem('menalab',JSON.stringify(S));}catch(e
 const VIEWS=['dashboard','lessons','player','quiz','map','chat','templates','community','mentors','events'];
 const TITLES={dashboard:'لوحة التحكم',lessons:'الدروس',player:'مشاهدة الدرس',quiz:'التقييم',map:'خريطة الفاب لابات',chat:'المساعد الذكي',templates:'قوالب التفكير التصميمي',community:'مجتمع المتعلمين',mentors:'المرشدون',events:'الفعاليات'};
 function showView(id){
-  VIEWS.forEach(v=>document.getElementById('view-'+v).classList.remove('active'));
-  document.getElementById('view-'+id).classList.add('active');
+  console.log('[showView] called with:', id);
+  VIEWS.forEach(v=>{
+    var el=document.getElementById('view-'+v);
+    if(el) el.classList.remove('active');
+  });
+  var target=document.getElementById('view-'+id);
+  if(!target){ console.error('[showView] view-'+id+' NOT FOUND in DOM'); return; }
+  target.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const ni=document.getElementById('nav-'+id);if(ni)ni.classList.add('active');
-  document.getElementById('page-title').textContent=TITLES[id]||'';
-  if(id==='dashboard')renderDashboard();
-  if(id==='lessons')renderLessons();
-  if(id==='quiz')initQuiz();
-  if(id==='map')renderMap();
-  if(id==='chat')renderQuickQs();
-  if(id==='templates')renderTemplatesGrid();
-  if(id==='community')renderCommunity();
-  if(id==='mentors')renderMentors();
-  if(id==='events')renderEvents();
-  updateXpUI();
+  var pt=document.getElementById('page-title');if(pt)pt.textContent=TITLES[id]||'';
+  try{
+    if(id==='dashboard')renderDashboard();
+    if(id==='lessons')renderLessons();
+    if(id==='quiz')initQuiz();
+    if(id==='map')renderMap();
+    if(id==='chat')renderQuickQs();
+    if(id==='templates'){console.log('[showView] calling renderTemplatesGrid');renderTemplatesGrid();}
+    if(id==='community'){console.log('[showView] calling renderCommunity');renderCommunity();}
+    if(id==='mentors'){console.log('[showView] calling renderMentors');renderMentors();}
+    if(id==='events'){console.log('[showView] calling renderEvents');renderEvents();}
+    updateXpUI();
+    console.log('[showView] done for:', id);
+  }catch(e){
+    console.error('[showView] ERROR in render for '+id+':', e.message, e.stack);
+  }
 }
 function toAr(n){return String(n).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
 function addXP(amt,reason){S.xp+=amt;save();updateXpUI();showToast('+'+amt+' XP — '+reason+'!');checkBadges();}
