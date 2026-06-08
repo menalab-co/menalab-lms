@@ -291,10 +291,14 @@ nav{padding:12px 10px;flex:1;overflow-y:auto}
             </div>
           </div>
           <div class="lesson-content" id="lesson-text-area"></div>
-          <div style="display:flex;gap:10px;margin-top:12px">
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
             <button class="btn btn-primary" id="complete-btn" onclick="completeLesson()">✓ إكمال الدرس (+XP)</button>
             <button class="btn btn-outline" onclick="showView('quiz')">📝 اختبار الدرس</button>
             <button class="btn btn-outline" onclick="showView('chat')">🤖 اسأل المساعد</button>
+          </div>
+          <div id="lesson-templates-section" style="display:none;margin-top:16px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📋 القوالب المرتبطة بهذا الدرس</div>
+            <div id="lesson-templates-list" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -637,20 +641,77 @@ let COURSES = [
    desc:'مبادئ التفريز CNC وبرمجة G-code', lessons:1, badge:''},
 ];
 
+var LESSON_CONTENT = {
+  1: `<h3>ما هو التفكير التصميمي؟</h3><p>التفكير التصميمي (Design Thinking) هو منهجية إبداعية تركز على <strong>الإنسان</strong> أولاً لحل المشكلات المعقدة. طوّرتها مدرسة d.school في جامعة ستانفورد وتستخدمها اليوم شركات مثل Apple و Google و IDEO.</p><div class="callout"><p>💡 <strong>المبدأ الأساسي:</strong> ابدأ بفهم الإنسان — وليس بالحل الجاهز.</p></div><h3>لماذا التفكير التصميمي؟</h3><p>معظمنا يقفز مباشرة إلى الحلول قبل أن يفهم المشكلة الحقيقية. التفكير التصميمي يعكس هذا المنطق: نقضي وقتاً طويلاً في فهم المشكلة، ووقتاً أقصر في إيجاد الحل.</p><h3>المراحل الخمس</h3><ul><li><strong>التعاطف (Empathize):</strong> فهم المستخدم عمقاً</li><li><strong>تحديد المشكلة (Define):</strong> صياغة المشكلة الجوهرية</li><li><strong>توليد الأفكار (Ideate):</strong> إنتاج أكبر عدد من الحلول</li><li><strong>النمذجة (Prototype):</strong> بناء نماذج أولية سريعة</li><li><strong>الاختبار (Test):</strong> اختبار الحلول مع مستخدمين حقيقيين</li></ul><div class="callout"><p>🔄 <strong>مهم:</strong> العملية ليست خطية — يمكنك العودة لأي مرحلة في أي وقت.</p></div>`,
+  2: `<h3>ما هو التعاطف؟</h3><p>التعاطف هو القدرة على فهم تجارب الآخرين ومشاعرهم عمقاً — ليس فقط ما يقولونه، بل ما يشعرون به ويفكرون فيه.</p><div class="callout"><p>🎯 هدف هذه المرحلة: اكتشاف الاحتياجات <strong>الحقيقية</strong> للمستخدم، وليس الاحتياجات التي يُعلن عنها.</p></div><h3>أدوات التعاطف</h3><h4>1. المقابلات (Interviews)</h4><p>اسأل أسئلة مفتوحة — "كيف؟" و"لماذا؟" بدلاً من "هل؟". استمع أكثر مما تتكلم.</p><h4>2. الملاحظة الميدانية</h4><p>راقب المستخدمين في بيئتهم الطبيعية دون تدخل. سجّل ما تراه حرفياً في عمود، والتفسير في عمود آخر.</p><h4>3. خريطة التعاطف</h4><p>أداة تساعدك على تنظيم ما تعلمته في أربعة محاور: يقول، يفكر، يفعل، يشعر.</p><div class="callout"><p>⚠️ <strong>تجنّب:</strong> الافتراضات المسبقة. اذهب إلى الميدان بعقل فارغ.</p></div>`,
+  3: `<h3>تطبيق خريطة التعاطف</h3><p>الآن طبّق ما تعلمته. سنملأ معاً خريطة تعاطف حقيقية لمشروع واقعي.</p><div class="callout"><p>📋 <strong>تمرين:</strong> افتح قالب خريطة التعاطف من قسم القوالب وابدأ بملئها بناءً على مقابلة أجريتها أو ملاحظة قمت بها.</p></div><h3>المحاور الأربعة</h3><ul><li><strong>يقول:</strong> اقتباسات حرفية من المستخدم</li><li><strong>يفكر:</strong> أفكاره الداخلية التي لا يُعبّر عنها</li><li><strong>يفعل:</strong> سلوكياته الملاحظة فعلياً</li><li><strong>يشعر:</strong> مشاعره وانفعالاته</li></ul><h3>من التعاطف إلى الشخصية</h3><p>بعد جمع المعلومات من عدة مستخدمين، نبني "شخصية" (Persona) تمثّل نمطاً من المستخدمين. هذه الشخصية ستكون مرجعنا في كل قرارات التصميم.</p>`,
+  4: `<h3>من التعاطف إلى تحديد المشكلة</h3><p>بعد جمع المعلومات في مرحلة التعاطف، نحتاج لتحويل ما تعلمناه إلى مشكلة قابلة للحل.</p><h3>بيان وجهة النظر (POV)</h3><p>الصيغة: <strong>[المستخدم] يحتاج إلى [حاجة] لأن [استنتاج مفاجئ]</strong></p><div class="callout"><p>✅ مثال جيد: "أحمد (٣٠ سنة، مهندس) يحتاج إلى طريقة لتذكّر مواعيده لأنه يركّز على العمل العميق ويفقد الإحساس بالوقت."</p></div><h3>أسئلة كيف يمكننا (HMW)</h3><p>HMW = How Might We. تحوّل الملاحظة إلى فرصة تصميمية.</p><ul><li>❌ ضيّق جداً: "كيف نبني تطبيق تذكير؟"</li><li>❌ واسع جداً: "كيف نجعل الناس أكثر إنتاجية؟"</li><li>✅ مثالي: "كيف يمكننا مساعدة أحمد على الانتباه للوقت دون مقاطعة تركيزه؟"</li></ul>`,
+  5: `<h3>توليد الأفكار</h3><p>هدف هذه المرحلة هو إنتاج <strong>أكبر كمية ممكنة</strong> من الأفكار — الكمية تُولّد الجودة.</p><div class="callout"><p>🚫 <strong>قاعدة ذهبية:</strong> لا نقد ولا حكم أثناء جلسة العصف الذهني.</p></div><h3>قواعد العصف الذهني</h3><ul><li>الكمية قبل الجودة</li><li>لا نقد أو تقييم</li><li>أفكار جريئة مرحّب بها</li><li>ابنِ على أفكار الآخرين</li></ul><h3>تقنية SCAMPER</h3><p>S: استبدل | C: ادمج | A: كيّف | M: عدّل | P: استخدم لأغراض أخرى | E: احذف | R: اعكس</p><div class="callout"><p>💡 <strong>تمرين:</strong> خذ منتجاً موجوداً وطبّق عليه SCAMPER — ستفاجأ بعدد الأفكار الجديدة!</p></div>`,
+  6: `<h3>النمذجة الأولية</h3><p>النموذج الأولي هو <strong>أسرع وأرخص</strong> طريقة لاختبار فكرتك قبل الاستثمار فيها.</p><div class="callout"><p>⚡ القاعدة: ابنِ بسرعة، اختبر مبكراً، فشل بتكلفة منخفضة.</p></div><h3>أنواع النماذج</h3><ul><li><strong>نموذج ورقي:</strong> رسم على الورق — مناسب للتطبيقات والواجهات</li><li><strong>نموذج مادي:</strong> كرتون وصمغ — مناسب للمنتجات المادية</li><li><strong>نموذج رقمي:</strong> Figma أو PowerPoint — مناسب للخدمات</li><li><strong>نموذج مطبوع:</strong> طابعة ثلاثية الأبعاد — للقطع الدقيقة</li></ul><h3>قاعدة الساعة الواحدة</h3><p>أعطِ نفسك ساعة واحدة فقط لبناء النموذج. القيود الزمنية تحفّز الإبداع وتمنعك من الإفراط في التفاصيل.</p>`,
+  7: `<h3>مرحلة الاختبار</h3><p>الاختبار ليس للتحقق من أن فكرتك صحيحة — بل للتعلم وتحسين الحل.</p><div class="callout"><p>🎯 هدفك: اكتشاف ما لا يعمل قبل الاستثمار الكبير.</p></div><h3>كيف تختبر؟</h3><ol><li>اختر ٣-٥ مستخدمين يمثّلون شريحتك المستهدفة</li><li>اعطهم مهمة محددة (لا توجيه مسبق)</li><li>راقب وسجّل دون تدخل</li><li>اسأل "لماذا؟" عند كل تصرف غير متوقع</li></ol><h3>بعد الاختبار</h3><p>نظّم ملاحظاتك، حدّد الأنماط، وقرّر: هل نُعدّل؟ نُعيد؟ أم نتقدّم؟</p>`,
+  8: `<h3>Fusion 360</h3><p>برنامج CAD/CAM/CAE متكامل من Autodesk — مجاني للطلاب والهواة.</p><div class="callout"><p>🆓 للحصول على النسخة المجانية: autodesk.com/products/fusion-360/personal</p></div><h3>مميزات Fusion 360</h3><ul><li>التصميم البارامتري (Parametric Design)</li><li>التجميع والحركة (Assembly & Motion)</li><li>مسارات التصنيع CAM</li><li>التحليل الهندسي FEA</li><li>العمل السحابي والتشاركي</li></ul>`,
+  9: `<h3>Sketching في Fusion 360</h3><p>المقطع ثنائي الأبعاد هو أساس كل تصميم ثلاثي. تعلّم رسمه بشكل صحيح وكل شيء آخر سيكون سهلاً.</p><div class="callout"><p>📐 ابدأ دائماً بتحديد Origin Point كمرجع ثابت.</p></div><h3>القيود الهندسية</h3><p>القيود (Constraints) تجعل تصميمك ذكياً — تغيّر بُعداً واحداً فيتكيّف الباقي تلقائياً.</p>`,
+  10: `<h3>الطباعة ثلاثية الأبعاد</h3><p>تقنية FDM تذيب خيط بلاستيكي وتبني الجسم طبقة فوق طبقة.</p><div class="callout"><p>🖨️ للمبتدئين: PLA هو الأفضل — سهل، غير سام، رخيص.</p></div><h3>الإعدادات الأساسية</h3><ul><li>Layer Height: 0.2mm</li><li>Infill: 20%</li><li>Print Speed: 50mm/s</li><li>Temperature: 200°C (PLA)</li></ul>`,
+  11: `<h3>برنامج Cura</h3><p>الـ Slicer يحوّل ملف STL إلى تعليمات G-code تفهمها الطابعة.</p><div class="callout"><p>⚙️ نصيحة: استخدم Tree Supports — أسهل في الإزالة من Normal Supports.</p></div>`,
+  12: `<h3>قطع الليزر</h3><p>شعاع مركّز لقطع أو نقش المواد بدقة عالية.</p><div class="callout"><p>🔆 خطوط حمراء = قطع | ملء أزرق = نقش</p></div><h3>المواد المناسبة</h3><p>خشب، أكريليك، جلد، ورق مقوى — تجنّب PVC لأنه يُطلق غازات سامة.</p>`,
+  13: `<h3>Arduino</h3><p>لوحة تحكم مفتوحة المصدر لتعلم الإلكترونيات والبرمجة.</p><div class="callout"><p>💡 أول مشروع: LED Blink — هو "Hello World" للإلكترونيات!</p></div><h3>الكود الأول</h3><pre style="background:#f0ede8;padding:12px;border-radius:8px;font-family:monospace;direction:ltr">void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(1000);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(1000);
+}</pre>`,
+  14: `<h3>CNC Router</h3><p>يتحرك في ٣ محاور (X,Y,Z) لقطع وتشكيل المواد الصلبة بدقة عالية.</p><div class="callout"><p>⚙️ الفرق عن الليزر: CNC يقطع بعمق حقيقي ويعمل على الخشب السميك والألومنيوم.</p></div>`,
+};
+
 let LESSONS=[
-  {id:1,title:'مقدمة في التفكير التصميمي',type:'video',mod:'dt',icon:'🧠',dur:'١٢ دقيقة',xp:50,objectives:['فهم مفهوم التفكير التصميمي','تعلم المراحل الخمس الأساسية','التمييز بين التفكير الخطي والتصميمي'],content:`<h3>ما هو التفكير التصميمي؟</h3><p>التفكير التصميمي هو منهجية إبداعية تركز على الإنسان لحل المشكلات المعقدة.</p><div class="callout"><p>💡 <strong>المبدأ الأساسي:</strong> ابدأ بفهم الإنسان، وليس بالحل.</p></div>`},
-  {id:2,title:'مرحلة التعاطف: الأساسيات',type:'text',mod:'dt',icon:'🔍',dur:'٨ دقائق',xp:50,objectives:['تعريف التعاطف في سياق التصميم','فهم الفرق بين التعاطف والتعاطف الفكري'],content:`<h3>ما هو التعاطف؟</h3><p>التعاطف هو القدرة على الفهم العميق لتجارب المستخدمين ومشاعرهم.</p><div class="callout"><p>🎯 المستخدم يقول "أريد زرًا أكبر" — أنت تفهم أنه "يحتاج إلى ثقة أكبر".</p></div>`},
-  {id:3,title:'أدوات الملاحظة الميدانية',type:'video',mod:'dt',icon:'👁️',dur:'١٥ دقيقة',xp:75,objectives:['إتقان تقنيات الملاحظة الصامتة','الفرق بين الملاحظة والتفسير'],content:`<h3>الملاحظة الميدانية</h3><p>مراقبة المستخدمين في بيئتهم الطبيعية دون التدخل.</p><div class="callout"><p>⚠️ سجّل الملاحظة أولاً، ثم افصل وقتاً للتفسير.</p></div>`},
-  {id:4,title:'تحديد المشكلة: صياغة HMW',type:'exercise',mod:'dt',icon:'🎯',dur:'٢٠ دقيقة',xp:100,objectives:['كتابة أسئلة HMW فعّالة','تحويل الملاحظات إلى تعريفات للمشكلة'],content:`<h3>أسئلة "كيف يمكننا"</h3><p>تحوّل الملاحظة إلى فرصة تصميمية.</p><div class="callout"><p>✅ جيد: "كيف يمكننا مساعدة الطلاب على التعلم بشكل ممتع؟"</p></div>`},
-  {id:5,title:'توليد الأفكار والعصف الذهني',type:'video',mod:'dt',icon:'💡',dur:'١٨ دقيقة',xp:75,objectives:['تطبيق قواعد العصف الذهني','استخدام تقنية SCAMPER'],content:`<h3>توليد الأفكار</h3><p>الكمية تُولّد الجودة. لا تنتقد الأفكار خلال الجلسة.</p><div class="callout"><p>🧠 SCAMPER: استبدل، ادمج، كيّف، عدّل، استخدم لأغراض أخرى، احذف، اعكس.</p></div>`},
-  {id:6,title:'مقدمة في Fusion 360',type:'video',mod:'cad',icon:'🖥️',dur:'٢٠ دقيقة',xp:100,objectives:['التعرف على واجهة Fusion 360','فهم مفهوم Parametric Design'],content:`<h3>Fusion 360</h3><p>برنامج CAD/CAM/CAE متكامل من Autodesk للتصميم الثلاثي الأبعاد.</p><div class="callout"><p>🆓 مجاني للطلاب والهواة. سجّل بحسابك الجامعي.</p></div>`},
-  {id:7,title:'رسم المقاطع ثنائية الأبعاد',type:'lab',mod:'cad',icon:'📐',dur:'٣٠ دقيقة',xp:150,objectives:['رسم مقاطع دقيقة بالقيود الهندسية'],content:`<h3>Sketching في Fusion 360</h3><p>المقطع ثنائي الأبعاد هو أساس أي تصميم ثلاثي.</p><div class="callout"><p>📐 ابدأ بتحديد Origin Point كمرجع دائماً.</p></div>`},
-  {id:8,title:'مقدمة في الطباعة ثلاثية الأبعاد',type:'video',mod:'3dp',icon:'🖨️',dur:'١٤ دقيقة',xp:75,objectives:['فهم مبدأ عمل طابعات FDM','التعرف على أنواع مواد الطباعة'],content:`<h3>الطباعة ثلاثية الأبعاد</h3><p>تقنية FDM تُذيب خيط بلاستيك وتبني الجسم طبقة فوق طبقة.</p><div class="callout"><p>🖨️ للمبتدئين: ابدأ بـ PLA — Layer Height: 0.2mm، Infill: 20%.</p></div>`},
-  {id:9,title:'إعداد ملف الطباعة (Slicing)',type:'exercise',mod:'3dp',icon:'⚙️',dur:'٢٥ دقيقة',xp:100,objectives:['استخدام برنامج Cura للـ Slicing'],content:`<h3>برنامج Cura</h3><p>الـ Slicer يحوّل ملف STL إلى تعليمات G-code.</p><div class="callout"><p>⚙️ استخدم Tree Supports بدلاً من Normal لتوفير المواد.</p></div>`},
-  {id:10,title:'أساسيات قطع الليزر',type:'video',mod:'laser',icon:'🔆',dur:'١٢ دقيقة',xp:75,objectives:['فهم مبدأ عمل قاطع الليزر','الفرق بين القطع والنقش'],content:`<h3>قطع الليزر</h3><p>شعاع مركّز عالي الطاقة لقطع أو نقش المواد.</p><div class="callout"><p>🔆 خطوط حمراء للقطع، ملء أزرق للنقش.</p></div>`},
-  {id:11,title:'برمجة Arduino للمبتدئين',type:'lab',mod:'elec',icon:'💡',dur:'٤٠ دقيقة',xp:200,objectives:['كتابة أول كود Arduino','التحكم في LED'],content:`<h3>Arduino</h3><p>لوحة تحكم مفتوحة المصدر لبرمجة الإلكترونيات.</p><div class="callout"><p>💡 أول مشروع: LED يومض (Blink) — Hello World للإلكترونيات!</p></div>`},
-  {id:12,title:'مقدمة في التفريز CNC',type:'video',mod:'cnc',icon:'⚙️',dur:'١٦ دقيقة',xp:75,objectives:['فهم مبدأ عمل ماكينة CNC Router'],content:`<h3>CNC Router</h3><p>تتحرك في 3 محاور (X,Y,Z) لقطع وتشكيل المواد الصلبة.</p><div class="callout"><p>⚙️ CNC تقطع بعمق حقيقي، الليزر يقتصر على السطح.</p></div>`},
+  {id:1,title:'مقدمة في التفكير التصميمي',type:'video',mod:'dt',icon:'🧠',dur:'١٢ دقيقة',xp:50,phase:0,video:'',
+   relatedTemplates:['empathy-map'],objectives:['فهم مفهوم التفكير التصميمي','تعلم المراحل الخمس','الفرق بين التفكير الخطي والتصميمي'],
+   get content(){return LESSON_CONTENT[1];}},
+  {id:2,title:'مرحلة التعاطف — فهم المستخدم',type:'video',mod:'dt',icon:'🔍',dur:'١٥ دقيقة',xp:50,phase:0,video:'',
+   relatedTemplates:['empathy-map','4ws'],objectives:['تعريف التعاطف في التصميم','أدوات جمع المعلومات','الفرق بين الملاحظة والتفسير'],
+   get content(){return LESSON_CONTENT[2];}},
+  {id:3,title:'خريطة التعاطف — تطبيق عملي',type:'exercise',mod:'dt',icon:'🗺️',dur:'٢٠ دقيقة',xp:75,phase:0,video:'',
+   relatedTemplates:['empathy-map','persona'],objectives:['ملء خريطة التعاطف','بناء شخصية المستخدم','استخراج الأفكار الجوهرية'],
+   get content(){return LESSON_CONTENT[3];}},
+  {id:4,title:'تحديد المشكلة — صياغة HMW',type:'video',mod:'dt',icon:'🎯',dur:'١٨ دقيقة',xp:75,phase:1,video:'',
+   relatedTemplates:['hmw','pov','5-whys'],objectives:['صياغة بيان POV','كتابة أسئلة HMW فعّالة','تحديد المشكلة الجوهرية'],
+   get content(){return LESSON_CONTENT[4];}},
+  {id:5,title:'توليد الأفكار والعصف الذهني',type:'video',mod:'dt',icon:'💡',dur:'٢٠ دقيقة',xp:75,phase:2,video:'',
+   relatedTemplates:['brainstorm','hmw'],objectives:['قواعد العصف الذهني','تقنية SCAMPER','اختيار أفضل الأفكار'],
+   get content(){return LESSON_CONTENT[5];}},
+  {id:6,title:'النمذجة السريعة',type:'lab',mod:'dt',icon:'🛠️',dur:'٢٥ دقيقة',xp:100,phase:3,video:'',
+   relatedTemplates:['prototype-plan'],objectives:['مبدأ النمذجة السريعة','أنواع النماذج الأولية','بناء نموذج بالورق والكرتون'],
+   get content(){return LESSON_CONTENT[6];}},
+  {id:7,title:'الاختبار مع المستخدمين',type:'exercise',mod:'dt',icon:'🧪',dur:'٢٢ دقيقة',xp:100,phase:4,video:'',
+   relatedTemplates:['journey-map'],objectives:['تصميم جلسة اختبار','جمع التغذية الراجعة','التكرار والتطوير'],
+   get content(){return LESSON_CONTENT[7];}},
+  {id:8,title:'مقدمة في Fusion 360',type:'video',mod:'cad',icon:'🖥️',dur:'٢٠ دقيقة',xp:100,phase:-1,video:'',
+   relatedTemplates:[],objectives:['واجهة Fusion 360','مفهوم Parametric Design','أدوات الرسم الأساسية'],
+   get content(){return LESSON_CONTENT[8];}},
+  {id:9,title:'رسم المقاطع ثنائية الأبعاد',type:'lab',mod:'cad',icon:'📐',dur:'٣٠ دقيقة',xp:150,phase:-1,video:'',
+   relatedTemplates:[],objectives:['رسم Sketch دقيق','القيود الهندسية','أداة Extrude'],
+   get content(){return LESSON_CONTENT[9];}},
+  {id:10,title:'مقدمة في الطباعة ثلاثية الأبعاد',type:'video',mod:'3dp',icon:'🖨️',dur:'١٤ دقيقة',xp:75,phase:-1,video:'',
+   relatedTemplates:[],objectives:['مبدأ FDM','أنواع مواد الطباعة','إعدادات المبتدئين'],
+   get content(){return LESSON_CONTENT[10];}},
+  {id:11,title:'إعداد ملف الطباعة (Slicing)',type:'exercise',mod:'3dp',icon:'⚙️',dur:'٢٥ دقيقة',xp:100,phase:-1,video:'',
+   relatedTemplates:[],objectives:['استخدام Cura','تصدير G-code','إعدادات الدعامات'],
+   get content(){return LESSON_CONTENT[11];}},
+  {id:12,title:'أساسيات قطع الليزر',type:'video',mod:'laser',icon:'🔆',dur:'١٢ دقيقة',xp:75,phase:-1,video:'',
+   relatedTemplates:[],objectives:['مبدأ عمل الليزر','القطع مقابل النقش','ملفات التصميم'],
+   get content(){return LESSON_CONTENT[12];}},
+  {id:13,title:'برمجة Arduino للمبتدئين',type:'lab',mod:'elec',icon:'💡',dur:'٤٠ دقيقة',xp:200,phase:-1,video:'',
+   relatedTemplates:[],objectives:['إعداد Arduino IDE','مشروع LED Blink','قراءة المستشعرات'],
+   get content(){return LESSON_CONTENT[13];}},
+  {id:14,title:'مقدمة في تصنيع CNC',type:'video',mod:'cnc',icon:'⚙️',dur:'١٦ دقيقة',xp:75,phase:-1,video:'',
+   relatedTemplates:[],objectives:['مبدأ CNC Router','المحاور الثلاثة','G-code أساسي'],
+   get content(){return LESSON_CONTENT[14];}},
 ];
+
+
 let QUESTIONS_BANK=[
   {q:'ما هو الهدف الرئيسي من مرحلة التعاطف؟',opts:['تصميم النموذج مباشرة','فهم احتياجات المستخدمين الحقيقية','توليد أكبر عدد من الأفكار','اختبار الحلول'],ans:1,ex:'التعاطف هو فهم المستخدمين بعمق من خلال الملاحظة والمقابلة.'},
   {q:'ما الفرق بين الملاحظة والتفسير؟',opts:['لا فرق','الملاحظة موضوعية والتفسير ذاتي','التفسير يأتي قبل الملاحظة','الملاحظة أقل أهمية'],ans:1,ex:'الملاحظة تسجّل ما تراه حرفياً، التفسير هو فهمك لدلالة ما رأيته.'},
@@ -755,16 +816,7 @@ function renderDashboard(){
 let activeMod='all';
 
 function setMod(el,mod){activeMod=mod;document.querySelectorAll('#mod-tabs .module-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderLessonsGrid();}
-function isDTLessonUnlocked(l){
-  if(l.mod!=='dt') return true; // non-DT lessons always open
-  const dtLessons=LESSONS.filter(x=>x.mod==='dt').sort((a,b)=>a.id-b.id);
-  const idx=dtLessons.findIndex(x=>x.id===l.id);
-  if(idx===0) return true; // first DT lesson always open
-  const prev=dtLessons[idx-1];
-  const prevDone=S.completedLessons.includes(prev.id);
-  const prevScore=(S.quizScores||{})[prev.id]||0;
-  return prevDone && prevScore>=90;
-}
+function isDTLessonUnlocked(l){ return true; }
 
 let currentLessonId=null,isPlaying=false;
 function openLesson(id){
@@ -777,7 +829,7 @@ function openLesson(id){
   const placeholder = document.getElementById('vid-placeholder');
   const controls = document.getElementById('vid-controls');
   const existingIframe = document.getElementById('lesson-iframe');
-  if(existingIframe) existingIframe.remove();
+  if(existingIframe && existingIframe.parentNode) existingIframe.parentNode.removeChild(existingIframe);
   if(l.video && l.video.trim()){
     // Inject iframe
     const iframe = document.createElement('iframe');
@@ -812,6 +864,26 @@ function openLesson(id){
   const ml=LESSONS.filter(ll=>ll.mod===l.mod);
   document.getElementById('sidebar-ll').innerHTML=ml.map((ll,i)=>{const d=S.completedLessons.includes(ll.id);return `<div class="ll-item ${ll.id===id?'ll-act':''} ${d?'ll-done':''}" onclick="openLesson(${ll.id})"><div class="ll-num">${d?'✓':i+1}</div><span style="flex:1">${ll.title}</span></div>`;}).join('');
   const cle=document.getElementById('current-lesson-chat');if(cle)cle.textContent=l.title;
+  // Show related templates
+  const tplSection=document.getElementById('lesson-templates-section');
+  const tplList=document.getElementById('lesson-templates-list');
+  if(tplSection&&tplList&&l.relatedTemplates&&l.relatedTemplates.length>0){
+    tplSection.style.display='block';
+    tplList.innerHTML='';
+    l.relatedTemplates.forEach(function(tid){
+      var t=TEMPLATES.find(function(x){return x.id===tid;});
+      if(!t) return;
+      var saved=localStorage.getItem('ml_tpl_'+tid);
+      var hasSaved=saved&&Object.values(JSON.parse(saved)).some(function(v){return v&&v.trim();});
+      var btn=document.createElement('button');
+      btn.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;background:'+(hasSaved?'#f0fdf7':'#fff7f3')+';border:1px solid '+(hasSaved?'var(--teal)':'var(--accent)')+';border-radius:9px;cursor:pointer;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;color:'+(hasSaved?'var(--teal)':'var(--accent)')+';width:100%;text-align:right';
+      btn.innerHTML=t.icon+' '+t.title+(hasSaved?' <span style="margin-right:auto;font-size:10px;opacity:.7">✓ محفوظ</span>':'<span style="margin-right:auto;font-size:10px;opacity:.6">افتح القالب ←</span>');
+      btn.onclick=function(){openTemplate(tid);};
+      tplList.appendChild(btn);
+    });
+  } else if(tplSection){
+    tplSection.style.display='none';
+  }
   // Show quiz score if DT lesson
   const scoreCard=document.getElementById('quiz-score-card');
   const tplCard=document.getElementById('templates-btn-card');
@@ -1073,61 +1145,33 @@ function showEnrollGate(course){
 
 function renderLessonsGrid(){
   var grid=document.getElementById('lessons-grid');
+  if(!grid) return;
   var list=activeMod==='all'?LESSONS:LESSONS.filter(function(l){return l.mod===activeMod;});
   var mbg={dt:'#fff7f3',cad:'#eef2ff','3dp':'#f0fdf7',laser:'#fffbeb',elec:'#f5f0ff',cnc:'#f0f8ff'};
   var tcls={video:'tv',text:'tt',exercise:'te',lab:'tl'};
   var tlbl={video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'};
-
-  if(activeMod!=='all'){
-    var c=COURSES.find(function(x){return x.id===activeMod;});
-    if(c&&!isEnrolled(activeMod)){showEnrollGate(c);return;}
-  }
-
   grid.innerHTML='';
   list.forEach(function(l){
     var done=S.completedLessons.includes(l.id);
-    var unlocked=isDTLessonUnlocked(l);
-    var enrolled=isEnrolled(l.mod);
-    var course=COURSES.find(function(x){return x.id===l.mod;});
-
     var div=document.createElement('div');
-    div.className='lesson-card'+(!unlocked||!enrolled?' lcard-locked':'');
-    div.onclick=function(){
-      if(enrolled&&unlocked) openLesson(l.id);
-      else openEnrollModal(l.mod);
-    };
-
+    div.className='lesson-card';
+    div.onclick=function(){openLesson(l.id);};
     var thumb=document.createElement('div');
     thumb.className='lesson-thumb';
     thumb.style.background=mbg[l.mod]||'#f5f5f0';
     thumb.innerHTML='<span style="font-size:38px;z-index:1;position:relative">'+l.icon+'</span>';
-
     if(done){
       var dtag=document.createElement('div');
       dtag.style.cssText='position:absolute;top:8px;right:8px;background:var(--teal);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px';
       dtag.textContent='✓ مكتمل';
       thumb.appendChild(dtag);
     }
-    if(!enrolled){
-      var lockDiv=document.createElement('div');
-      lockDiv.className='lock-ov';
-      lockDiv.innerHTML='<div style="text-align:center"><div style="font-size:22px">💳</div><div style="font-size:10px;color:var(--text2);margin-top:4px">'+(course?'$'+course.price:'سجّل')+'<br>للوصول</div></div>';
-      thumb.appendChild(lockDiv);
-    } else if(!unlocked){
-      var lockDiv2=document.createElement('div');
-      lockDiv2.className='lock-ov';
-      lockDiv2.innerHTML='<div style="text-align:center"><div style="font-size:22px">🔒</div><div style="font-size:10px;color:var(--text2);margin-top:4px">أكمل السابق<br>90%+</div></div>';
-      thumb.appendChild(lockDiv2);
-    }
-
     var body=document.createElement('div');
     body.className='lesson-body';
-    var priceTag=!enrolled&&course?'<span style="color:var(--accent);font-weight:600">💳 $'+course.price+'</span>':'';
     body.innerHTML=
       '<div class="ltype '+(tcls[l.type]||'tv')+'">'+tlbl[l.type]+'</div>'+
       '<div class="lesson-title">'+l.title+'</div>'+
-      '<div class="lesson-meta"><span>⏱ '+l.dur+'</span><span style="color:var(--accent2)">⚡ +'+toAr(l.xp)+' XP</span>'+priceTag+'</div>';
-
+      '<div class="lesson-meta"><span>⏱ '+l.dur+'</span><span style="color:var(--accent2)">⚡ +'+toAr(l.xp)+' XP</span></div>';
     div.appendChild(thumb);
     div.appendChild(body);
     grid.appendChild(div);
@@ -1138,26 +1182,13 @@ function renderLessonsGrid(){
 const __origRenderLessons = renderLessons;
 function renderLessons(){
   var tabs=document.getElementById('mod-tabs');
+  if(!tabs) return;
   tabs.innerHTML='';
   MODULES.forEach(function(m){
-    var course=COURSES.find(function(c){return c.id===m.id;});
-    var enrolled=course?isEnrolled(m.id):true;
     var div=document.createElement('div');
     div.className='module-tab'+(activeMod===m.id?' active':'');
+    div.textContent=m.label;
     div.onclick=function(){setMod(div,m.id);};
-    div.innerHTML=m.label;
-    if(course&&!enrolled){
-      var badge=document.createElement('span');
-      badge.style.cssText='font-size:9px;background:var(--accent);color:#212121;padding:1px 5px;border-radius:6px;margin-right:4px';
-      badge.textContent='$'+course.price;
-      div.appendChild(badge);
-    }
-    if(enrolled&&m.id!=='all'){
-      var check=document.createElement('span');
-      check.style.cssText='font-size:9px;color:var(--teal);margin-right:3px';
-      check.textContent='✓';
-      div.appendChild(check);
-    }
     tabs.appendChild(div);
   });
   renderLessonsGrid();
@@ -1167,13 +1198,14 @@ function renderLessons(){
 // EVENTS SYSTEM
 // ═══════════════════════════════════════════════════════
 let EVENTS_DATA = [
-  {id:'e1',type:'webinar',title:'مقدمة في التفكير التصميمي',date:'2025-07-10',time:'19:00',duration:'٩٠ دقيقة',host:'د. سارة الأحمد',free:true,seats:100,registered:67,lang:'عربي',platform:'Zoom',link:'https://eventbrite.com',desc:'جلسة تعريفية مجانية بمنهجية التفكير التصميمي وكيف تُطبّقها في حياتك اليومية.',tags:['تفكير تصميمي','مبتدئين']},
-  {id:'e2',type:'meetup',title:'لقاء صانعي عمّان',date:'2025-07-18',time:'17:00',duration:'٣ ساعات',host:'فريق MenaLab',free:true,seats:40,registered:28,lang:'عربي',platform:'Fab Lab Amman',link:'https://eventbrite.com',desc:'لقاء مجتمعي حضوري في Fab Lab عمّان. شارك مشروعك، تعرّف على الصانعين، واستكشف التجهيزات.',tags:['حضوري','تواصل','صناع']},
-  {id:'e3',type:'workshop',title:'ورشة: طباعة نموذجك الأول',date:'2025-07-25',time:'10:00',duration:'٤ ساعات',host:'م. خالد المنصور',free:false,price:25,seats:15,registered:12,lang:'عربي',platform:'Fab Lab Amman',link:'https://eventbrite.com',desc:'ورشة عملية حضورية: من التصميم في Fusion 360 إلى الطباعة ثلاثية الأبعاد الفعلية. الأدوات متاحة.',tags:['حضوري','طباعة ثلاثية','عملي']},
-  {id:'e4',type:'webinar',title:'كيف تبني شركة ناشئة بالتفكير التصميمي',date:'2025-08-05',time:'20:00',duration:'٦٠ دقيقة',host:'أ. نورة السالم',free:true,seats:200,registered:134,lang:'عربي',platform:'Google Meet',link:'https://eventbrite.com',desc:'قصص نجاح حقيقية من مؤسسين استخدموا Design Thinking لإطلاق منتجاتهم وحل مشاكل حقيقية.',tags:['ريادة أعمال','تفكير تصميمي']},
-  {id:'e5',type:'competition',title:'هاكاثون MenaLab للتصميم',date:'2025-08-15',time:'09:00',duration:'٤٨ ساعة',host:'فريق MenaLab',free:true,seats:60,registered:41,lang:'عربي وإنجليزي',platform:'هجين (حضوري + أونلاين)',link:'https://eventbrite.com',desc:'هاكاثون ٤٨ ساعة لتطبيق التفكير التصميمي على تحدي حقيقي. جوائز نقدية لأفضل ٣ فرق.',tags:['مسابقة','جوائز','فرق']},
-  {id:'e6',type:'meetup',title:'لقاء بيروت التقني',date:'2025-08-22',time:'18:00',duration:'٢ ساعات',host:'مجتمع MenaLab لبنان',free:true,seats:50,registered:19,lang:'عربي',platform:'TechHub Beirut',link:'https://eventbrite.com',desc:'لقاء شهري لمجتمع الصانعين في بيروت. عروض تقديمية من الأعضاء، نقاشات، وتواصل مهني.',tags:['حضوري','تواصل','شهري']},
+  {id:'e1',type:'webinar',title:'وبينار: مقدمة في التفكير التصميمي',date:'2025-07-15',time:'19:00',duration:'٩٠ دقيقة',host:'د. سارة الأحمد',free:true,seats:200,registered:134,lang:'عربي',platform:'Zoom',link:'https://eventbrite.com',desc:'جلسة تعريفية مجانية بمنهجية التفكير التصميمي. ستتعلم المراحل الخمس، وكيف تطبّقها على مشكلة حقيقية في ٩٠ دقيقة.',tags:['مبتدئين','تفكير تصميمي','مجاني']},
+  {id:'e2',type:'meetup',title:'لقاء مجتمع شكّل — جدة',date:'2025-07-22',time:'17:30',duration:'٣ ساعات',host:'فريق شكّل',free:true,seats:50,registered:38,lang:'عربي',platform:'Fab Lab جدة',link:'https://eventbrite.com',desc:'لقاء شهري لمجتمع الصانعين والمصممين في جدة. شارك مشروعك، تعرّف على المهتمين، واستكشف مختبر التصنيع الرقمي.',tags:['حضوري','تواصل','جدة']},
+  {id:'e3',type:'workshop',title:'ورشة: من الفكرة إلى النموذج المطبوع',date:'2025-08-01',time:'10:00',duration:'٦ ساعات',host:'م. خالد المنصور',free:false,price:150,seats:15,registered:11,lang:'عربي',platform:'Fab Lab الرياض',link:'https://eventbrite.com',desc:'ورشة عملية مكثّفة: تصمّم قطعة في Fusion 360 وتطبعها بالطابعة ثلاثية الأبعاد في نفس اليوم. الأدوات والمواد مشمولة.',tags:['حضوري','Fusion 360','طباعة ثلاثية','عملي']},
+  {id:'e4',type:'webinar',title:'كيف تبني منتجاً ناجحاً بالتفكير التصميمي',date:'2025-08-10',time:'20:00',duration:'٦٠ دقيقة',host:'أ. نورة السالم',free:true,seats:300,registered:198,lang:'عربي',platform:'Google Meet',link:'https://eventbrite.com',desc:'قصص نجاح حقيقية من مؤسسين استخدموا Design Thinking لإطلاق منتجاتهم. أسئلة مفتوحة في آخر الجلسة.',tags:['ريادة أعمال','منتج','مجاني']},
+  {id:'e5',type:'competition',title:'هاكاثون شكّل ٢٠٢٥',date:'2025-08-22',time:'09:00',duration:'٤٨ ساعة',host:'فريق شكّل',free:true,seats:80,registered:64,lang:'عربي وإنجليزي',platform:'هجين — الرياض + أونلاين',link:'https://eventbrite.com',desc:'هاكاثون ٤٨ ساعة لتطبيق التفكير التصميمي على تحدٍ حقيقي. جوائز نقدية لأفضل ٣ فرق: ٥٠٠٠ ريال للأول.',tags:['مسابقة','جوائز','فرق','٤٨ ساعة']},
+  {id:'e6',type:'workshop',title:'ورشة: أساسيات قطع الليزر',date:'2025-09-05',time:'14:00',duration:'٤ ساعات',host:'م. أحمد الزهراني',free:false,price:100,seats:12,registered:5,lang:'عربي',platform:'Fab Lab جدة',link:'https://eventbrite.com',desc:'تعلّم تصميم ملفات الليزر وتشغيل الآلة من الصفر. ستخرج بقطعة جاهزة صممتها بنفسك.',tags:['حضوري','ليزر','عملي']}
 ];
+
 
 let eventFilter = '';
 
@@ -1313,7 +1345,22 @@ function filterPosts(tag){
   renderCommunity();
 }
 
-function renderCommunity(){
+
+function seedCommunityIfEmpty(){
+  var existing = JSON.parse(localStorage.getItem('ml_posts')||'[]');
+  if(existing.length > 0) return;
+  var starterPosts = [
+    {id:'seed1',title:'ما الفرق بين التعاطف والتعاطف الفكري في التصميم؟',body:'أحاول فهم الفرق بين empathy وsympathy في سياق التفكير التصميمي. هل يمكن أحد يشرح الفرق بمثال عملي؟',tag:'التعاطف',author:'سارة المنصور',authorId:'seed',date:new Date(Date.now()-86400000*3).toISOString(),votes:12,solved:true,replies:[{author:'فريق شكّل',text:'التعاطف (Empathy) = تضع نفسك مكان المستخدم وتشعر بما يشعر. التعاطف الفكري (Sympathy) = تفهم موقفه من بُعد دون أن تعيشه. في التصميم نحتاج للتعاطف الحقيقي — اذهب إلى الميدان وعاش التجربة معهم.'}]},
+    {id:'seed2',title:'كيف أكتب سؤال HMW جيد؟',body:'كلما حاولت أكتب سؤال HMW إما يكون ضيق جداً أو واسع جداً. فيه طريقة أتدرب عليها؟',tag:'تحديد المشكلة',author:'خالد العمري',authorId:'seed',date:new Date(Date.now()-86400000*2).toISOString(),votes:8,solved:true,replies:[{author:'فريق شكّل',text:'الاختبار البسيط: إذا كان الجواب حلاً واحداً واضحاً = ضيق جداً. إذا كان الجواب "كل شيء" = واسع جداً. السؤال الجيد يُنتج ١٠-٢٠ فكرة مختلفة ممكنة. جرب: اكتب ٥ أسئلة HMW من نفس الملاحظة وقيّمها.'}]},
+    {id:'seed3',title:'هل يمكنني تطبيق التفكير التصميمي منفرداً دون فريق؟',body:'أنا طالب وليس عندي فريق. هل التفكير التصميمي يشترط فريق أم يمكن تطبيقه لوحدي؟',tag:'عام',author:'نورة السالم',authorId:'seed',date:new Date(Date.now()-86400000*1).toISOString(),votes:15,solved:false,replies:[]},
+    {id:'seed4',title:'ما أفضل برنامج Slicer للمبتدئين في الطباعة ثلاثية الأبعاد؟',body:'سمعت عن Cura وPrusaSlicer وChitubox. أيهم أنصح به كمبتدئ؟',tag:'عام',author:'أحمد الزهراني',authorId:'seed',date:new Date(Date.now()-86400000*5).toISOString(),votes:6,solved:true,replies:[{author:'فريق شكّل',text:'للمبتدئين: Cura هو الأفضل — واجهة بسيطة، إعدادات تلقائية ممتازة، ومجتمع ضخم. PrusaSlicer أقوى لكن أعقد. Chitubox للطابعات الراتنجية (Resin) فقط.'}]},
+    {id:'seed5',title:'شاركوا مشاريعكم — من طبّق التفكير التصميمي على مشكلة حقيقية؟',body:'نريد نسمع تجاربكم! من منكم طبّق منهجية Design Thinking على مشكلة في حياته أو عمله؟ شاركنا المشكلة والنتيجة.',tag:'عام',author:'فريق شكّل',authorId:'admin',date:new Date(Date.now()-86400000*7).toISOString(),votes:20,solved:false,replies:[]},
+    {id:'seed6',title:'نصائح لجلسة مقابلة ناجحة مع المستخدمين؟',body:'سأجري مقابلات مع مستخدمين لأول مرة الأسبوع القادم. ما أهم النصائح؟',tag:'التعاطف',author:'ريم الحربي',authorId:'seed',date:new Date(Date.now()-3600000*2).toISOString(),votes:9,solved:false,replies:[{author:'فريق شكّل',text:'١) ابدأ بأسئلة مفتوحة: "حدثني عن..." ٢) اصمت واستمع — مقاومة الرغبة في الكلام ٣) اسأل "لماذا؟" ٣ مرات على الأقل لكل إجابة ٤) لا تسأل عن المستقبل ("هل ستستخدم...؟") بل عن الماضي ("كيف تعاملت مع...؟") ٥) سجّل بالفيديو أو الصوت إذا أذنوا لك.'}]}
+  ];
+  localStorage.setItem('ml_posts', JSON.stringify(starterPosts));
+}
+
+function renderCommunity(){ seedCommunityIfEmpty();
   const posts = loadPosts();
   const filtered = postFilterTag ? posts.filter(p=>p.tag===postFilterTag) : posts;
   const list = document.getElementById('posts-list');
@@ -1411,34 +1458,55 @@ function deletePost(id){
 // MENTORS
 // ═══════════════════════════════════════════════════════
 const MENTORS_DEFAULT = [
-  {id:'m1',name:'د. سارة الأحمد',title:'خبيرة التفكير التصميمي',bio:'١٠ سنوات خبرة في تطبيق Design Thinking في شركات عالمية. متخصصة في مرحلتي التعاطف وتحديد المشكلة.',specialties:['التعاطف','تحديد المشكلة','HMW'],avatar:'سا',color:'var(--accent)',available:true},
-  {id:'m2',name:'م. خالد المنصور',title:'مهندس تصنيع رقمي',bio:'مهندس متخصص في Fusion 360 والتصنيع الرقمي. يدير فاب لاب في عمّان ولديه خبرة في الطباعة ثلاثية الأبعاد والـ CNC.',specialties:['Fusion 360','طباعة ثلاثية','CNC'],avatar:'خا',color:'var(--blue)',available:true},
-  {id:'m3',name:'أ. نورة السالم',title:'مصممة منتجات رقمية',bio:'مصممة منتجات بتجربة ٨ سنوات. متخصصة في النمذجة السريعة وإجراء اختبارات المستخدم. حصلت على شهادة IDEO.',specialties:['النمذجة','الاختبار','UX'],avatar:'نو',color:'var(--teal)',available:false},
-  {id:'m4',name:'م. أحمد الزهراني',title:'خبير الإلكترونيات والـ IoT',bio:'مهندس إلكترونيات ومبرمج Arduino و Raspberry Pi. يُدرّب المبتدئين في الإلكترونيات والمشاريع التفاعلية.',specialties:['Arduino','إلكترونيات','IoT'],avatar:'أح',color:'var(--purple)',available:true},
+  {id:'m1',name:'د. سارة الأحمد',title:'خبيرة التفكير التصميمي',bio:'١٠ سنوات خبرة في تطبيق Design Thinking في شركات عالمية. عملت مع IDEO وSAP. حاصلة على شهادة d.school من ستانفورد. تساعد الفرق على تحويل مشاكلهم إلى فرص تصميمية.',specialties:['التعاطف','تحديد المشكلة','HMW','ورش العمل'],avatar:'سا',color:'var(--accent)',available:true,sessions:47,rating:4.9,responseTime:'خلال ٢٤ ساعة'},
+  {id:'m2',name:'م. خالد المنصور',title:'مهندس تصنيع رقمي',bio:'مهندس ميكانيكي متخصص في Fusion 360 والتصنيع الرقمي. يدير Fab Lab في عمّان منذ ٦ سنوات. درّب أكثر من ٥٠٠ شخص على الطباعة ثلاثية الأبعاد والـ CNC.',specialties:['Fusion 360','طباعة ثلاثية الأبعاد','CNC','تصميم القطع'],avatar:'خا',color:'var(--blue,#1565C0)',available:true,sessions:89,rating:4.8,responseTime:'خلال ٣٦ ساعة'},
+  {id:'m3',name:'أ. نورة السالم',title:'مصممة منتجات ورائدة أعمال',bio:'مصممة منتجات بخبرة ٨ سنوات في شركات ناشئة وكبرى. أسّست شركتها الخاصة باستخدام Design Thinking. متخصصة في UX وتجربة المستخدم وإطلاق المنتجات.',specialties:['النمذجة','اختبار المستخدم','UX Design','Lean Startup'],avatar:'نو',color:'var(--teal)',available:true,sessions:63,rating:5.0,responseTime:'خلال ٤٨ ساعة'},
+  {id:'m4',name:'م. أحمد الزهراني',title:'مهندس إلكترونيات وـ IoT',bio:'مهندس كهربائي ومبرمج متخصص في Arduino وRaspberry Pi وأنظمة IoT. يُصمّم مشاريع ذكية تجمع بين التصنيع الرقمي والبرمجة. مدرّب معتمد في عدة Fab Labs.',specialties:['Arduino','Electronics','IoT','Raspberry Pi','قطع الليزر'],avatar:'أح',color:'var(--purple,#6A1B9A)',available:false,sessions:34,rating:4.7,responseTime:'خلال ٧٢ ساعة'}
 ];
+
 
 let currentMentorId = null;
 
 function renderMentors(){
-  const mentors = JSON.parse(localStorage.getItem('ml_mentors')||'null') || MENTORS_DEFAULT;
-  const grid = document.getElementById('mentors-grid');
-  grid.innerHTML = mentors.map(m=>`
-    <div style="background:white;border:1px solid var(--border);border-radius:var(--r2);padding:20px;position:relative">
-      ${!m.available?'<div style="position:absolute;top:12px;left:12px;background:var(--surface3);color:var(--text3);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px">غير متاح حالياً</div>':''}
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div style="width:48px;height:48px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0">${m.avatar}</div>
-        <div>
-          <div style="font-size:15px;font-weight:700">${m.name}</div>
-          <div style="font-size:12px;color:var(--text2)">${m.title}</div>
-        </div>
-      </div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">${m.bio}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">${m.specialties.map(s=>`<span style="background:var(--surface2);color:var(--text2);font-size:11px;padding:2px 8px;border-radius:10px">${s}</span>`).join('')}</div>
-      <div style="display:flex;gap:8px">
-        <button onclick="openMentorModal('${m.id}','question')" ${!m.available?'disabled':''} style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--accent);background:#fff7f3;color:var(--accent);font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:${m.available?'pointer':'not-allowed'};opacity:${m.available?1:0.5}">❓ سؤال</button>
-        <button onclick="openMentorModal('${m.id}','session')" ${!m.available?'disabled':''} style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--teal);background:#f0fdf7;color:var(--teal);font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:${m.available?'pointer':'not-allowed'};opacity:${m.available?1:0.5}">📅 جلسة</button>
-      </div>
-    </div>`).join('');
+  var mentors=JSON.parse(localStorage.getItem('ml_mentors')||'null')||MENTORS_DEFAULT;
+  var grid=document.getElementById('mentors-grid');
+  grid.innerHTML='';
+  mentors.forEach(function(m){
+    var card=document.createElement('div');
+    card.style.cssText='background:white;border:1px solid var(--border);border-radius:var(--r2);padding:20px;position:relative;transition:box-shadow .2s';
+    card.onmouseover=function(){this.style.boxShadow='var(--shadow2)';};
+    card.onmouseout=function(){this.style.boxShadow='';};
+    var stars='⭐'.repeat(Math.floor(m.rating||5));
+    card.innerHTML=
+      (!m.available?'<div style="position:absolute;top:12px;left:12px;background:var(--surface3);color:var(--text3);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px">غير متاح</div>':'')+
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
+        '<div style="width:52px;height:52px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0">'+m.avatar+'</div>'+
+        '<div style="flex:1"><div style="font-size:15px;font-weight:700">'+m.name+'</div>'+
+        '<div style="font-size:12px;color:var(--text2)">'+m.title+'</div>'+
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+stars+' '+m.rating+' · '+m.sessions+' جلسة</div></div>'+
+      '</div>'+
+      '<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">'+m.bio+'</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">'+
+        m.specialties.map(function(s){return '<span style="background:var(--surface2);color:var(--text2);font-size:11px;padding:2px 9px;border-radius:10px">'+s+'</span>';}).join('')+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text3);margin-bottom:14px">⏱ وقت الرد: '+m.responseTime+'</div>';
+    var btnRow=document.createElement('div');
+    btnRow.style.cssText='display:flex;gap:8px';
+    var btnQ=document.createElement('button');
+    btnQ.textContent='❓ سؤال';
+    btnQ.style.cssText='flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--accent);background:#fff7f3;color:var(--accent);font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:'+(m.available?'pointer':'not-allowed')+';opacity:'+(m.available?'1':'0.5');
+    btnQ.disabled=!m.available;
+    (function(mid){btnQ.onclick=function(){openMentorModal(mid,'question');};})(m.id);
+    var btnS=document.createElement('button');
+    btnS.textContent='📅 جلسة';
+    btnS.style.cssText='flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--teal);background:#f0fdf7;color:var(--teal);font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:'+(m.available?'pointer':'not-allowed')+';opacity:'+(m.available?'1':'0.5');
+    btnS.disabled=!m.available;
+    (function(mid){btnS.onclick=function(){openMentorModal(mid,'session');};})(m.id);
+    btnRow.appendChild(btnQ);
+    btnRow.appendChild(btnS);
+    card.appendChild(btnRow);
+    grid.appendChild(card);
+  });
 }
 
 function openMentorModal(id, tab){
@@ -1643,7 +1711,24 @@ const TEMPLATES = [
 
 let currentTemplateId = null;
 
-function renderTemplatesGrid(){
+
+function seedTemplateExamplesIfEmpty(){
+  // Only seed if user hasn't filled them yet
+  var examples = {
+    'empathy-map': {'user-name':'سارة، ٢٨ سنة، معلمة ابتدائي','says':'أنا دائماً متأخرة في تصحيح الواجبات — ليس لأني كسولة بل لأن وقتي ضيّق جداً','thinks':'هل سيلاحظ المدير أنني لم أنتهِ؟ أريد أن أكون معلمة أفضل','does':'تصحّح الواجبات في المنزل بعد منتصف الليل، تستخدم نفس نماذج التقييم منذ سنوات','feels':'إرهاق وإحباط من الأعباء الإدارية المتزايدة','pains':'عدم وجود وقت كافٍ، غياب أدوات رقمية مناسبة، كثرة الأوراق','gains':'توفير الوقت، رؤية تقدم طلابها، التواصل مع أولياء الأمور بسهولة'},
+    'persona': {'name':'سارة الأحمدي، ٢٨ سنة، معلمة','bio':'معلمة متفانية في مدرسة ابتدائية حكومية. تعلّم ٣٠ طالباً. تقطع ٤٠ دقيقة يومياً للوصول للمدرسة.','goals':'تحسين أداء طلابها وتوفير وقتها الشخصي','frustrations':'الأعباء الورقية الكثيرة، غياب التقنية في الفصل، ضعف التواصل مع الأهالي','motivations':'رؤية الطلاب ينجحون، شعورها بالإنجاز عند تطور أداء الطفل الضعيف','tech':'مستخدمة خفيفة — WhatsApp و YouTube فقط، تفضّل البساطة','quote':'أريد أن أكون معلمة لا موظفة تملأ نماذج'},
+    '5-whys': {'problem':'الطلاب لا يؤدون واجباتهم المنزلية','why1':'لأنهم ينسون أو لا يفهمون المطلوب','why2':'لأن التعليمات تُعطى شفهياً فقط في نهاية الحصة عندما يكون الطلاب مشتتين','why3':'لأن المعلمة لا تملك أداة رقمية لإرسال الواجبات بشكل واضح','why4':'لأن المدرسة لم تعتمد نظاماً رقمياً موحداً للتواصل','why5':'لأن الإدارة لم تدرس احتياجات المعلمين في التواصل الرقمي','root-cause':'غياب منصة تواصل رقمية واضحة وسهلة بين المعلم والطالب والأهل'},
+    'hmw': {'observation':'المعلمون يقضون ٣ ساعات أسبوعياً في تصحيح الواجبات الورقية بينما يمكن أتمتة جزء كبير منها','hmw1':'كيف يمكننا مساعدة المعلمين على توفير وقت التصحيح؟','hmw2':'كيف يمكننا جعل الواجبات أكثر تفاعلية وأقل عبئاً؟','hmw3':'كيف يمكننا ربط الأهالي بتقدم أبنائهم دون جهد إضافي من المعلم؟','hmw4':'كيف يمكننا تحويل التغذية الراجعة من نصية إلى صوتية أو مرئية؟','hmw5':'كيف يمكننا مساعدة الطلاب على تقييم عملهم قبل التسليم؟','best-hmw':'كيف يمكننا مساعدة المعلمين على تقليل وقت التقييم بنسبة ٥٠٪ دون التأثير على جودة التغذية الراجعة؟'},
+  };
+  Object.keys(examples).forEach(function(tid){
+    var existing = localStorage.getItem('ml_tpl_'+tid);
+    if(!existing){
+      localStorage.setItem('ml_tpl_'+tid, JSON.stringify(examples[tid]));
+    }
+  });
+}
+
+function renderTemplatesGrid(){ seedTemplateExamplesIfEmpty();
   const grid = document.getElementById('templates-grid');
   const phaseColors = {'مرحلة التعاطف':'#fff7f3','مرحلة تحديد المشكلة':'#f0fdf7','مرحلة توليد الأفكار':'#fffbeb','مرحلة النمذجة':'#f5f0ff'};
   grid.innerHTML = TEMPLATES.map(t => {
