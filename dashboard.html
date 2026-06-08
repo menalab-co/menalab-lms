@@ -945,20 +945,7 @@ function askQ(q){document.getElementById('chat-inp').value=q;sendMsg();}
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
 function autoSize(el){el.style.height='36px';el.style.height=Math.min(el.scrollHeight,90)+'px';}
 function clearChat(){chatHistory=[];localStorage.removeItem('ml_chat');document.getElementById('chat-msgs').innerHTML=`<div class="msg ai"><div class="m-av ai">🤖</div><div><div class="m-bubble">محادثة جديدة! كيف يمكنني مساعدتك؟</div><div class="m-time">الآن</div></div></div>`;}
-renderDashboard();renderLessons();renderMap();renderQuickQs();loadLiveContent();updateCreditsUI();
 
-// Auto-enroll in DT course if not already enrolled (free access)
-(function(){
-  if(!S.enrolledCourses) S.enrolledCourses = [];
-  if(!S.enrolledCourses.includes('dt')){
-    S.enrolledCourses.push('dt');
-    S.aiCredits = (S.aiCredits||0) + 50;
-    S.maxCredits = (S.maxCredits||0) + 50;
-    save();
-    renderLessons();
-    updateCreditsUI();
-  }
-})();
 
 // ═══════════════════════════════════════════════════════
 // AI CREDITS SYSTEM
@@ -1742,6 +1729,55 @@ if(window.__mlUser){
 // Load chat history after DOM is ready
 loadChatHistory();
 
+
+function completeEnrollment(){
+  const course = COURSES.find(c=>c.id===enrollingCourseId);
+  if(!course) return;
+  if(!S.enrolledCourses) S.enrolledCourses=[];
+  if(!S.enrolledCourses.includes(course.id)){
+    S.enrolledCourses.push(course.id);
+    S.aiCredits=(S.aiCredits||0)+course.credits;
+    S.maxCredits=(S.maxCredits||0)+course.credits;
+    save(); updateCreditsUI();
+    addActivity('سجّلت في دورة: '+course.title,'var(--blue)');
+  }
+  document.getElementById('enroll-free-section').style.display='none';
+  document.getElementById('enroll-paid-section').style.display='none';
+  document.getElementById('enroll-success-section').style.display='block';
+  document.getElementById('enroll-success-msg').textContent='تم تفعيل دورة "'+course.title+'" وإضافة '+toAr(course.credits)+' رسالة AI لرصيدك.';
+  renderLessons(); updateXpUI();
+}
+
+function simulatePayment(){
+  const btn = document.querySelector('#enroll-paid-section button');
+  if(btn){ btn.textContent='⏳ جارٍ المعالجة...'; btn.disabled=true; }
+  setTimeout(function(){
+    if(btn){ btn.textContent='💳 إتمام الدفع والتسجيل'; btn.disabled=false; }
+    completeEnrollment();
+  },1800);
+}
+
+// ── INIT — runs after ALL functions are defined ──────────
+(function(){
+  // Auto-enroll in DT course (free)
+  if(!S.enrolledCourses) S.enrolledCourses=[];
+  if(!S.enrolledCourses.includes('dt')){
+    S.enrolledCourses.push('dt');
+    S.aiCredits=(S.aiCredits||0)+50;
+    S.maxCredits=(S.maxCredits||0)+50;
+    save();
+  }
+  // Render everything
+  renderDashboard();
+  renderLessons();
+  renderMap();
+  renderQuickQs();
+  renderTemplatesGrid();
+  updateCreditsUI();
+  updateXpUI();
+  // Load live content last
+  loadLiveContent();
+})();
 </script>
 </body>
 </html>
