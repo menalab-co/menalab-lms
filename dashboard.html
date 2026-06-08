@@ -846,7 +846,17 @@ function renderDashboard(){
 let activeMod='all';
 
 function setMod(el,mod){activeMod=mod;document.querySelectorAll('#mod-tabs .module-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderLessonsGrid();}
-function isDTLessonUnlocked(l){ return true; }
+function isDTLessonUnlocked(l){
+  if(l.mod !== 'dt') return true;  // non-DT lessons always open
+  var dtLessons = LESSONS.filter(function(x){ return x.mod==='dt'; })
+    .sort(function(a,b){ return a.id-b.id; });
+  var idx = dtLessons.findIndex(function(x){ return x.id===l.id; });
+  if(idx <= 0) return true;  // first DT lesson always open
+  var prev = dtLessons[idx-1];
+  var prevDone = S.completedLessons.includes(prev.id);
+  var prevScore = (S.quizScores||{})[prev.id] || 0;
+  return prevDone && prevScore >= 90;
+}
 
 let currentLessonId=null,isPlaying=false;
 function openLesson(id){
@@ -1028,6 +1038,18 @@ function showQuizResults(){
     const prev=S.quizScores[currentLessonId]||0;
     S.quizScores[currentLessonId]=Math.max(prev,pct);
     save();
+    // Show unlock message for DT lessons
+    var curL=LESSONS.find(function(l){return l.id===currentLessonId;});
+    if(curL && curL.mod==='dt'){
+      var msgEl=document.getElementById('res-msg');
+      if(pct>=90){
+        if(msgEl) msgEl.textContent='🎉 ممتاز! حصلت على '+toAr(pct)+'% — تم فتح الدرس التالي!';
+        showToast('🔓 تم فتح الدرس التالي!');
+        renderLessons();
+      } else {
+        if(msgEl) msgEl.textContent='حصلت على '+toAr(pct)+'% — تحتاج 90% لفتح الدرس التالي. حاول مجدداً!';
+      }
+    }
   }
   document.getElementById('res-score').textContent=toAr(sc);
   document.getElementById('res-max').textContent='من '+toAr(tot);
@@ -1227,9 +1249,16 @@ function renderLessonsGrid(){
   grid.innerHTML='';
   list.forEach(function(l){
     var done=S.completedLessons.includes(l.id);
+    var unlocked=isDTLessonUnlocked(l);
     var div=document.createElement('div');
-    div.className='lesson-card';
-    div.onclick=function(){openLesson(l.id);};
+    div.className='lesson-card'+(unlocked?'':' lcard-locked');
+    if(unlocked){
+      (function(lid){ div.onclick=function(){openLesson(lid);}; })(l.id);
+    } else {
+      div.onclick=function(){
+        showToast('🔒 أكمل الدرس السابق بنتيجة 90% أو أعلى لفتح هذا الدرس');
+      };
+    }
     var thumb=document.createElement('div');
     thumb.className='lesson-thumb';
     thumb.style.background=mbg[l.mod]||'#f5f5f0';
@@ -1240,12 +1269,24 @@ function renderLessonsGrid(){
       dtag.textContent='✓ مكتمل';
       thumb.appendChild(dtag);
     }
+    if(!unlocked){
+      var scoreNeeded=(S.quizScores||{})[l.id-1]||0;
+      var lockDiv=document.createElement('div');
+      lockDiv.className='lock-ov';
+      lockDiv.innerHTML='<div style="text-align:center"><div style="font-size:24px">🔒</div><div style="font-size:10px;color:var(--text2);margin-top:4px;font-weight:600">أكمل الدرس السابق<br>بنتيجة 90%+</div></div>';
+      thumb.appendChild(lockDiv);
+    }
     var body=document.createElement('div');
     body.className='lesson-body';
+    var scoreBadge='';
+    if(l.mod==='dt' && (S.quizScores||{})[l.id]!==undefined){
+      var sc=(S.quizScores||{})[l.id];
+      scoreBadge='<span style="color:'+(sc>=90?'var(--teal)':'var(--accent)')+';font-size:10px;font-weight:700">'+toAr(sc)+'%</span>';
+    }
     body.innerHTML=
       '<div class="ltype '+(tcls[l.type]||'tv')+'">'+tlbl[l.type]+'</div>'+
       '<div class="lesson-title">'+l.title+'</div>'+
-      '<div class="lesson-meta"><span>⏱ '+l.dur+'</span><span style="color:var(--accent2)">⚡ +'+toAr(l.xp)+' XP</span></div>';
+      '<div class="lesson-meta"><span>⏱ '+l.dur+'</span><span style="color:var(--accent2)">⚡ +'+toAr(l.xp)+' XP</span>'+scoreBadge+'</div>';
     div.appendChild(thumb);
     div.appendChild(body);
     grid.appendChild(div);
