@@ -867,6 +867,50 @@ function openLesson(id){
   // Switch to player view first
   showView('player');
 
+  // Show locked message if DT lesson not yet unlocked
+  if(!isDTLessonUnlocked(l)){
+    var videoBox2=document.getElementById('video-box');
+    var placeholder2=document.getElementById('vid-placeholder');
+    var controls2=document.getElementById('vid-controls');
+    var eIframe=document.getElementById('lesson-iframe');
+    if(eIframe && eIframe.parentNode) eIframe.parentNode.removeChild(eIframe);
+    if(placeholder2){
+      placeholder2.style.display='flex';
+      placeholder2.style.flexDirection='column';
+      placeholder2.style.alignItems='center';
+      placeholder2.style.justifyContent='center';
+      // Build locked UI with DOM
+      placeholder2.textContent='';
+      var lockIcon=document.createElement('div');
+      lockIcon.textContent='🔒';
+      lockIcon.style.cssText='font-size:52px;margin-bottom:14px';
+      var lockTitle=document.createElement('div');
+      lockTitle.textContent='هذا الدرس مغلق';
+      lockTitle.style.cssText='font-size:16px;color:white;font-weight:700;margin-bottom:8px';
+      var lockDesc=document.createElement('div');
+      lockDesc.textContent='أكمل الدرس السابق وحقّق نتيجة 90% أو أعلى في التقييم لفتح هذا الدرس';
+      lockDesc.style.cssText='font-size:13px;color:rgba(255,255,255,0.65);text-align:center;max-width:280px;line-height:1.6;margin-bottom:16px';
+      var lockBtn=document.createElement('button');
+      lockBtn.textContent='← العودة للدروس';
+      lockBtn.style.cssText='background:var(--accent);color:#212121;border:none;padding:10px 22px;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer';
+      lockBtn.onclick=function(){showView('lessons');};
+      placeholder2.appendChild(lockIcon);
+      placeholder2.appendChild(lockTitle);
+      placeholder2.appendChild(lockDesc);
+      placeholder2.appendChild(lockBtn);
+    }
+    if(controls2) controls2.style.display='none';
+    if(videoBox2) videoBox2.style.background='#1a1a2e';
+    var cBtn=document.getElementById('complete-btn');
+    if(cBtn){cBtn.disabled=true;cBtn.style.opacity='0.4';cBtn.textContent='🔒 الدرس مغلق';}
+    var xpB=document.getElementById('player-xp-badge');
+    if(xpB) xpB.textContent='+'+toAr(l.xp)+' XP عند الإكمال';
+    var bc2=document.getElementById('player-bc');
+    var mn2={dt:'التفكير التصميمي',cad:'Fusion 360','3dp':'الطباعة ثلاثية الأبعاد',laser:'قطع الليزر',elec:'الإلكترونيات',cnc:'تصنيع CNC'};
+    if(bc2) bc2.textContent=(mn2[l.mod]||l.mod)+' › '+l.title;
+    return;
+  }
+
   var mn={dt:'التفكير التصميمي',cad:'Fusion 360','3dp':'الطباعة ثلاثية الأبعاد',laser:'قطع الليزر',elec:'الإلكترونيات',cnc:'تصنيع CNC'};
   var bc=document.getElementById('player-bc');
   if(bc) bc.textContent=(mn[l.mod]||l.mod)+' › '+l.title;
