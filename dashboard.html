@@ -573,8 +573,14 @@ nav{padding:12px 10px;flex:1;overflow-y:auto}
 
 (function(){
   const u = localStorage.getItem('ml_user');
-  if(!u){ window.location.href = '/'; return; }
-  window.__mlUser = JSON.parse(u);
+  if(!u){
+    // Create guest session so dashboard works without signup
+    const guest = {name:'زائر',email:'guest@shakkel.com',guest:true};
+    localStorage.setItem('ml_user', JSON.stringify(guest));
+    window.__mlUser = guest;
+  } else {
+    window.__mlUser = JSON.parse(u);
+  }
 })();
 
 // ── Load live content from content.json (published by admin) ──
@@ -940,6 +946,19 @@ function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMs
 function autoSize(el){el.style.height='36px';el.style.height=Math.min(el.scrollHeight,90)+'px';}
 function clearChat(){chatHistory=[];localStorage.removeItem('ml_chat');document.getElementById('chat-msgs').innerHTML=`<div class="msg ai"><div class="m-av ai">🤖</div><div><div class="m-bubble">محادثة جديدة! كيف يمكنني مساعدتك؟</div><div class="m-time">الآن</div></div></div>`;}
 renderDashboard();renderLessons();renderMap();renderQuickQs();loadLiveContent();updateCreditsUI();
+
+// Auto-enroll in DT course if not already enrolled (free access)
+(function(){
+  if(!S.enrolledCourses) S.enrolledCourses = [];
+  if(!S.enrolledCourses.includes('dt')){
+    S.enrolledCourses.push('dt');
+    S.aiCredits = (S.aiCredits||0) + 50;
+    S.maxCredits = (S.maxCredits||0) + 50;
+    save();
+    renderLessons();
+    updateCreditsUI();
+  }
+})();
 
 // ═══════════════════════════════════════════════════════
 // AI CREDITS SYSTEM
