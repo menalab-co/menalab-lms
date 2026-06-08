@@ -1032,80 +1032,134 @@ function getEnrolled(){ return S.enrolledCourses || []; }
 function isEnrolled(courseId){ return getEnrolled().includes(courseId); }
 
 function openEnrollModal(courseId){
-  const course = COURSES.find(c=>c.id===courseId);
+  const course=COURSES.find(function(c){return c.id===courseId;});
   if(!course) return;
-  if(isEnrolled(courseId)){
-    showToast('أنت مسجّل في هذه الدورة بالفعل ✓');
-    showView('lessons');
-    return;
-  }
-  enrolli, 1800);
+  if(isEnrolled(courseId)){showToast('أنت مسجّل في هذه الدورة بالفعل ✓');showView('lessons');return;}
+  enrollingCourseId=courseId;
+  document.getElementById('enroll-icon').textContent=course.icon;
+  document.getElementById('enroll-title').textContent=course.title;
+  document.getElementById('enroll-desc').textContent=course.desc;
+  document.getElementById('enroll-price').textContent=course.free?'مجانية':'$'+course.price;
+  document.getElementById('enroll-credits').textContent=toAr(course.credits)+' رسالة AI';
+  document.getElementById('enroll-includes').textContent='✓ الوصول لجميع دروس الدورة ('+toAr(course.lessons)+' دروس)\n✓ '+toAr(course.credits)+' رسالة مع المساعد الذكي\n✓ وصول مدى الحياة للمحتوى';
+  document.getElementById('enroll-free-section').style.display=course.free?'block':'none';
+  document.getElementById('enroll-paid-section').style.display=course.free?'none':'block';
+  document.getElementById('enroll-success-section').style.display='none';
+  document.getElementById('enroll-modal').style.display='flex';
 }
 
-// Update renderLessonsGrid to show enrollment gate for non-enrolled courses
-const __origRenderLessonsGrid = renderLessonsGrid;
-function renderLessonsGrid(){
-  const grid = document.getElementById('lessons-grid');
-  const list = activeMod==='all' ? LESSONS : LESSONS.filter(l=>l.mod===activeMod);
-  const tcls={video:'tv',text:'tt',exercise:'te',lab:'tl'};
-  const tlbl={video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'};
-  const mbg={dt:'#fff7f3',cad:'#eef2ff','3dp':'#f0fdf7',laser:'#fffbeb',elec:'#f5f0ff',cnc:'#f0f8ff'};
 
-  // Show enrollment cards for non-enrolled modules when filtering by module
-  if(activeMod !== 'all'){
-    const course = COURSES.find(c=>c.id===activeMod);
-    if(course && !isEnrolled(activeMod)){
-      grid.innerHTML = `<div style="grid-column:1/-1;background:white;border:1px solid var(--border);border-radius:var(--r2);padding:32px;text-align:center">
-        <div style="font-size:48px;margin-bottom:14px">${course.icon}</div>
-        <div style="font-size:18px;font-weight:800;margin-bottom:8px">${course.title}</div>
-        <div style="font-size:14px;color:var(--text2);margin-bottom:16px">${course.desc}</div>
-        <div style="display:inline-flex;align-items:center;gap:20px;background:var(--surface2);padding:14px 24px;border-radius:12px;margin-bottom:20px;flex-wrap:wrap;justify-content:center">
-          <div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--accent)">${course.free?'مجاني':'$'+course.price}</div><div style="font-size:11px;color:var(--text2)">السعر</div></div>
-          <div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--purple)">${toAr(course.credits)}</div><div style="font-size:11px;color:var(--text2)">رسالة AI</div></div>
-          <div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--teal)">${toAr(course.lessons)}</div><div style="font-size:11px;color:var(--text2)">دروس</div></div>
-        </div>
-        <button onclick="openEnrollModal('${course.id}')" style="background:var(--accent);color:#212121;border:none;padding:13px 32px;border-radius:12px;font-family:Cairo,sans-serif;font-size:15px;font-weight:700;cursor:pointer">
-          ${course.free ? '✓ التسجيل مجاناً' : '💳 سجّل الآن — $'+course.price}
-        </button>
-      </div>`;
-      return;
-    }
+function showEnrollGate(course){
+  var grid=document.getElementById('lessons-grid');
+  var el=document.createElement('div');
+  el.style.cssText='grid-column:1/-1;background:white;border:1px solid var(--border);border-radius:var(--r2);padding:32px;text-align:center';
+  el.innerHTML=
+    '<div style="font-size:48px;margin-bottom:14px">'+course.icon+'</div>'+
+    '<div style="font-size:18px;font-weight:800;margin-bottom:8px">'+course.title+'</div>'+
+    '<div style="font-size:14px;color:var(--text2);margin-bottom:16px">'+course.desc+'</div>'+
+    '<div style="display:flex;gap:20px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">'+
+      '<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--accent)">'+(course.free?'مجاني':'$'+course.price)+'</div><div style="font-size:11px;color:var(--text2)">السعر</div></div>'+
+      '<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--purple)">'+toAr(course.credits)+'</div><div style="font-size:11px;color:var(--text2)">رسالة AI</div></div>'+
+      '<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--teal)">'+toAr(course.lessons)+'</div><div style="font-size:11px;color:var(--text2)">دروس</div></div>'+
+    '</div>';
+  var btn=document.createElement('button');
+  btn.textContent=course.free?'✓ التسجيل مجاناً':'💳 سجّل الآن — $'+course.price;
+  btn.style.cssText='background:var(--accent);color:#212121;border:none;padding:13px 32px;border-radius:12px;font-family:Cairo,sans-serif;font-size:15px;font-weight:700;cursor:pointer';
+  btn.onclick=function(){openEnrollModal(course.id);};
+  el.appendChild(btn);
+  grid.innerHTML='';
+  grid.appendChild(el);
+}
+
+function renderLessonsGrid(){
+  var grid=document.getElementById('lessons-grid');
+  var list=activeMod==='all'?LESSONS:LESSONS.filter(function(l){return l.mod===activeMod;});
+  var mbg={dt:'#fff7f3',cad:'#eef2ff','3dp':'#f0fdf7',laser:'#fffbeb',elec:'#f5f0ff',cnc:'#f0f8ff'};
+  var tcls={video:'tv',text:'tt',exercise:'te',lab:'tl'};
+  var tlbl={video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'};
+
+  if(activeMod!=='all'){
+    var c=COURSES.find(function(x){return x.id===activeMod;});
+    if(c&&!isEnrolled(activeMod)){showEnrollGate(c);return;}
   }
 
-  grid.innerHTML = list.map(l=>{
-    const done = S.completedLessons.includes(l.id);
-    const unlocked = isDTLessonUnlocked(l);
-    const enrolled = isEnrolled(l.mod);
-    const course = COURSES.find(c=>c.id===l.mod);
-    return `<div class="lesson-card ${(!unlocked||!enrolled)?'lcard-locked':''}" onclick="${enrolled&&unlocked?`openLesson(${l.id})`:'openEnrollModal(''+l.mod+'')'}">
-      <div class="lesson-thumb" style="background:${mbg[l.mod]||'#f5f5f0'}">
-        <span style="font-size:38px;z-index:1;position:relative">${l.icon}</span>
-        ${enrolled&&!unlocked?'<div class="play-overlay"><div class="play-circle">▶</div></div>':''}
-        ${done?`<div style="position:absolute;top:8px;right:8px;background:var(--teal);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">✓ مكتمل</div>`:''}
-        ${!enrolled?`<div class="lock-ov"><div style="text-align:center"><div style="font-size:22px">💳</div><div style="font-size:10px;color:var(--text2);margin-top:4px">${course?'$'+course.price:'سجّل'}<br>للوصول</div></div></div>`:''}
-        ${enrolled&&!unlocked?`<div class="lock-ov"><div style="text-align:center"><div style="font-size:22px">🔒</div><div style="font-size:10px;color:var(--text2);margin-top:4px">أكمل السابق<br>90%+</div></div></div>`:''}
-      </div>
-      <div class="lesson-body">
-        <div class="ltype ${tcls[l.type]}">${tlbl[l.type]}</div>
-        <div class="lesson-title">${l.title}</div>
-        <div class="lesson-meta"><span>⏱ ${l.dur}</span><span style="color:var(--accent2)">⚡ +${toAr(l.xp)} XP</span>${!enrolled?`<span style="color:var(--accent);font-weight:600">💳 $${course?course.price:''}</span>`:''}</div>
-      </div>
-    </div>`;
-  }).join('');
+  grid.innerHTML='';
+  list.forEach(function(l){
+    var done=S.completedLessons.includes(l.id);
+    var unlocked=isDTLessonUnlocked(l);
+    var enrolled=isEnrolled(l.mod);
+    var course=COURSES.find(function(x){return x.id===l.mod;});
+
+    var div=document.createElement('div');
+    div.className='lesson-card'+(!unlocked||!enrolled?' lcard-locked':'');
+    div.onclick=function(){
+      if(enrolled&&unlocked) openLesson(l.id);
+      else openEnrollModal(l.mod);
+    };
+
+    var thumb=document.createElement('div');
+    thumb.className='lesson-thumb';
+    thumb.style.background=mbg[l.mod]||'#f5f5f0';
+    thumb.innerHTML='<span style="font-size:38px;z-index:1;position:relative">'+l.icon+'</span>';
+
+    if(done){
+      var dtag=document.createElement('div');
+      dtag.style.cssText='position:absolute;top:8px;right:8px;background:var(--teal);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px';
+      dtag.textContent='✓ مكتمل';
+      thumb.appendChild(dtag);
+    }
+    if(!enrolled){
+      var lockDiv=document.createElement('div');
+      lockDiv.className='lock-ov';
+      lockDiv.innerHTML='<div style="text-align:center"><div style="font-size:22px">💳</div><div style="font-size:10px;color:var(--text2);margin-top:4px">'+(course?'$'+course.price:'سجّل')+'<br>للوصول</div></div>';
+      thumb.appendChild(lockDiv);
+    } else if(!unlocked){
+      var lockDiv2=document.createElement('div');
+      lockDiv2.className='lock-ov';
+      lockDiv2.innerHTML='<div style="text-align:center"><div style="font-size:22px">🔒</div><div style="font-size:10px;color:var(--text2);margin-top:4px">أكمل السابق<br>90%+</div></div>';
+      thumb.appendChild(lockDiv2);
+    }
+
+    var body=document.createElement('div');
+    body.className='lesson-body';
+    var priceTag=!enrolled&&course?'<span style="color:var(--accent);font-weight:600">💳 $'+course.price+'</span>':'';
+    body.innerHTML=
+      '<div class="ltype '+(tcls[l.type]||'tv')+'">'+tlbl[l.type]+'</div>'+
+      '<div class="lesson-title">'+l.title+'</div>'+
+      '<div class="lesson-meta"><span>⏱ '+l.dur+'</span><span style="color:var(--accent2)">⚡ +'+toAr(l.xp)+' XP</span>'+priceTag+'</div>';
+
+    div.appendChild(thumb);
+    div.appendChild(body);
+    grid.appendChild(div);
+  });
 }
 
 // Update module tabs to show enrolled/price status
 const __origRenderLessons = renderLessons;
 function renderLessons(){
-  document.getElementById('mod-tabs').innerHTML = MODULES.map(m=>{
-    const course = COURSES.find(c=>c.id===m.id);
-    const enrolled = course ? isEnrolled(m.id) : true;
-    return `<div class="module-tab ${activeMod===m.id?'active':''}" onclick="setMod(this,'${m.id}')">
-      ${m.label}
-      ${course&&!enrolled?`<span style="font-size:9px;background:var(--accent);color:white;padding:1px 5px;border-radius:6px;margin-right:4px">$${course.price}</span>`:''}
-      ${enrolled&&m.id!=='all'?'<span style="font-size:9px;color:var(--teal);margin-right:3px">✓</span>':''}
-    </div>`;
-  }).join('');
+  var tabs=document.getElementById('mod-tabs');
+  tabs.innerHTML='';
+  MODULES.forEach(function(m){
+    var course=COURSES.find(function(c){return c.id===m.id;});
+    var enrolled=course?isEnrolled(m.id):true;
+    var div=document.createElement('div');
+    div.className='module-tab'+(activeMod===m.id?' active':'');
+    div.onclick=function(){setMod(div,m.id);};
+    div.innerHTML=m.label;
+    if(course&&!enrolled){
+      var badge=document.createElement('span');
+      badge.style.cssText='font-size:9px;background:var(--accent);color:#212121;padding:1px 5px;border-radius:6px;margin-right:4px';
+      badge.textContent='$'+course.price;
+      div.appendChild(badge);
+    }
+    if(enrolled&&m.id!=='all'){
+      var check=document.createElement('span');
+      check.style.cssText='font-size:9px;color:var(--teal);margin-right:3px';
+      check.textContent='✓';
+      div.appendChild(check);
+    }
+    tabs.appendChild(div);
+  });
   renderLessonsGrid();
 }
 
@@ -1567,9 +1621,7 @@ const TEMPLATES = [
       {id:'wild-ideas', label:'🚀 الأفكار الجريئة (لا قيود)', type:'textarea', placeholder:'اكتب كل فكرة تخطر ببالك، مهما كانت جنونية...'},
       {id:'practical-ideas', label:'⚙️ الأفكار العملية', type:'textarea', placeholder:'الأفكار التي يمكن تنفيذها فعلاً...'},
       {id:'combinations', label:'🔗 مزج الأفكار (Combine)', type:'textarea', placeholder:'ماذا لو جمعت فكرتين معاً؟'},
-      {id:'top3', label:'🏆 أفضل ٣ أفكار للمضي قُدُماً', type:'textarea', placeholder:'١.
-٢.
-٣.'},
+      {id:'top3', label:'🏆 أفضل ٣ أفكار للمضي قُدُماً', type:'textarea', placeholder:'١.\n٢.\n٣.'},
       {id:'next-step', label:'⏭️ الخطوة التالية', type:'input', placeholder:'ما أول شيء ستفعله لتطوير الفكرة المختارة؟'},
     ]
   },
@@ -1582,10 +1634,7 @@ const TEMPLATES = [
       {id:'type', label:'نوع النموذج', type:'input', placeholder:'مثال: نموذج ورقي، نموذج رقمي، نموذج مطبوع ثلاثي الأبعاد...'},
       {id:'what-to-test', label:'🎯 ما الذي تريد اختباره؟', type:'textarea', placeholder:'ما الافتراض الرئيسي الذي تريد التحقق منه؟'},
       {id:'materials', label:'🔧 المواد والأدوات المطلوبة', type:'textarea', placeholder:'ما الذي تحتاجه لبناء النموذج؟'},
-      {id:'steps', label:'📋 خطوات البناء', type:'textarea', placeholder:'١.
-٢.
-٣.
-...'},
+      {id:'steps', label:'📋 خطوات البناء', type:'textarea', placeholder:'١.\n٢.\n٣.\n...'},
       {id:'timeline', label:'⏰ الوقت المقدّر', type:'input', placeholder:'مثال: ٣ ساعات، يوم واحد...'},
       {id:'success-criteria', label:'✅ معايير النجاح', type:'textarea', placeholder:'كيف ستعرف أن النموذج نجح في اختبار افتراضك؟'},
     ]
