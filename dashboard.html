@@ -747,10 +747,7 @@ function renderDashboard(){
   document.getElementById('activity-list').innerHTML=S.activities.slice(0,5).map(a=>`<div class="act-item"><div class="act-dot" style="background:${a.color}"></div><div class="act-txt">${a.text}</div><div class="act-time">${a.time}</div></div>`).join('');
 }
 let activeMod='all';
-function renderLessons(){
-  document.getElementById('mod-tabs').innerHTML=MODULES.map(m=>`<div class="module-tab ${activeMod===m.id?'active':''}" onclick="setMod(this,'${m.id}')">${m.label}</div>`).join('');
-  renderLessonsGrid();
-}
+
 function setMod(el,mod){activeMod=mod;document.querySelectorAll('#mod-tabs .module-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderLessonsGrid();}
 function isDTLessonUnlocked(l){
   if(l.mod!=='dt') return true; // non-DT lessons always open
@@ -762,31 +759,7 @@ function isDTLessonUnlocked(l){
   const prevScore=(S.quizScores||{})[prev.id]||0;
   return prevDone && prevScore>=90;
 }
-function renderLessonsGrid(){
-  const grid=document.getElementById('lessons-grid');
-  const list=activeMod==='all'?LESSONS:LESSONS.filter(l=>l.mod===activeMod);
-  const tcls={video:'tv',text:'tt',exercise:'te',lab:'tl'};
-  const tlbl={video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'};
-  const mbg={dt:'#fff7f3',cad:'#eef2ff','3dp':'#f0fdf7',laser:'#fffbeb',elec:'#f5f0ff',cnc:'#f0f8ff'};
-  grid.innerHTML=list.map(l=>{
-    const done=S.completedLessons.includes(l.id);
-    const unlocked=isDTLessonUnlocked(l);
-    const prevScore=l.mod==='dt'?(S.quizScores||{})[l.id]||0:100;
-    return `<div class="lesson-card ${!unlocked?'lcard-locked':''}" onclick="${unlocked?`openLesson(${l.id})`:'showLockedMsg()'}">
-      <div class="lesson-thumb" style="background:${mbg[l.mod]||'#f5f5f0'}">
-        <span style="font-size:38px;z-index:1;position:relative">${l.icon}</span>
-        <div class="play-overlay"><div class="play-circle">${done?'↻':'▶'}</div></div>
-        ${done?`<div style="position:absolute;top:8px;right:8px;background:var(--teal);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">✓ مكتمل</div>`:''}
-        ${!unlocked?`<div class="lock-ov"><div style="text-align:center"><div style="font-size:24px">🔒</div><div style="font-size:10px;color:var(--text2);margin-top:4px">أكمل الدرس السابق<br>بدرجة 90%+</div></div></div>`:''}
-      </div>
-      <div class="lesson-body">
-        <div class="ltype ${tcls[l.type]}">${tlbl[l.type]}</div>
-        <div class="lesson-title">${l.title}</div>
-        <div class="lesson-meta"><span>⏱ ${l.dur}</span><span style="color:var(--accent2)">⚡ +${toAr(l.xp)} XP</span></div>
-      </div>
-    </div>`;
-  }).join('');
-}
+
 let currentLessonId=null,isPlaying=false;
 function openLesson(id){
   currentLessonId=id;
@@ -953,21 +926,7 @@ function showFabPopup(i,x,y){
 }
 let chatHistory=[],msgCount=0;
 function renderQuickQs(){const el=document.getElementById('quick-qs');if(!el)return;el.innerHTML=QUICK_QS.map(q=>`<div class="quick-q" onclick="askQ('${q.replace(/'/g,"\\'")}')">${q}</div>`).join('');}
-async function sendMsg(){
-  const inp=document.getElementById('chat-inp');const text=inp.value.trim();if(!text)return;
-  inp.value='';inp.style.height='36px';addChatMsg(text,'user');msgCount++;
-  document.getElementById('send-btn-el').disabled=true;showTyping();
-  chatHistory.push({role:'user',content:text});saveChatHistory();
-  try{
-    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:SYSTEM_PROMPT,messages:chatHistory.slice(-12)})});
-    removeTyping();
-    if(!res.ok)throw new Error('API Error');
-    const data=await res.json();
-    const reply=data.content.map(b=>b.text||'').join('');
-    chatHistory.push({role:'assistant',content:reply});addChatMsg(reply,'ai');saveChatHistory();
-  }catch(e){removeTyping();addChatMsg('عذراً، حدث خطأ. تأكد من إضافة مفتاح Anthropic API.','ai');}
-  document.getElementById('send-btn-el').disabled=false;
-}
+
 function addChatMsg(text,type){
   const msgs=document.getElementById('chat-msgs');const div=document.createElement('div');div.className='msg '+type;
   const t=new Date();const time=`${t.getHours()}:${t.getMinutes().toString().padStart(2,'0')}`;
@@ -1016,20 +975,46 @@ function updateCreditsUI(){
   }
 }
 
-// Patch sendMsg to deduct credits
-const __origSendMsg = sendMsg;
+// Chat send function
+
 async function sendMsg(){
+  const inp = document.getElementById('chat-inp');
+  const text = inp.value.trim();
+  if(!text) return;
+  // Credits check
   if(getCredits() <= 0){
     document.getElementById('no-credits-modal').style.display='flex';
     return;
   }
-  const inp = document.getElementById('chat-inp');
-  const text = inp.value.trim();
-  if(!text) return;
   const local = getLocalAnswer(text);
-  if(!local) deductCredit(); // only deduct for real API calls
-  return __origSendMsg();
+  if(!local) deductCredit();
+  inp.value=''; inp.style.height='36px';
+  addChatMsg(text,'user'); msgCount++;
+  saveChatHistory();
+  chatHistory.push({role:'user',content:text});
+  if(local){
+    setTimeout(function(){
+      addChatMsg(local.a,'ai');
+      chatHistory.push({role:'assistant',content:local.a});
+      saveChatHistory();
+    },400);
+    return;
+  }
+  document.getElementById('send-btn-el').disabled=true;
+  showTyping();
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:SYSTEM_PROMPT,messages:chatHistory.slice(-12)})});
+    removeTyping();
+    const data=await res.json();
+    if(!res.ok){addChatMsg('خطأ: '+(data.error||res.status),'ai');document.getElementById('send-btn-el').disabled=false;return;}
+    const reply=data.content.map(function(b){return b.text||'';}).join('');
+    chatHistory.push({role:'assistant',content:reply});
+    addChatMsg(reply,'ai');
+    saveChatHistory();
+  }catch(e){removeTyping();addChatMsg('خطأ في الاتصال: '+e.message,'ai');}
+  document.getElementById('send-btn-el').disabled=false;
 }
+
 
 // ═══════════════════════════════════════════════════════
 // ENROLLMENT & COURSE SYSTEM
@@ -1048,51 +1033,7 @@ function openEnrollModal(courseId){
     showView('lessons');
     return;
   }
-  enrollingCourseId = courseId;
-  document.getElementById('enroll-icon').textContent = course.icon;
-  document.getElementById('enroll-title').textContent = course.title;
-  document.getElementById('enroll-desc').textContent = course.desc;
-  document.getElementById('enroll-price').textContent = course.free ? 'مجانية' : '$'+course.price;
-  document.getElementById('enroll-credits').textContent = toAr(course.credits)+' رسالة AI';
-  document.getElementById('enroll-includes').textContent =
-    '✓ الوصول لجميع دروس الدورة ('+toAr(course.lessons)+' دروس)
-✓ '+toAr(course.credits)+' رسالة مع المساعد الذكي
-✓ شهادة إتمام إلكترونية
-✓ وصول مدى الحياة للمحتوى';
-  document.getElementById('enroll-free-section').style.display = course.free ? 'block' : 'none';
-  document.getElementById('enroll-paid-section').style.display = course.free ? 'none' : 'block';
-  document.getElementById('enroll-success-section').style.display = 'none';
-  document.getElementById('enroll-modal').style.display = 'flex';
-}
-
-function completeEnrollment(){
-  const course = COURSES.find(c=>c.id===enrollingCourseId);
-  if(!course) return;
-  if(!S.enrolledCourses) S.enrolledCourses=[];
-  S.enrolledCourses.push(course.id);
-  S.aiCredits = (S.aiCredits||0) + course.credits;
-  S.maxCredits = (S.maxCredits||0) + course.credits;
-  save(); updateCreditsUI();
-  addActivity('سجّلت في دورة: '+course.title, 'var(--blue)');
-  checkBadges();
-  document.getElementById('enroll-free-section').style.display='none';
-  document.getElementById('enroll-paid-section').style.display='none';
-  document.getElementById('enroll-success-section').style.display='block';
-  document.getElementById('enroll-success-msg').textContent =
-    'تم تفعيل دورة "'+course.title+'" وإضافة '+toAr(course.credits)+' رسالة AI لرصيدك. ابدأ التعلم الآن!';
-  renderLessons(); updateXpUI();
-}
-
-function simulatePayment(){
-  // In production, integrate Stripe/PayPal here
-  const btn = document.getElementById('enroll-paid-section').querySelector('button');
-  btn.textContent = '⏳ جارٍ المعالجة...';
-  btn.disabled = true;
-  setTimeout(()=>{
-    btn.textContent = '💳 إتمام الدفع والتسجيل';
-    btn.disabled = false;
-    completeEnrollment();
-  }, 1800);
+  enrolli, 1800);
 }
 
 // Update renderLessonsGrid to show enrollment gate for non-enrolled courses
@@ -1297,29 +1238,6 @@ function showLessonHint(lessonId) {
   div.innerHTML = `<div class="m-av ai">🤖</div><div><div class="m-bubble" style="background:#f5f0ff;border:1px solid rgba(107,71,212,0.15)">${hint}</div><div class="m-time" style="font-size:10px;color:var(--text3)">تلميح تلقائي</div></div>`;
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
-}
-
-// Override sendMsg to check local cache first
-const _originalSendMsg = sendMsg;
-async function sendMsg() {
-  const inp = document.getElementById('chat-inp');
-  const text = inp.value.trim();
-  if(!text) return;
-  const local = getLocalAnswer(text);
-  if(local) {
-    inp.value = ''; inp.style.height='36px';
-    addChatMsg(text, 'user'); msgCount++;
-    saveChatHistory();
-    chatHistory.push({role:'user',content:text});
-    setTimeout(()=>{
-      const reply = local.a;
-      addChatMsg(reply, 'ai');
-      chatHistory.push({role:'assistant',content:reply});
-      saveChatHistory();
-    }, 400);
-    return;
-  }
-  return _originalSendMsg();
 }
 
 // ═══════════════════════════════════════════════════════
