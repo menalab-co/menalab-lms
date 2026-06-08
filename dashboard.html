@@ -1288,7 +1288,9 @@ function filterEvents(type){
 }
 
 function renderEvents(){
+  console.log('[renderEvents] EVENTS_DATA count:', EVENTS_DATA.length);
   const list = document.getElementById('events-list');
+  console.log('[renderEvents] events-list element:', list ? 'FOUND' : 'NULL');
   const filtered = eventFilter ? EVENTS_DATA.filter(e=>e.type===eventFilter) : EVENTS_DATA;
   const typeIcons={webinar:'🎙️',meetup:'🤝',workshop:'🛠️',competition:'🏆'};
   const typeLabels={webinar:'وبينار',meetup:'لقاء مجتمعي',workshop:'ورشة عمل',competition:'مسابقة'};
@@ -1434,6 +1436,7 @@ function seedCommunityIfEmpty(){
 }
 
 function renderCommunity(){ seedCommunityIfEmpty();
+  console.log('[renderCommunity] ml_posts:', localStorage.getItem('ml_posts') ? JSON.parse(localStorage.getItem('ml_posts')).length+' posts' : 'null');
   const userPosts = loadPosts().filter(function(p){return !p.id.startsWith('seed');});
   const seedPosts = JSON.parse(localStorage.getItem('ml_posts')||'[]').filter(function(p){return p.id.startsWith('seed');});
   const allPosts = userPosts.concat(seedPosts.length ? seedPosts : []);
@@ -1545,7 +1548,10 @@ let currentMentorId = null;
 
 function renderMentors(){
   var mentors=JSON.parse(localStorage.getItem('ml_mentors')||'null')||MENTORS_DEFAULT;
+  console.log('[renderMentors] mentors count:', mentors.length);
   var grid=document.getElementById('mentors-grid');
+  console.log('[renderMentors] grid element:', grid ? 'FOUND' : 'NULL');
+  if(!grid) return;
   grid.innerHTML='';
   mentors.forEach(function(m){
     var card=document.createElement('div');
