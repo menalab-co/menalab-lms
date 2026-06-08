@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MenaLab — تعلم التفكير التصميمي والتصنيع الرقمي</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<title>شكّل مستقبلك — MenaLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;900&family=Cairo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#1a1a2e;--accent:#e05c2a;--accent2:#f4a03c;--teal:#1a9e7a;--purple:#6b47d4;--text:#1a1a2e;--text2:#5a5870;--text3:#9896a8;--surface:#fff;--surface2:#f8f7f4;--border:rgba(26,26,46,0.1);--r:12px;--r2:20px}
+:root{--ink:#212121;--accent:#EBC84C;--accent2:#D4A017;--teal:#2E7D32;--blue:#1565C0;--purple:#6A1B9A;--red:#dc2626;--surface:#fff;--surface2:#EDEAE6;--surface3:#E5E0D8;--border:rgba(33,33,33,0.12);--border2:rgba(33,33,33,0.22);--text:#212121;--text2:#4a4840;--text3:#8a8678;--r:10px;--r2:16px;--shadow:0 2px 12px rgba(0,0,0,0.07);--shadow2:0 8px 32px rgba(0,0,0,0.12)}
 html{scroll-behavior:smooth}
-body{font-family:'Cairo',sans-serif;color:var(--text);background:var(--surface);direction:rtl;overflow-x:hidden}
+body{font-family:'Noto Kufi Arabic','Cairo',sans-serif;color:var(--text);background:var(--surface);direction:rtl;overflow-x:hidden}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5%;height:70px;display:flex;align-items:center;gap:24px;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .nav-logo-mark{width:38px;height:38px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:white}
@@ -21,14 +21,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5%;height:70px;dis
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
 .btn-ghost{background:transparent;color:var(--text);border:1.5px solid var(--border)}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-.btn-primary{background:var(--accent);color:white}
+.btn-primary{background:var(--accent);color:#212121}
 .btn-primary:hover{background:#c94d1e;transform:translateY(-1px)}
 .btn-large{padding:14px 32px;font-size:16px;border-radius:12px}
-.hero{min-height:100vh;display:flex;align-items:center;padding:100px 5% 60px;position:relative;overflow:hidden;background:linear-gradient(160deg,#fff 0%,#fdf6f2 50%,#f0fdf7 100%)}
+.hero{min-height:100vh;display:flex;align-items:center;padding:100px 5% 60px;position:relative;overflow:hidden;background:linear-gradient(160deg,#fff 0%,#EDEAE6 50%,#F5F2EE 100%)}
 .hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .hero-circle{position:absolute;border-radius:50%;opacity:.06}
 .hero-content{max-width:580px;position:relative;z-index:1}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:#fff7f3;border:1px solid rgba(224,92,42,0.2);color:var(--accent);font-size:13px;font-weight:600;padding:7px 16px;border-radius:30px;margin-bottom:24px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(235,200,76,0.15);border:1px solid rgba(235,200,76,0.4);color:#212121;font-size:13px;font-weight:600;padding:7px 16px;border-radius:30px;margin-bottom:24px}
 .badge-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 h1{font-size:50px;font-weight:900;line-height:1.1;margin-bottom:20px;color:var(--ink)}
@@ -94,7 +94,7 @@ section{padding:80px 5%}
 .t-name{font-size:13px;font-weight:700}
 .t-role{font-size:11px;color:var(--text3)}
 .stars{color:#f4a03c;font-size:12px;margin-bottom:7px}
-.cta-sec{background:linear-gradient(135deg,var(--ink) 0%,#2a1a4e 100%);text-align:center;padding:90px 5%}
+.cta-sec{background:linear-gradient(135deg,#212121 0%,#2a2018 100%);text-align:center;padding:90px 5%}
 .cta-sec .sec-title{color:white}
 .cta-sec .sec-sub{color:rgba(255,255,255,0.6);margin:0 auto 36px}
 .cta-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
@@ -130,8 +130,16 @@ footer{background:var(--ink);padding:32px 5%;color:rgba(255,255,255,0.45);font-s
 
 <nav>
   <a class="nav-logo" href="/">
-    <div class="nav-logo-mark">M</div>
-    <div class="nav-logo-text">MenaLab</div>
+    <svg width="38" height="38" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="80" height="80" rx="16" fill="#212121"/>
+<path d="M26 54 L36 30 L44 38 Z" stroke="#EBC84C" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+<line x1="26" y1="54" x2="22" y2="58" stroke="#EBC84C" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="44" y1="38" x2="56" y2="26" stroke="#EBC84C" stroke-width="1.4" stroke-linecap="round"/>
+<circle cx="56" cy="26" r="3" stroke="#EBC84C" stroke-width="1.4" fill="none"/>
+<circle cx="56" cy="26" r="1" fill="#EBC84C"/>
+<circle cx="36" cy="30" r="3" stroke="#EBC84C" stroke-width="1.4" fill="none"/>
+</svg>
+    <div class="nav-logo-text">شكّل مستقبلك</div>
   </a>
   <div class="nav-links">
     <button class="nav-link" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">كيف يعمل</button>
@@ -146,13 +154,13 @@ footer{background:var(--ink);padding:32px 5%;color:rgba(255,255,255,0.45);font-s
 
 <section class="hero">
   <div class="hero-bg">
-    <div class="hero-circle" style="width:580px;height:580px;background:var(--accent);top:-180px;left:-80px"></div>
+    <div class="hero-circle" style="width:580px;height:580px;background:#EBC84C;top:-180px;left:-80px;opacity:.08"></div>
     <div class="hero-circle" style="width:380px;height:380px;background:var(--teal);bottom:-80px;right:28%"></div>
   </div>
   <div class="hero-content">
     <div class="hero-badge"><span class="badge-dot"></span>منصة التعلم الأولى عربياً للتصنيع الرقمي</div>
-    <h1>تعلّم <span>التفكير التصميمي</span> والتصنيع الرقمي</h1>
-    <p class="hero-desc">رحلة تعليمية تفاعلية مُلعّبة تأخذك من الفكرة إلى النموذج الحقيقي — بالعربية، خطوة بخطوة.</p>
+    <h1><span>شكّل</span> مستقبلك بأدوات التفكير التصميمي</h1>
+    <p class="hero-desc">منصة عربية تعليمية تفاعلية تأخذك من الفكرة إلى النموذج الحقيقي — عبر التفكير التصميمي، التصميم الرقمي، والتصنيع.</p>
     <div class="hero-actions">
       <button class="btn btn-primary btn-large" onclick="openModal('signup')">ابدأ رحلتك مجاناً ←</button>
       <button class="btn btn-ghost btn-large" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">كيف يعمل؟</button>
@@ -225,7 +233,7 @@ footer{background:var(--ink);padding:32px 5%;color:rgba(255,255,255,0.45);font-s
 </section>
 
 <section id="map">
-  <div class="tc"><div class="sec-label">المجتمع العربي</div><div class="sec-title">١٢+ فاب لاب <span>حول العالم العربي </span></div><div class="sec-sub">بعد كل مرحلة، ابحث عن فاب لاب قريب وحوّل تصميمك إلى واقع.</div></div>
+  <div class="tc"><div class="sec-label">المجتمع العالمي</div><div class="sec-title">١٢+ فاب لاب <span>حول العالم</span></div><div class="sec-sub">بعد كل مرحلة، ابحث عن فاب لاب قريب وحوّل تصميمك إلى واقع.</div></div>
   <div class="map-box">
     <svg viewBox="0 0 900 260" width="100%" preserveAspectRatio="xMidYMid meet">
       <rect width="900" height="260" fill="#c8e6f0"/>
@@ -263,7 +271,7 @@ footer{background:var(--ink);padding:32px 5%;color:rgba(255,255,255,0.45);font-s
 <section class="cta-sec">
   <div class="sec-label" style="color:var(--accent2)">ابدأ اليوم</div>
   <div class="sec-title">جاهز لتحويل أفكارك <span style="color:var(--accent2)">إلى واقع؟</span></div>
-  <div class="sec-sub">انضم مجاناً وابدأ رحلتك الآن.</div>
+  <div class="sec-sub">انضم الآن وابدأ رحلة التصميم والصنع.</div>
   <div class="cta-actions">
     <button class="btn btn-primary btn-large" onclick="openModal('signup')">إنشاء حساب مجاني ←</button>
     <button class="btn btn-large" style="background:rgba(255,255,255,0.1);color:white;border:1.5px solid rgba(255,255,255,0.2)" onclick="openModal('login')">تسجيل الدخول</button>
@@ -271,8 +279,8 @@ footer{background:var(--ink);padding:32px 5%;color:rgba(255,255,255,0.45);font-s
 </section>
 
 <footer>
-  <div class="f-logo"><div class="f-logo-mark">M</div><div class="f-logo-text">MenaLab</div></div>
-  <div>© 2025 MenaLab. جميع الحقوق محفوظة.</div>
+  <div class="f-logo"><div class="f-logo-mark">M</div><div class="f-logo-text">شكّل مستقبلك</div></div>
+  <div>© 2025 شكّل مستقبلك | menalab. جميع الحقوق محفوظة.</div>
   <div class="f-links"><a class="f-link" href="#">سياسة الخصوصية</a><a class="f-link" href="#">الشروط</a><a class="f-link" href="#">تواصل معنا</a></div>
 </footer>
 
@@ -280,7 +288,25 @@ footer{background:var(--ink);padding:32px 5%;color:rgba(255,255,255,0.45);font-s
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-logo"><div class="modal-logo-mark">M</div></div>
+    <div class="modal-logo"><div style="width:38px;height:38px;flex-shrink:0"><svg width="38" height="38" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="120" height="120" rx="24" fill="#212121"/>
+<path d="M60 14 L63 11 L66 13 L65 17 C69 18.5 72.5 21 75.5 24 L79.5 23 L81.5 26 L79 28.5 C82 32.5 84 37 84.5 42 L88 43.5 L88 47 L84.5 48.5 C84 53.5 82 58 79 62 L81.5 64.5 L79.5 67.5 L75.5 66.5 C72.5 69.5 69 72 65 73.5 L65 77 L61.5 78 L58.5 77 L58.5 73.5 C54.5 72 51 69.5 48 66.5 L44 67.5 L42 64.5 L44.5 62 C41.5 58 39.5 53.5 39 48.5 L35.5 47 L35.5 43.5 L39 42 C39.5 37 41.5 32.5 44.5 28.5 L42 26 L44 23 L48 24 C51 21 54.5 18.5 58.5 17 L57.5 13 L60.5 11 Z" stroke="#EBC84C" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+<path d="M60 26 C53 26 48 30 46 35 C44 40 45 45 47 49 C48.5 52 48 55 46 57 C44.5 59 45.5 62 48 63 L60 63" stroke="#EBC84C" stroke-width="2" fill="none" stroke-linecap="round"/>
+<path d="M60 26 C67 26 72 30 74 35 C76 40 75 45 73 49 C71.5 52 72 55 74 57 C75.5 59 74.5 62 72 63 L60 63" stroke="#EBC84C" stroke-width="2" fill="none" stroke-linecap="round"/>
+<line x1="60" y1="28" x2="60" y2="63" stroke="#EBC84C" stroke-width="0.8" stroke-dasharray="2.5 2" opacity=".3"/>
+<path d="M49 36 C47 34 48 31 51 32 C53 33 52 36 50 37" stroke="#EBC84C" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".55"/>
+<path d="M47 47 C45 45 46 42 49 43 C51 44 50 47 48 48" stroke="#EBC84C" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".45"/>
+<path d="M71 36 C73 34 72 31 69 32 C67 33 68 36 70 37" stroke="#EBC84C" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".55"/>
+<path d="M73 47 C75 45 74 42 71 43 C69 44 70 47 72 48" stroke="#EBC84C" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".45"/>
+<line x1="48" y1="66" x2="72" y2="66" stroke="#EBC84C" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="50" y1="70" x2="70" y2="70" stroke="#EBC84C" stroke-width="2" stroke-linecap="round"/>
+<line x1="52" y1="74" x2="68" y2="74" stroke="#EBC84C" stroke-width="1.5" stroke-linecap="round" opacity=".65"/>
+<line x1="54" y1="78" x2="66" y2="78" stroke="#EBC84C" stroke-width="1.2" stroke-linecap="round" opacity=".4"/>
+<path d="M52 50 L55 43 L58 49 L60 42 L62 49 L65 43 L68 50" stroke="#EBC84C" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+<g transform="translate(22 64)"><path d="M10 2 L11.5 0 L13 2 L12.5 4.5 C14.5 5.2 16 6.5 17 8.2 L19.5 7.8 L20.5 9.5 L18.5 11 C18.8 13 18.2 15 17 16.8 L18.5 18.5 L17 20 L15 18.5 C13.2 19.5 11 20 9 20 C7 20 5 19.5 3 18.5 L1 20 L-0.5 18.5 L1 16.8 C-0.2 15 -0.8 13 -0.5 11 L-2.5 9.5 L-1.5 7.8 L1 8.2 C2 6.5 3.5 5.2 5.5 4.5 L5 2 L6.5 0 L8 2 Z" stroke="#EBC84C" stroke-width="1.2" fill="none" stroke-linejoin="round" opacity=".8"/><circle cx="9" cy="10" r="4" stroke="#EBC84C" stroke-width="1.2" fill="none" opacity=".8"/><circle cx="9" cy="10" r="1.8" fill="#EBC84C" opacity=".8"/></g>
+<g transform="translate(77 68)"><path d="M8 1.5 L9.5 0 L11 1.5 L10.5 3.5 C12 4.2 13.2 5.2 14 6.5 L16 6 L17 7.5 L15.5 9 C15.8 10.5 15.3 12 14.5 13.5 L16 15 L14.5 16.5 L13 15 C11.5 15.8 9.8 16.2 8 16 C6.2 16.2 4.5 15.8 3 15 L1.5 16.5 L0 15 L1.5 13.5 C0.7 12 0.2 10.5 0.5 9 L-1 7.5 L0 6 L2 6.5 C2.8 5.2 4 4.2 5.5 3.5 L5 1.5 L6.5 0 L8 1.5 Z" stroke="#EBC84C" stroke-width="1.1" fill="none" stroke-linejoin="round" opacity=".7"/><circle cx="8" cy="8" r="3.2" stroke="#EBC84C" stroke-width="1.1" fill="none" opacity=".7"/><circle cx="8" cy="8" r="1.5" fill="#EBC84C" opacity=".7"/></g>
+<circle cx="60" cy="18" r="1.8" fill="#EBC84C" opacity=".3"/>
+</svg></div></div>
 
     <div id="f-signup">
       <div class="modal-title">إنشاء حساب جديد</div>
