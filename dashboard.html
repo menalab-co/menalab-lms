@@ -619,6 +619,7 @@ async function loadLiveContent(){
     // Re-render everything with live content
     renderDashboard();
     renderLessons();
+    renderEvents();
   }catch(e){
     // Silently fall back to defaults if fetch fails
   }
@@ -821,53 +822,91 @@ function isDTLessonUnlocked(l){ return true; }
 let currentLessonId=null,isPlaying=false;
 function openLesson(id){
   currentLessonId=id;
-  const l=LESSONS.find(x=>x.id===id);if(!l)return;
-  const mn={dt:'التفكير التصميمي',cad:'Fusion 360','3dp':'الطباعة ثلاثية الأبعاد',laser:'قطع الليزر',elec:'الإلكترونيات',cnc:'تصنيع CNC'};
-  document.getElementById('player-bc').textContent=mn[l.mod]+' › '+l.title;
-  // Video: show iframe if URL exists, otherwise show placeholder
-  const videoBox = document.getElementById('video-box');
-  const placeholder = document.getElementById('vid-placeholder');
-  const controls = document.getElementById('vid-controls');
-  const existingIframe = document.getElementById('lesson-iframe');
+  var l=LESSONS.find(function(x){return x.id===id;});
+  if(!l) return;
+
+  // Switch to player view first
+  showView('player');
+
+  var mn={dt:'التفكير التصميمي',cad:'Fusion 360','3dp':'الطباعة ثلاثية الأبعاد',laser:'قطع الليزر',elec:'الإلكترونيات',cnc:'تصنيع CNC'};
+  var bc=document.getElementById('player-bc');
+  if(bc) bc.textContent=(mn[l.mod]||l.mod)+' › '+l.title;
+
+  // Video player
+  var videoBox=document.getElementById('video-box');
+  var placeholder=document.getElementById('vid-placeholder');
+  var controls=document.getElementById('vid-controls');
+  var existingIframe=document.getElementById('lesson-iframe');
   if(existingIframe && existingIframe.parentNode) existingIframe.parentNode.removeChild(existingIframe);
+
   if(l.video && l.video.trim()){
-    // Inject iframe
-    const iframe = document.createElement('iframe');
-    iframe.id = 'lesson-iframe';
-    iframe.src = l.video.trim();
-    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:var(--r2)';
-    iframe.allow = 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media';
-    iframe.allowFullscreen = true;
+    var iframe=document.createElement('iframe');
+    iframe.id='lesson-iframe';
+    iframe.src=l.video.trim();
+    iframe.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:8px';
+    iframe.setAttribute('allow','autoplay; fullscreen; picture-in-picture');
     iframe.setAttribute('allowfullscreen','');
-    console.log('Loading video:', l.video.trim());
-    videoBox.style.position = 'relative';
-    videoBox.style.padding = '0';
-    videoBox.style.overflow = 'hidden';
-    videoBox.appendChild(iframe);
+    if(videoBox){
+      videoBox.style.position='relative';
+      videoBox.style.padding='0';
+      videoBox.style.overflow='hidden';
+      videoBox.style.background='#000';
+      videoBox.appendChild(iframe);
+    }
     if(placeholder) placeholder.style.display='none';
     if(controls) controls.style.display='none';
-    videoBox.style.background = '#000';
   } else {
     if(placeholder) placeholder.style.display='flex';
     if(controls) controls.style.display='flex';
-    document.getElementById('pl-icon').textContent=l.icon;
-    document.getElementById('pl-title').textContent=l.title;
-    document.getElementById('pl-dur').textContent='مدة: '+l.dur;
+    var pi=document.getElementById('pl-icon');
+    var pt=document.getElementById('pl-title');
+    var pd=document.getElementById('pl-dur');
+    if(pi) pi.textContent=l.icon;
+    if(pt) pt.textContent=l.title;
+    if(pd) pd.textContent='مدة: '+l.dur;
   }
-  document.getElementById('player-xp-badge').textContent='+'+toAr(l.xp)+' XP عند الإكمال';
-  document.getElementById('lesson-text-area').innerHTML=l.content;
-  document.getElementById('lesson-objectives').innerHTML=l.objectives.map(o=>`<li>${o}</li>`).join('');
-  const done=S.completedLessons.includes(id);
-  document.getElementById('complete-btn').textContent=done?'✓ تم الإكمال':'✓ إكمال الدرس (+'+toAr(l.xp)+' XP)';
-  document.getElementById('complete-btn').disabled=done;
-  document.getElementById('complete-btn').style.opacity=done?'0.5':'1';
-  const ml=LESSONS.filter(ll=>ll.mod===l.mod);
-  document.getElementById('sidebar-ll').innerHTML=ml.map((ll,i)=>{const d=S.completedLessons.includes(ll.id);return `<div class="ll-item ${ll.id===id?'ll-act':''} ${d?'ll-done':''}" onclick="openLesson(${ll.id})"><div class="ll-num">${d?'✓':i+1}</div><span style="flex:1">${ll.title}</span></div>`;}).join('');
-  const cle=document.getElementById('current-lesson-chat');if(cle)cle.textContent=l.title;
-  // Show related templates
-  const tplSection=document.getElementById('lesson-templates-section');
-  const tplList=document.getElementById('lesson-templates-list');
-  if(tplSection&&tplList&&l.relatedTemplates&&l.relatedTemplates.length>0){
+
+  // Lesson info
+  var xpBadge=document.getElementById('player-xp-badge');
+  if(xpBadge) xpBadge.textContent='+'+toAr(l.xp)+' XP عند الإكمال';
+
+  var textArea=document.getElementById('lesson-text-area');
+  if(textArea) textArea.innerHTML=l.content||'';
+
+  var objList=document.getElementById('lesson-objectives');
+  if(objList) objList.innerHTML=(l.objectives||[]).map(function(o){return '<li>'+o+'</li>';}).join('');
+
+  var done=S.completedLessons.includes(id);
+  var completeBtn=document.getElementById('complete-btn');
+  if(completeBtn){
+    completeBtn.textContent=done?'✓ تم الإكمال':'✓ إكمال الدرس (+'+toAr(l.xp)+' XP)';
+    completeBtn.disabled=done;
+    completeBtn.style.opacity=done?'0.5':'1';
+  }
+
+  // Sidebar lesson list
+  var sll=document.getElementById('sidebar-ll');
+  if(sll){
+    var ml=LESSONS.filter(function(ll){return ll.mod===l.mod;});
+    sll.innerHTML='';
+    ml.forEach(function(ll,idx){
+      var d=S.completedLessons.includes(ll.id);
+      var item=document.createElement('div');
+      item.className='ll-item'+(ll.id===id?' ll-act':'')+(d?' ll-done':'');
+      item.onclick=function(){openLesson(ll.id);};
+      item.innerHTML='<div class="ll-num">'+(d?'✓':idx+1)+'</div><span style="flex:1">'+ll.title+'</span>';
+      sll.appendChild(item);
+    });
+  }
+
+  // Chat context
+  var cle=document.getElementById('current-lesson-chat');
+  if(cle) cle.textContent=l.title;
+
+  // Related templates
+  var tplSection=document.getElementById('lesson-templates-section');
+  var tplList=document.getElementById('lesson-templates-list');
+  if(tplSection && tplList && l.relatedTemplates && l.relatedTemplates.length>0){
     tplSection.style.display='block';
     tplList.innerHTML='';
     l.relatedTemplates.forEach(function(tid){
@@ -877,29 +916,35 @@ function openLesson(id){
       var hasSaved=saved&&Object.values(JSON.parse(saved)).some(function(v){return v&&v.trim();});
       var btn=document.createElement('button');
       btn.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;background:'+(hasSaved?'#f0fdf7':'#fff7f3')+';border:1px solid '+(hasSaved?'var(--teal)':'var(--accent)')+';border-radius:9px;cursor:pointer;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;color:'+(hasSaved?'var(--teal)':'var(--accent)')+';width:100%;text-align:right';
-      btn.innerHTML=t.icon+' '+t.title+(hasSaved?' <span style="margin-right:auto;font-size:10px;opacity:.7">✓ محفوظ</span>':'<span style="margin-right:auto;font-size:10px;opacity:.6">افتح القالب ←</span>');
+      btn.innerHTML=t.icon+' '+t.title+(hasSaved?' <span style="margin-right:auto;font-size:10px;opacity:.7">✓ محفوظ</span>':'<span style="margin-right:auto;font-size:10px;opacity:.6">افتح ←</span>');
       btn.onclick=function(){openTemplate(tid);};
       tplList.appendChild(btn);
     });
   } else if(tplSection){
     tplSection.style.display='none';
   }
-  // Show quiz score if DT lesson
-  const scoreCard=document.getElementById('quiz-score-card');
-  const tplCard=document.getElementById('templates-btn-card');
+
+  // DT score card
+  var scoreCard=document.getElementById('quiz-score-card');
+  var tplCard=document.getElementById('templates-btn-card');
   if(l.mod==='dt'){
-    const sc=(S.quizScores||{})[l.id];
-    if(sc!==undefined){
-      scoreCard.style.display='block';
-      document.getElementById('quiz-score-display').textContent=toAr(sc)+'%';
-      document.getElementById('quiz-score-msg').textContent=sc>=90?'✅ اجتزت هذه المرحلة':'⚠️ تحتاج 90% لفتح الدرس التالي';
-    } else { scoreCard.style.display='none'; }
+    var sc=(S.quizScores||{})[l.id];
+    if(scoreCard){
+      if(sc!==undefined){
+        scoreCard.style.display='block';
+        var sd=document.getElementById('quiz-score-display');
+        var sm=document.getElementById('quiz-score-msg');
+        if(sd) sd.textContent=toAr(sc)+'%';
+        if(sm) sm.textContent=sc>=90?'✅ ممتاز':'📝 استمر في التعلم';
+      } else {
+        scoreCard.style.display='none';
+      }
+    }
     if(tplCard) tplCard.style.display='block';
   } else {
     if(scoreCard) scoreCard.style.display='none';
     if(tplCard) tplCard.style.display='none';
   }
-  showView('player');
 }
 function completeLesson(){
   if(!currentLessonId||S.completedLessons.includes(currentLessonId))return;
@@ -1348,7 +1393,8 @@ function filterPosts(tag){
 
 function seedCommunityIfEmpty(){
   var existing = JSON.parse(localStorage.getItem('ml_posts')||'[]');
-  if(existing.length > 0) return;
+  if(existing.length > 0 && existing.some(function(p){return !p.id.startsWith('seed');})) return;
+  // Re-seed if only has seed posts or is empty
   var starterPosts = [
     {id:'seed1',title:'ما الفرق بين التعاطف والتعاطف الفكري في التصميم؟',body:'أحاول فهم الفرق بين empathy وsympathy في سياق التفكير التصميمي. هل يمكن أحد يشرح الفرق بمثال عملي؟',tag:'التعاطف',author:'سارة المنصور',authorId:'seed',date:new Date(Date.now()-86400000*3).toISOString(),votes:12,solved:true,replies:[{author:'فريق شكّل',text:'التعاطف (Empathy) = تضع نفسك مكان المستخدم وتشعر بما يشعر. التعاطف الفكري (Sympathy) = تفهم موقفه من بُعد دون أن تعيشه. في التصميم نحتاج للتعاطف الحقيقي — اذهب إلى الميدان وعاش التجربة معهم.'}]},
     {id:'seed2',title:'كيف أكتب سؤال HMW جيد؟',body:'كلما حاولت أكتب سؤال HMW إما يكون ضيق جداً أو واسع جداً. فيه طريقة أتدرب عليها؟',tag:'تحديد المشكلة',author:'خالد العمري',authorId:'seed',date:new Date(Date.now()-86400000*2).toISOString(),votes:8,solved:true,replies:[{author:'فريق شكّل',text:'الاختبار البسيط: إذا كان الجواب حلاً واحداً واضحاً = ضيق جداً. إذا كان الجواب "كل شيء" = واسع جداً. السؤال الجيد يُنتج ١٠-٢٠ فكرة مختلفة ممكنة. جرب: اكتب ٥ أسئلة HMW من نفس الملاحظة وقيّمها.'}]},
@@ -1361,8 +1407,11 @@ function seedCommunityIfEmpty(){
 }
 
 function renderCommunity(){ seedCommunityIfEmpty();
-  const posts = loadPosts();
-  const filtered = postFilterTag ? posts.filter(p=>p.tag===postFilterTag) : posts;
+  const userPosts = loadPosts().filter(function(p){return !p.id.startsWith('seed');});
+  const seedPosts = JSON.parse(localStorage.getItem('ml_posts')||'[]').filter(function(p){return p.id.startsWith('seed');});
+  const allPosts = userPosts.concat(seedPosts.length ? seedPosts : []);
+  const posts = allPosts;
+  const filtered = postFilterTag ? posts.filter(function(p){return p.tag===postFilterTag;}) : posts;
   const list = document.getElementById('posts-list');
   if(!filtered.length){
     list.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text3)"><div style="font-size:36px;margin-bottom:12px">💬</div><div style="font-size:14px">لا توجد منشورات بعد — كن أول من يطرح سؤالاً!</div></div>`;
@@ -1901,6 +1950,8 @@ function simulatePayment(){
     S.maxCredits=(S.maxCredits||0)+50;
     save();
   }
+  // Clear any broken empty localStorage entries
+  try{ var pp=JSON.parse(localStorage.getItem('ml_posts')||'null'); if(pp&&pp.length===0) localStorage.removeItem('ml_posts'); }catch(e){}
   // Render everything
   renderDashboard();
   renderLessons();
