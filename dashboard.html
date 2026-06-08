@@ -620,9 +620,9 @@ async function loadLiveContent(){
   }
 }
 
-const MODULES=[{id:'all',label:'جميع الوحدات'},{id:'dt',label:'🧠 التفكير التصميمي'},{id:'cad',label:'🖥️ Fusion 360'},{id:'3dp',label:'🖨️ الطباعة ثلاثية الأبعاد'},{id:'cnc',label:'⚙️ CNC'},{id:'laser',label:'🔆 قطع الليزر'},{id:'elec',label:'💡 الإلكترونيات'}];
+let MODULES=[{id:'all',label:'جميع الوحدات'},{id:'dt',label:'🧠 التفكير التصميمي'},{id:'cad',label:'🖥️ Fusion 360'},{id:'3dp',label:'🖨️ الطباعة ثلاثية الأبعاد'},{id:'cnc',label:'⚙️ CNC'},{id:'laser',label:'🔆 قطع الليزر'},{id:'elec',label:'💡 الإلكترونيات'}];
 // COURSES (modules that require enrollment)
-const COURSES = [
+let COURSES = [
   {id:'dt', title:'التفكير التصميمي', icon:'🧠', price:49, free:false, credits:50,
    desc:'مسار كامل عبر المراحل الخمس بمنهج d.school', lessons:5, badge:'الأكثر شعبية'},
   {id:'cad', title:'Fusion 360 للمبتدئين', icon:'🖥️', price:39, free:false, credits:30,
@@ -637,7 +637,7 @@ const COURSES = [
    desc:'مبادئ التفريز CNC وبرمجة G-code', lessons:1, badge:''},
 ];
 
-const LESSONS=[
+let LESSONS=[
   {id:1,title:'مقدمة في التفكير التصميمي',type:'video',mod:'dt',icon:'🧠',dur:'١٢ دقيقة',xp:50,objectives:['فهم مفهوم التفكير التصميمي','تعلم المراحل الخمس الأساسية','التمييز بين التفكير الخطي والتصميمي'],content:`<h3>ما هو التفكير التصميمي؟</h3><p>التفكير التصميمي هو منهجية إبداعية تركز على الإنسان لحل المشكلات المعقدة.</p><div class="callout"><p>💡 <strong>المبدأ الأساسي:</strong> ابدأ بفهم الإنسان، وليس بالحل.</p></div>`},
   {id:2,title:'مرحلة التعاطف: الأساسيات',type:'text',mod:'dt',icon:'🔍',dur:'٨ دقائق',xp:50,objectives:['تعريف التعاطف في سياق التصميم','فهم الفرق بين التعاطف والتعاطف الفكري'],content:`<h3>ما هو التعاطف؟</h3><p>التعاطف هو القدرة على الفهم العميق لتجارب المستخدمين ومشاعرهم.</p><div class="callout"><p>🎯 المستخدم يقول "أريد زرًا أكبر" — أنت تفهم أنه "يحتاج إلى ثقة أكبر".</p></div>`},
   {id:3,title:'أدوات الملاحظة الميدانية',type:'video',mod:'dt',icon:'👁️',dur:'١٥ دقيقة',xp:75,objectives:['إتقان تقنيات الملاحظة الصامتة','الفرق بين الملاحظة والتفسير'],content:`<h3>الملاحظة الميدانية</h3><p>مراقبة المستخدمين في بيئتهم الطبيعية دون التدخل.</p><div class="callout"><p>⚠️ سجّل الملاحظة أولاً، ثم افصل وقتاً للتفسير.</p></div>`},
@@ -651,7 +651,7 @@ const LESSONS=[
   {id:11,title:'برمجة Arduino للمبتدئين',type:'lab',mod:'elec',icon:'💡',dur:'٤٠ دقيقة',xp:200,objectives:['كتابة أول كود Arduino','التحكم في LED'],content:`<h3>Arduino</h3><p>لوحة تحكم مفتوحة المصدر لبرمجة الإلكترونيات.</p><div class="callout"><p>💡 أول مشروع: LED يومض (Blink) — Hello World للإلكترونيات!</p></div>`},
   {id:12,title:'مقدمة في التفريز CNC',type:'video',mod:'cnc',icon:'⚙️',dur:'١٦ دقيقة',xp:75,objectives:['فهم مبدأ عمل ماكينة CNC Router'],content:`<h3>CNC Router</h3><p>تتحرك في 3 محاور (X,Y,Z) لقطع وتشكيل المواد الصلبة.</p><div class="callout"><p>⚙️ CNC تقطع بعمق حقيقي، الليزر يقتصر على السطح.</p></div>`},
 ];
-const QUESTIONS_BANK=[
+let QUESTIONS_BANK=[
   {q:'ما هو الهدف الرئيسي من مرحلة التعاطف؟',opts:['تصميم النموذج مباشرة','فهم احتياجات المستخدمين الحقيقية','توليد أكبر عدد من الأفكار','اختبار الحلول'],ans:1,ex:'التعاطف هو فهم المستخدمين بعمق من خلال الملاحظة والمقابلة.'},
   {q:'ما الفرق بين الملاحظة والتفسير؟',opts:['لا فرق','الملاحظة موضوعية والتفسير ذاتي','التفسير يأتي قبل الملاحظة','الملاحظة أقل أهمية'],ans:1,ex:'الملاحظة تسجّل ما تراه حرفياً، التفسير هو فهمك لدلالة ما رأيته.'},
   {q:'ما الخطأ في: "كيف يمكننا بناء تطبيق مذاكرة؟"',opts:['لا شيء، صياغة ممتازة','تتضمن حلاً مسبقاً','قصيرة جداً','لا تبدأ بـ كيف'],ans:1,ex:'أسئلة HMW يجب ألّا تحتوي على حل مسبق.'},
@@ -904,7 +904,7 @@ function showQuizResults(){
     const retryBtn=document.getElementById('retry-quiz-btn');
     if(retryBtn) retryBtn.textContent=passed?'🔄 إعادة':'🔄 حاول مجدداً ('+toAr(90-pct)+'% ناقصة)';
   } else {
-    const msgs=['حاول مرة أخرى!','جيد! راجع الإجابات.','أداء رائع!','ممتاز تماماً!'];
+    let msgs=['حاول مرة أخرى!','جيد! راجع الإجابات.','أداء رائع!','ممتاز تماماً!'];
     const mi=sc/tot>=1?3:sc/tot>=.75?2:sc/tot>=.5?1:0;
     document.getElementById('res-title').textContent=['راجع الدروس','جيد!','رائع 🎉','ممتاز 🏆'][mi];
     document.getElementById('res-msg').textContent=msgs[mi];
@@ -934,12 +934,12 @@ let chatHistory=[],msgCount=0;
 function renderQuickQs(){const el=document.getElementById('quick-qs');if(!el)return;el.innerHTML=QUICK_QS.map(q=>`<div class="quick-q" onclick="askQ('${q.replace(/'/g,"\\'")}')">${q}</div>`).join('');}
 
 function addChatMsg(text,type){
-  const msgs=document.getElementById('chat-msgs');const div=document.createElement('div');div.className='msg '+type;
+  let msgs=document.getElementById('chat-msgs');const div=document.createElement('div');div.className='msg '+type;
   const t=new Date();const time=`${t.getHours()}:${t.getMinutes().toString().padStart(2,'0')}`;
   div.innerHTML=`<div class="m-av ${type}">${type==='ai'?'🤖':'أح'}</div><div><div class="m-bubble">${text.replace(/\n/g,'<br>')}</div><div class="m-time">${time}</div></div>`;
   msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
 }
-function showTyping(){const msgs=document.getElementById('chat-msgs');const d=document.createElement('div');d.className='msg ai';d.id='typing-el';d.innerHTML=`<div class="m-av ai">🤖</div><div class="m-bubble"><div class="typing-ind"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
+function showTyping(){let msgs=document.getElementById('chat-msgs');const d=document.createElement('div');d.className='msg ai';d.id='typing-el';d.innerHTML=`<div class="m-av ai">🤖</div><div class="m-bubble"><div class="typing-ind"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
 function removeTyping(){const e=document.getElementById('typing-el');if(e)e.remove();}
 function askQ(q){document.getElementById('chat-inp').value=q;sendMsg();}
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
@@ -1125,7 +1125,7 @@ function renderLessons(){
 // ═══════════════════════════════════════════════════════
 // EVENTS SYSTEM
 // ═══════════════════════════════════════════════════════
-const EVENTS_DATA = [
+let EVENTS_DATA = [
   {id:'e1',type:'webinar',title:'مقدمة في التفكير التصميمي',date:'2025-07-10',time:'19:00',duration:'٩٠ دقيقة',host:'د. سارة الأحمد',free:true,seats:100,registered:67,lang:'عربي',platform:'Zoom',link:'https://eventbrite.com',desc:'جلسة تعريفية مجانية بمنهجية التفكير التصميمي وكيف تُطبّقها في حياتك اليومية.',tags:['تفكير تصميمي','مبتدئين']},
   {id:'e2',type:'meetup',title:'لقاء صانعي عمّان',date:'2025-07-18',time:'17:00',duration:'٣ ساعات',host:'فريق MenaLab',free:true,seats:40,registered:28,lang:'عربي',platform:'Fab Lab Amman',link:'https://eventbrite.com',desc:'لقاء مجتمعي حضوري في Fab Lab عمّان. شارك مشروعك، تعرّف على الصانعين، واستكشف التجهيزات.',tags:['حضوري','تواصل','صناع']},
   {id:'e3',type:'workshop',title:'ورشة: طباعة نموذجك الأول',date:'2025-07-25',time:'10:00',duration:'٤ ساعات',host:'م. خالد المنصور',free:false,price:25,seats:15,registered:12,lang:'عربي',platform:'Fab Lab Amman',link:'https://eventbrite.com',desc:'ورشة عملية حضورية: من التصميم في Fusion 360 إلى الطباعة ثلاثية الأبعاد الفعلية. الأدوات متاحة.',tags:['حضوري','طباعة ثلاثية','عملي']},
@@ -1250,7 +1250,7 @@ function showLessonHint(lessonId) {
   const hints = LESSON_HINTS[lessonId];
   if(!hints) return;
   const hint = hints[Math.floor(Math.random()*hints.length)];
-  const msgs = document.getElementById('chat-msgs');
+  let msgs = document.getElementById('chat-msgs');
   if(!msgs) return;
   const div = document.createElement('div');
   div.className = 'msg ai';
@@ -1719,7 +1719,7 @@ function loadChatHistory(){
     const saved = JSON.parse(localStorage.getItem('ml_chat')||'[]');
     if(!saved.length) return;
     chatHistory = saved;
-    const msgs = document.getElementById('chat-msgs');
+    let msgs = document.getElementById('chat-msgs');
     saved.forEach(function(m){
       const div = document.createElement('div');
       div.className = 'msg ' + m.role.replace('assistant','ai');
