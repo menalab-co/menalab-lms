@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شكّل — بوابة المرشدين</title>
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+<div class="modal-overlay open" id="login-modal">
+  <div class="modal-box" style="max-width:380px">
+    <div style="text-align:center;margin-bottom:20px"><div data-logo="44" style="display:inline-block"></div><h3 style="margin-top:10px">بوابة المرشدين</h3></div>
+    <div id="login-err" style="display:none;background:var(--red-light);color:var(--red);padding:8px 12px;border-radius:var(--r);font-size:12px;margin-bottom:12px"></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">اسم المستخدم</label>
+      <input class="inp" id="m-user" placeholder="sara / khaled / noura / ahmed">
+    </div>
+    <input class="inp" id="m-pass" type="password" placeholder="كلمة المرور" dir="ltr" style="margin-bottom:14px" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary btn-full btn-lg" onclick="doLogin()">دخول ←</button>
+    <div style="text-align:center;margin-top:12px"><a href="index.html" style="font-size:12px;color:var(--text3)">العودة للرئيسية</a></div>
+  </div>
+</div>
+
+<div class="app-layout" id="portal-app" style="display:none">
+<aside class="sidebar">
+  <div class="sidebar-logo"><a href="index.html" class="logo-mark"><span data-logo="32"></span><span class="logo-name light" style="font-size:15px">شكّل</span></a></div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" id="nav-overview" onclick="showSection('overview')"><span class="nav-icon">📊</span> نظرة عامة</button>
+    <button class="nav-item" id="nav-questions" onclick="showSection('questions')"><span class="nav-icon">❓</span> الأسئلة <span class="nav-badge" id="q-badge">0</span></button>
+    <button class="nav-item" id="nav-sessions" onclick="showSection('sessions')"><span class="nav-icon">📅</span> الجلسات <span class="nav-badge" id="s-badge">0</span></button>
+    <button class="nav-item" id="nav-profile" onclick="showSection('profile')"><span class="nav-icon">👤</span> ملفي</button>
+    <button class="nav-item" onclick="doLogout()"><span class="nav-icon">🚪</span> خروج</button>
+  </nav>
+</aside>
+
+<main class="main-content">
+  <div style="margin-bottom:24px"><h2 id="section-title">نظرة عامة</h2></div>
+
+  <div id="sec-overview">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+      <div class="card"><div style="font-size:22px;margin-bottom:6px">❓</div><div style="font-size:24px;font-weight:700" id="ov-q">0</div><div style="font-size:12px;color:var(--text3)">أسئلة معلّقة</div></div>
+      <div class="card"><div style="font-size:22px;margin-bottom:6px">📅</div><div style="font-size:24px;font-weight:700" id="ov-s">0</div><div style="font-size:12px;color:var(--text3)">طلبات جلسات</div></div>
+      <div class="card"><div style="font-size:22px;margin-bottom:6px">⭐</div><div style="font-size:24px;font-weight:700" id="ov-r">—</div><div style="font-size:12px;color:var(--text3)">التقييم</div></div>
+    </div>
+    <div class="card"><div id="mentor-info"></div></div>
+  </div>
+
+  <div id="sec-questions" style="display:none">
+    <div id="questions-list"></div>
+  </div>
+
+  <div id="sec-sessions" style="display:none">
+    <div id="sessions-list"></div>
+  </div>
+
+  <div id="sec-profile" style="display:none">
+    <div class="card">
+      <h4 style="margin-bottom:16px">ملفي الشخصي</h4>
+      <div id="profile-content"></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script src="_shared.js"></script>
+<script>
+var MENTOR_ACCOUNTS={sara:'m1',khaled:'m2',noura:'m3',ahmed:'m4'};
+var MENTOR_PASS='mentor2025';
+var currentMentor=null;
+
+function doLogin(){
+  var user=document.getElementById('m-user').value.trim().toLowerCase();
+  var pass=document.getElementById('m-pass').value;
+  var err=document.getElementById('login-err');
+  err.style.display='none';
+  if(!MENTOR_ACCOUNTS[user]||pass!==MENTOR_PASS){
+    err.textContent='بيانات خاطئة. جرّب: sara/khaled/noura/ahmed مع كلمة مرور mentor2025';
+    err.style.display='block';return;
+  }
+  currentMentor=MENTORS.find(function(m){return m.id===MENTOR_ACCOUNTS[user];});
+  localStorage.setItem('sh_mentor_session',JSON.stringify({id:currentMentor.id,user}));
+  document.getElementById('login-modal').classList.remove('open');
+  document.getElementById('portal-app').style.display='flex';
+  renderAll();
+}
+
+function doLogout(){localStorage.removeItem('sh_mentor_session');window.location.reload();}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var sess=JSON.parse(localStorage.getItem('sh_mentor_session')||'null');
+  if(sess){
+    currentMentor=MENTORS.find(function(m){return m.id===sess.id;});
+    if(currentMentor){
+      document.getElementById('login-modal').classList.remove('open');
+      document.getElementById('portal-app').style.display='flex';
+      renderAll();
+    }
+  }
+});
+
+function showSection(sec){
+  ['overview','questions','sessions','profile'].forEach(function(s){
+    document.getElementById('sec-'+s).style.display=s===sec?'':'none';
+    document.getElementById('nav-'+s).classList.toggle('active',s===sec);
+  });
+  var titles={overview:'نظرة عامة',questions:'الأسئلة',sessions:'الجلسات',profile:'ملفي الشخصي'};
+  document.getElementById('section-title').textContent=titles[sec];
+}
+
+function renderAll(){
+  if(!currentMentor)return;
+  var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]').filter(function(r){return r.mentorId===currentMentor.id;});
+  var questions=reqs.filter(function(r){return r.type==='question';});
+  var sessions=reqs.filter(function(r){return r.type==='session';});
+  var pending_q=questions.filter(function(r){return r.status==='pending';}).length;
+  var pending_s=sessions.filter(function(r){return r.status==='pending';}).length;
+
+  document.getElementById('ov-q').textContent=toAr(pending_q);
+  document.getElementById('ov-s').textContent=toAr(pending_s);
+  document.getElementById('ov-r').textContent=currentMentor.rating;
+  document.getElementById('q-badge').textContent=toAr(pending_q);
+  document.getElementById('s-badge').textContent=toAr(pending_s);
+
+  document.getElementById('mentor-info').innerHTML=
+    '<div style="display:flex;gap:14px;align-items:center">'+
+      '<div style="width:56px;height:56px;border-radius:50%;background:'+currentMentor.color+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">'+currentMentor.av+'</div>'+
+      '<div><div style="font-size:17px;font-weight:700">'+currentMentor.name+'</div><div style="font-size:13px;color:var(--text2)">'+currentMentor.title+'</div>'+
+      '<div style="font-size:12px;color:var(--text3);margin-top:4px">'+toAr(currentMentor.sessions)+' جلسة · ⭐ '+currentMentor.rating+'</div></div>'+
+    '</div>';
+
+  // Questions
+  var qlist=document.getElementById('questions-list');
+  qlist.innerHTML='';
+  if(!questions.length){qlist.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--text3)">لا توجد أسئلة بعد</div>';return;}
+  questions.forEach(function(r){
+    var card=document.createElement('div');
+    card.className='card';
+    card.style.marginBottom='12px';
+    card.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">'+
+        '<div><div style="font-size:13px;font-weight:600">'+r.student+'</div><div style="font-size:11px;color:var(--text3)">'+new Date(r.date).toLocaleDateString('ar')+'</div></div>'+
+        '<span class="badge '+(r.status==='answered'?'badge-teal':'badge-gold')+'">'+( r.status==='answered'?'تم الرد':'معلّق')+'</span>'+
+      '</div>'+
+      '<div style="font-size:13px;color:var(--text2);margin-bottom:12px;padding:10px;background:var(--warm3);border-radius:var(--r)">'+r.question+'</div>'+
+      (r.reply?'<div style="font-size:12px;padding:8px;background:var(--teal-light);border-radius:var(--r);color:var(--teal)"><strong>ردك:</strong> '+r.reply+'</div>':
+        '<div style="display:flex;gap:8px">'+
+          '<input type="text" class="inp" id="rep-'+r.id+'" placeholder="اكتب ردك..." style="flex:1">'+
+          '<button class="btn btn-teal btn-sm" onclick="answerQuestion(\''+r.id+'\')">إرسال</button>'+
+        '</div>'
+      );
+    qlist.appendChild(card);
+  });
+
+  // Sessions
+  var slist=document.getElementById('sessions-list');
+  slist.innerHTML='';
+  if(!sessions.length){slist.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--text3)">لا توجد طلبات جلسات بعد</div>';return;}
+  sessions.forEach(function(r){
+    var card=document.createElement('div');
+    card.className='card';
+    card.style.marginBottom='12px';
+    card.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">'+
+        '<div><div style="font-size:13px;font-weight:600">'+r.student+'</div><div style="font-size:11px;color:var(--text3)">'+new Date(r.date).toLocaleDateString('ar')+'</div></div>'+
+        '<span class="badge '+(r.status==='accepted'?'badge-teal':r.status==='declined'?'badge-red':'badge-gold')+'">'+( r.status==='accepted'?'مقبول':r.status==='declined'?'مرفوض':'معلّق')+'</span>'+
+      '</div>'+
+      '<div style="font-size:13px;margin-bottom:6px"><strong>الموضوع:</strong> '+(r.topic||'—')+'</div>'+
+      '<div style="font-size:12px;color:var(--text3);margin-bottom:10px"><strong>الوقت:</strong> '+(r.time||'—')+'</div>'+
+      (r.notes?'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+r.notes+'</div>':'')+
+      (r.status==='pending'?
+        '<div style="display:flex;gap:8px">'+
+          '<button class="btn btn-teal btn-sm" onclick="updateSession(\''+r.id+'\',\'accepted\')">✓ قبول</button>'+
+          '<button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)" onclick="updateSession(\''+r.id+'\',\'declined\')">✗ رفض</button>'+
+        '</div>':''
+      );
+    slist.appendChild(card);
+  });
+
+  // Profile
+  document.getElementById('profile-content').innerHTML=
+    '<div style="display:flex;flex-direction:column;gap:12px">'+
+      '<div class="form-group"><label class="form-label">الاسم</label><input class="inp" value="'+currentMentor.name+'" readonly></div>'+
+      '<div class="form-group"><label class="form-label">اللقب</label><input class="inp" value="'+currentMentor.title+'" readonly></div>'+
+      '<div class="form-group"><label class="form-label">نبذة</label><textarea class="inp textarea" readonly>'+currentMentor.bio+'</textarea></div>'+
+      '<div class="form-group"><label class="form-label">التخصصات</label><input class="inp" value="'+currentMentor.specs.join(' · ')+'" readonly></div>'+
+      '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--warm3);border-radius:var(--r2)">'+
+        '<span style="font-size:13px">حالة الاستقبال:</span>'+
+        '<button onclick="toggleAvailability()" class="btn '+(currentMentor.available?'btn-teal':'btn-outline')+' btn-sm">'+( currentMentor.available?'✅ متاح — اضغط لإيقاف':'⛔ غير متاح — اضغط للتفعيل')+'</button>'+
+      '</div>'+
+    '</div>';
+}
+
+function answerQuestion(id){
+  var inp=document.getElementById('rep-'+id);
+  if(!inp||!inp.value.trim()){showToast('يرجى كتابة الرد');return;}
+  var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
+  var req=reqs.find(function(r){return r.id===id;});
+  if(req){req.reply=inp.value.trim();req.status='answered';}
+  localStorage.setItem('sh_mentor_reqs',JSON.stringify(reqs));
+  showToast('✅ تم إرسال الرد');renderAll();
+}
+function updateSession(id,status){
+  var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
+  var req=reqs.find(function(r){return r.id===id;});
+  if(req)req.status=status;
+  localStorage.setItem('sh_mentor_reqs',JSON.stringify(reqs));
+  showToast(status==='accepted'?'✅ تم قبول الجلسة':'تم رفض الطلب');renderAll();
+}
+function toggleAvailability(){
+  currentMentor.available=!currentMentor.available;
+  showToast(currentMentor.available?'✅ أنت الآن متاح للطلاب':'⛔ تم إيقاف الاستقبال');
+  renderAll();
+}
+</script>
+</body>
+</html>

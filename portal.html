@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شكّل — بوابة المشروع</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.stage-header{background:var(--ink);color:#fff;padding:20px 24px;border-radius:var(--r2);margin-bottom:20px}
+.stage-progress-row{display:flex;align-items:center;gap:8px;margin:16px 0}
+.stage-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.stage-pill.done{background:rgba(235,200,76,.2);color:var(--gold)}
+.stage-pill.active{background:var(--gold);color:var(--ink)}
+.stage-pill.locked{background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);cursor:not-allowed}
+.lesson-content{font-size:14px;line-height:1.8;color:var(--text2)}
+.lesson-content h3{font-size:17px;font-weight:700;color:var(--text);margin:20px 0 8px}
+.lesson-content h4{font-size:15px;font-weight:600;color:var(--text);margin:16px 0 6px}
+.lesson-content ul,.lesson-content ol{padding-right:20px;margin:8px 0}
+.lesson-content li{margin-bottom:6px}
+.lesson-content strong{color:var(--text);font-weight:600}
+.template-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r2);padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;margin-bottom:10px}
+.template-card:hover{border-color:var(--gold);box-shadow:var(--shadow)}
+.template-card.submitted{background:var(--teal-light);border-color:var(--teal)}
+.template-icon{font-size:28px;flex-shrink:0}
+.quiz-container{max-width:640px}
+.quiz-option{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r);margin-bottom:8px;cursor:pointer;transition:all .15s;font-size:13px;font-weight:500}
+.quiz-option:hover{border-color:var(--gold-dark);background:rgba(235,200,76,.05)}
+.quiz-option.selected{border-color:var(--gold-dark);background:rgba(235,200,76,.1)}
+.quiz-option.correct{border-color:var(--teal);background:var(--teal-light);color:var(--teal)}
+.quiz-option.wrong{border-color:var(--red);background:var(--red-light);color:var(--red)}
+.quiz-dot{width:8px;height:8px;border-radius:50%;background:var(--warm2);flex-shrink:0}
+.quiz-dot.answered{background:var(--gold)}
+.quiz-dot.correct{background:var(--teal)}
+.quiz-dot.wrong{background:var(--red)}
+.checklist-row{display:flex;flex-direction:column;gap:8px;padding:16px;background:var(--warm3);border-radius:var(--r2);margin-bottom:16px}
+.template-modal-body{display:flex;flex-direction:column;gap:14px}
+.locked-stage{text-align:center;padding:48px 24px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<!-- TEMPLATE FILL MODAL -->
+<div class="modal-overlay" id="template-modal">
+  <div class="modal-box" style="max-width:600px">
+    <button class="modal-close" onclick="closeModal('template-modal')">✕</button>
+    <div id="template-modal-content"></div>
+  </div>
+</div>
+
+<div class="app-layout">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <a href="index.html" class="logo-mark">
+      <span data-logo="32"></span>
+      <span class="logo-name light" style="font-size:15px">شكّل</span>
+    </a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">التنقل</div>
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">🏠</span> لوحة التحكم</a>
+    <a href="portal.html" class="nav-item active"><span class="nav-icon">🎯</span> المشروع</a>
+    <a href="courses.html" class="nav-item"><span class="nav-icon">📚</span> الدورات</a>
+    <div class="sidebar-section">مراحل التفكير التصميمي</div>
+    <div id="stage-nav"></div>
+  </nav>
+  <div class="sidebar-user">
+    <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:6px">مشروعك</div>
+    <div id="proj-title-sidebar" style="color:rgba(255,255,255,.7);font-size:12px;line-height:1.5;max-height:60px;overflow:hidden"></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content" id="portal-main">
+  <div style="text-align:center;padding:60px">
+    <div style="font-size:32px;margin-bottom:12px">⏳</div>
+    <p>جاري تحميل المشروع...</p>
+  </div>
+</main>
+</div>
+
+<script src="_shared.js"></script>
+<script>
+// ── Templates per stage ──────────────────────────────────
+var STAGE_TEMPLATES = {
+  empathy: [
+    {id:'empathy_map', name:'خريطة التعاطف', icon:'🗺️', desc:'نظّم ما تعلمته: يقول، يفكر، يفعل، يشعر', fields:[
+      {id:'says',   label:'يقول',   type:'textarea', placeholder:'اقتباسات حرفية من المستخدم...'},
+      {id:'thinks', label:'يفكر',   type:'textarea', placeholder:'أفكاره الداخلية التي لا يعبّر عنها...'},
+      {id:'does',   label:'يفعل',   type:'textarea', placeholder:'سلوكياته الملاحظة فعلياً...'},
+      {id:'feels',  label:'يشعر',   type:'textarea', placeholder:'مشاعره وانفعالاته...'},
+      {id:'pains',  label:'إحباطات',type:'textarea', placeholder:'ما يعيقه ويؤلمه...'},
+      {id:'gains',  label:'مكاسب',  type:'textarea', placeholder:'ما يريد تحقيقه وما يسعده...'}
+    ]},
+    {id:'interview_notes', name:'ملاحظات المقابلة', icon:'📝', desc:'سجّل ما تعلمته من المقابلات الميدانية', fields:[
+      {id:'interviewee', label:'المستخدم المُقابَل', type:'input', placeholder:'الاسم أو الوصف'},
+      {id:'observations', label:'ملاحظات مباشرة', type:'textarea', placeholder:'ما قاله وفعله حرفياً...'},
+      {id:'interpretations', label:'تفسيراتي', type:'textarea', placeholder:'ما استنتجته من الملاحظات...'},
+      {id:'surprises', label:'ما فاجأني', type:'textarea', placeholder:'ما كان غير متوقع...'}
+    ]},
+    {id:'observation_log', name:'سجل الملاحظة', icon:'👁️', desc:'وثّق ملاحظاتك الميدانية', fields:[
+      {id:'context', label:'السياق والبيئة', type:'textarea', placeholder:'أين ومتى جرت الملاحظة؟'},
+      {id:'behaviors', label:'السلوكيات المُلاحظة', type:'textarea', placeholder:'ماذا فعل المستخدم بالضبط؟'},
+      {id:'pain_points', label:'نقاط الألم الملاحظة', type:'textarea', placeholder:'أين صعب عليه؟'},
+      {id:'workarounds', label:'الحلول المؤقتة', type:'textarea', placeholder:'كيف يحلّ مشكلته حالياً؟'}
+    ]}
+  ],
+  define: [
+    {id:'pov_statement', name:'بيان POV', icon:'🎯', desc:'صُغ مشكلتك بشكل واضح', fields:[
+      {id:'user_desc', label:'وصف المستخدم', type:'input', placeholder:'اسم ووصف مختصر للمستخدم'},
+      {id:'need', label:'الحاجة الحقيقية', type:'textarea', placeholder:'ماذا يحتاج فعلاً؟'},
+      {id:'insight', label:'الاستنتاج المفاجئ', type:'textarea', placeholder:'لأن... (السبب الجذري غير المتوقع)'},
+      {id:'full_pov', label:'بيان POV الكامل', type:'textarea', placeholder:'[المستخدم] يحتاج إلى [الحاجة] لأن [الاستنتاج]'}
+    ]},
+    {id:'hmw_questions', name:'أسئلة HMW', icon:'❓', desc:'حوّل مشكلتك لفرص تصميمية', fields:[
+      {id:'observation', label:'الملاحظة المرجعية', type:'textarea', placeholder:'من ماذا ستصيغ أسئلتك؟'},
+      {id:'hmw1', label:'سؤال HMW 1', type:'input', placeholder:'كيف يمكننا...'},
+      {id:'hmw2', label:'سؤال HMW 2', type:'input', placeholder:'كيف يمكننا...'},
+      {id:'hmw3', label:'سؤال HMW 3', type:'input', placeholder:'كيف يمكننا...'},
+      {id:'hmw4', label:'سؤال HMW 4', type:'input', placeholder:'كيف يمكننا...'},
+      {id:'hmw5', label:'سؤال HMW 5', type:'input', placeholder:'كيف يمكننا...'},
+      {id:'best_hmw', label:'السؤال الأفضل ولماذا', type:'textarea', placeholder:'اخترت هذا السؤال لأن...'}
+    ]},
+    {id:'insights_summary', name:'ملخص الرؤى', icon:'💎', desc:'لخّص أهم ما تعلمته عن المستخدم', fields:[
+      {id:'key_insight1', label:'الرؤية الأولى', type:'textarea', placeholder:'أهم شيء تعلمته...'},
+      {id:'key_insight2', label:'الرؤية الثانية', type:'textarea', placeholder:'...'},
+      {id:'key_insight3', label:'الرؤية الثالثة', type:'textarea', placeholder:'...'},
+      {id:'core_problem', label:'المشكلة الجوهرية', type:'textarea', placeholder:'بناءً على الرؤى، المشكلة الحقيقية هي...'}
+    ]}
+  ],
+  ideate: [
+    {id:'brainstorm', name:'لوحة العصف الذهني', icon:'⚡', desc:'سجّل كل أفكارك دون نقد', fields:[
+      {id:'challenge', label:'التحدي أو سؤال HMW', type:'input', placeholder:'ما التحدي الذي تعصف ذهنياً عليه؟'},
+      {id:'wild_ideas', label:'الأفكار الجريئة (لا قيود)', type:'textarea', placeholder:'اكتب كل فكرة تخطر ببالك، مهما كانت جريئة أو غريبة...'},
+      {id:'practical_ideas', label:'الأفكار العملية', type:'textarea', placeholder:'الأفكار التي يمكن تنفيذها فعلاً...'},
+      {id:'top3', label:'أفضل ٣ أفكار للمضي قدماً', type:'textarea', placeholder:'١. ...\n٢. ...\n٣. ...'}
+    ]},
+    {id:'scamper', name:'ورقة SCAMPER', icon:'🔄', desc:'استخدم SCAMPER لتوليد أفكار جديدة', fields:[
+      {id:'substitute', label:'S - استبدل', type:'textarea', placeholder:'ماذا يمكنك استبداله في الحل الحالي؟'},
+      {id:'combine',    label:'C - ادمج',   type:'textarea', placeholder:'ماذا يمكنك دمجه مع غيره؟'},
+      {id:'adapt',      label:'A - كيّف',   type:'textarea', placeholder:'كيف يمكنك تكييفه لسياق آخر؟'},
+      {id:'modify',     label:'M - عدّل',   type:'textarea', placeholder:'ما الذي يمكن تعديله أو تكبيره أو تصغيره؟'},
+      {id:'other_uses', label:'P - استخدم لأغراض أخرى', type:'textarea', placeholder:'هل يمكن استخدامه بطريقة مختلفة؟'},
+      {id:'eliminate',  label:'E - احذف',   type:'textarea', placeholder:'ما الذي يمكن إلغاؤه أو تبسيطه؟'},
+      {id:'reverse',    label:'R - اعكس',   type:'textarea', placeholder:'ماذا لو عكست الفكرة أو الترتيب؟'}
+    ]},
+    {id:'top_ideas', name:'أفضل ٣ أفكار', icon:'🏆', desc:'اختر وقيّم أفضل أفكارك', fields:[
+      {id:'idea1',     label:'الفكرة الأولى',    type:'textarea', placeholder:'صف الفكرة...'},
+      {id:'idea1_why', label:'لماذا هي الأفضل؟', type:'textarea', placeholder:'مزاياها وتميّزها...'},
+      {id:'idea2',     label:'الفكرة الثانية',   type:'textarea', placeholder:'صف الفكرة...'},
+      {id:'idea3',     label:'الفكرة الثالثة',   type:'textarea', placeholder:'صف الفكرة...'},
+      {id:'chosen',    label:'الفكرة المختارة للنمذجة', type:'textarea', placeholder:'اخترت... لأن...'}
+    ]}
+  ],
+  prototype: [
+    {id:'prototype_plan', name:'خطة النموذج', icon:'📋', desc:'خطّط لبناء نموذجك الأولي', fields:[
+      {id:'chosen_idea', label:'الفكرة المختارة', type:'textarea', placeholder:'ما الفكرة التي ستُنمذجها؟'},
+      {id:'type',        label:'نوع النموذج',      type:'input',    placeholder:'ورقي / كرتوني / رقمي / مطبوع ثلاثياً...'},
+      {id:'materials',   label:'المواد المطلوبة',  type:'textarea', placeholder:'قائمة بكل ما تحتاجه...'},
+      {id:'steps',       label:'خطوات البناء',     type:'textarea', placeholder:'كيف ستبنيه خطوة بخطوة؟'},
+      {id:'time_budget', label:'الوقت المتاح',     type:'input',    placeholder:'كم ساعة ستخصص لبنائه؟'},
+      {id:'assumptions', label:'الافتراضات التي ستختبرها', type:'textarea', placeholder:'ما الأشياء التي تريد التحقق منها بهذا النموذج؟'}
+    ]},
+    {id:'materials_list', name:'قائمة المواد', icon:'📦', desc:'وثّق المواد والأدوات المستخدمة', fields:[
+      {id:'materials_used', label:'المواد المستخدمة فعلاً', type:'textarea', placeholder:'ما استخدمته بالفعل...'},
+      {id:'tools',          label:'الأدوات',                type:'textarea', placeholder:'الأدوات التي احتجتها...'},
+      {id:'cost',           label:'التكلفة التقريبية',      type:'input',    placeholder:'بالريال أو الدولار'},
+      {id:'time_taken',     label:'الوقت الفعلي المُستغرق', type:'input',    placeholder:'كم استغرق البناء فعلاً؟'}
+    ]},
+    {id:'build_log', name:'سجل البناء', icon:'🔨', desc:'وثّق عملية البناء والتحديات', fields:[
+      {id:'what_built',    label:'ما الذي بنيته',          type:'textarea', placeholder:'صف ما بنيته بالتفصيل...'},
+      {id:'challenges',    label:'التحديات التي واجهتها',  type:'textarea', placeholder:'ما الصعوبات؟'},
+      {id:'solutions',     label:'كيف تجاوزت التحديات',   type:'textarea', placeholder:'كيف حللت المشاكل؟'},
+      {id:'learnings',     label:'ما تعلمته من عملية البناء', type:'textarea', placeholder:'ملاحظات مهمة...'},
+      {id:'ready_to_test', label:'هل النموذج جاهز للاختبار؟', type:'textarea', placeholder:'نعم/لا — لماذا؟'}
+    ]}
+  ],
+  test: [
+    {id:'test_script', name:'سيناريو الاختبار', icon:'📜', desc:'خطّط لجلسة الاختبار مع المستخدمين', fields:[
+      {id:'test_goal',    label:'هدف الاختبار',          type:'textarea', placeholder:'ما الذي تريد اكتشافه من هذا الاختبار؟'},
+      {id:'tasks',        label:'المهام للمستخدم',        type:'textarea', placeholder:'ما ستطلبه من المستخدم فعله بالنموذج؟'},
+      {id:'questions',    label:'أسئلة ما بعد الاختبار', type:'textarea', placeholder:'الأسئلة التي ستطرحها على المستخدم...'},
+      {id:'what_to_watch',label:'ما ستراقبه',             type:'textarea', placeholder:'ردود الفعل والسلوكيات التي تريد ملاحظتها...'}
+    ]},
+    {id:'test_results', name:'نتائج الاختبار', icon:'📊', desc:'سجّل نتائج اختبار المستخدمين', fields:[
+      {id:'user1_feedback', label:'تغذية المستخدم الأول',   type:'textarea', placeholder:'ما قاله وفعله...'},
+      {id:'user2_feedback', label:'تغذية المستخدم الثاني',  type:'textarea', placeholder:'...'},
+      {id:'user3_feedback', label:'تغذية المستخدم الثالث',  type:'textarea', placeholder:'...'},
+      {id:'patterns',       label:'الأنماط المُكتشفة',      type:'textarea', placeholder:'ما تكرّر عند أكثر من مستخدم؟'},
+      {id:'surprises',      label:'ما فاجأك',               type:'textarea', placeholder:'ما لم تتوقعه...'}
+    ]},
+    {id:'feedback_summary', name:'ملخص التغذية الراجعة', icon:'📋', desc:'لخّص ما تعلمته من الاختبار', fields:[
+      {id:'what_worked',   label:'ما نجح',               type:'textarea', placeholder:'ما أعجب المستخدمين وعمل معهم جيداً...'},
+      {id:'what_failed',   label:'ما لم ينجح',           type:'textarea', placeholder:'ما أربكهم أو صعب عليهم...'},
+      {id:'improvements',  label:'التحسينات المطلوبة',    type:'textarea', placeholder:'ما يجب تعديله أو تحسينه...'},
+      {id:'decision',      label:'القرار: هل نكرّر؟',    type:'textarea', placeholder:'سنُعدّل / سنُعيد البناء / سنتقدّم — لماذا؟'}
+    ]}
+  ],
+  iterate: [
+    {id:'iteration_log', name:'سجل التكرار', icon:'🔄', desc:'وثّق التغييرات التي أجريتها', fields:[
+      {id:'what_changed',  label:'ما الذي غيّرته',     type:'textarea', placeholder:'التعديلات المحددة على النموذج...'},
+      {id:'why_changed',   label:'لماذا غيّرته',        type:'textarea', placeholder:'بناءً على أي تغذية راجعة؟'},
+      {id:'how_changed',   label:'كيف غيّرته',           type:'textarea', placeholder:'العملية التقنية للتعديل...'},
+      {id:'before_after',  label:'قبل/بعد',              type:'textarea', placeholder:'الفرق بين الإصدار السابق والحالي...'}
+    ]},
+    {id:'updated_prototype', name:'النموذج المُحدَّث', icon:'🆕', desc:'وثّق النسخة الجديدة من نموذجك', fields:[
+      {id:'version_num',   label:'رقم الإصدار',          type:'input',    placeholder:'٢.٠ أو ٣.٠...'},
+      {id:'description',   label:'وصف النموذج المُحدَّث', type:'textarea', placeholder:'ما الذي يبدو عليه الآن؟'},
+      {id:'key_improvements', label:'التحسينات الرئيسية', type:'textarea', placeholder:'أبرز ما تحسّن...'},
+      {id:'ready_for_test', label:'هل جاهز لاختبار آخر؟', type:'input',   placeholder:'نعم/لا'}
+    ]},
+    {id:'final_reflection', name:'التأمل النهائي', icon:'🌟', desc:'تأمّل رحلتك كاملة', fields:[
+      {id:'journey_summary', label:'ملخص الرحلة',          type:'textarea', placeholder:'صف رحلتك من البداية للنهاية...'},
+      {id:'key_learnings',   label:'أهم ما تعلمته',        type:'textarea', placeholder:'الدروس التي لن تنساها...'},
+      {id:'what_next',       label:'الخطوة التالية',        type:'textarea', placeholder:'ماذا ستفعل بهذا المشروع؟'},
+      {id:'advice',          label:'نصيحة لنفسك القديمة',  type:'textarea', placeholder:'لو رجعت للبداية، ماذا كنت ستفعل بشكل مختلف؟'}
+    ]}
+  ]
+};
+
+// ── Quiz questions per stage ─────────────────────────────
+var STAGE_QUIZZES = {
+  empathy: [
+    {q:'ما هدف مرحلة التعاطف في التفكير التصميمي؟', opts:['تصميم الحل المثالي','فهم المستخدم وتجربته الحقيقية','كتابة الكود البرمجي','تحديد ميزانية المشروع'], a:1},
+    {q:'ما الفرق بين الملاحظة والتفسير في البحث الميداني؟', opts:['لا فرق بينهما','الملاحظة: ما تراه حرفياً. التفسير: ما تستنتجه','التفسير أهم من الملاحظة','الملاحظة أداة إلكترونية'], a:1},
+    {q:'ما أفضل سؤال تطرحه في مقابلة المستخدم؟', opts:['هل ستستخدم هذا المنتج؟','ماذا تعمل عادةً عند مواجهة هذه المشكلة؟','كم عمرك؟','هل تحب التكنولوجيا؟'], a:1},
+    {q:'في خريطة التعاطف، ماذا يعني محور "يفكر"؟', opts:['الأفكار التي يُعلنها','أفكاره الداخلية التي لا يُعبّر عنها عادةً','تفكيره في المستقبل','خططه المهنية'], a:1},
+    {q:'لماذا نتجنب الافتراضات المسبقة في مرحلة التعاطف؟', opts:['لتوفير الوقت','لأن الافتراضات قد تمنعنا من اكتشاف الحاجات الحقيقية','لأن الافتراضات صحيحة دائماً','لا نتجنبها'], a:1},
+    {q:'ما أسلوب جمع البيانات الأفضل في التعاطف؟', opts:['الاستبيان الكمي فقط','مزيج من المقابلات والملاحظة الميدانية','البحث في الإنترنت','الاستعانة بالإحصاء'], a:1},
+    {q:'ما المحور الذي يُدوَّن فيه "اقتباسات حرفية من المستخدم" في خريطة التعاطف؟', opts:['يفكر','يشعر','يقول','يفعل'], a:2},
+    {q:'متى تنتهي مرحلة التعاطف؟', opts:['بعد مقابلة واحدة','عندما تشعر أن لديك فهماً عميقاً كافياً للمضي قدماً','بعد أسبوع','عند نفاد الوقت'], a:1},
+    {q:'ما الخطأ الشائع في مرحلة التعاطف؟', opts:['مقابلة مستخدمين حقيقيين','افتراض ما يحتاجه المستخدم قبل البحث','توثيق الملاحظات','طرح أسئلة مفتوحة'], a:1},
+    {q:'لماذا نفضّل الأسئلة المفتوحة على المغلقة في المقابلات؟', opts:['لأنها أسرع','لأنها تُتيح للمستخدم مشاركة تجربته بعمق دون توجيه','لأنها أسهل في التحليل','لا فرق'], a:1}
+  ],
+  define: [
+    {q:'ما صيغة بيان POV الصحيحة؟', opts:['[الحل] يحل [المشكلة]','[المستخدم] يحتاج [الحاجة] لأن [الاستنتاج]','[المنتج] بسعر [التكلفة]','[الوقت] مع [الموارد]'], a:1},
+    {q:'ما خصائص سؤال HMW الجيد؟', opts:['ضيق جداً لحل واحد محدد','واسع جداً بلا تركيز','واسع بما يكفي للإبداع وضيق بما يكفي للتركيز','بسيط لا يحتاج تفكيراً'], a:2},
+    {q:'ما الهدف من مرحلة تحديد المشكلة؟', opts:['إيجاد الحل النهائي','تحويل الرؤى إلى مشكلة واضحة قابلة للحل','جمع المزيد من البيانات','تصميم النموذج'], a:1},
+    {q:'لماذا يُعدّ الاستنتاج في بيان POV مهماً؟', opts:['لأنه يجعل الجملة أطول','لأنه يكشف السبب الجذري الذي قد يفتح آفاقاً جديدة للحل','لأنه متطلب أكاديمي','لأنه يستعرض معلوماتنا'], a:1},
+    {q:'من يكتب بيان POV؟', opts:['المستخدم نفسه','فريق التصميم بناءً على بحث التعاطف','المدير التنفيذي','لا أحد'], a:1},
+    {q:'كم عدد أسئلة HMW المطلوبة على الأقل قبل الاختيار؟', opts:['١','٢-٣','٥ أو أكثر','لا حد أدنى'], a:2},
+    {q:'ما الفرق بين المشكلة الظاهرة والمشكلة الجذرية؟', opts:['لا فرق بينهما','الظاهرة: ما يُشكى منه. الجذرية: السبب الحقيقي الخفي','الجذرية ليست مهمة','الظاهرة أعمق دائماً'], a:1},
+    {q:'ما الخطأ في هذا السؤال HMW: "كيف نبني تطبيقاً للمذاكرة؟"', opts:['لا خطأ فيه','هو ضيق جداً — يفترض الحل مسبقاً','هو واسع جداً','الكلمات غير صحيحة'], a:1},
+    {q:'متى تنجح مرحلة تحديد المشكلة؟', opts:['عند كتابة أطول وصف','عندما يوافق الجميع على تعريف المشكلة والمستخدم المستهدف','بعد أسبوع من البحث','عند اكتمال العرض التقديمي'], a:1},
+    {q:'ما أفضل مصدر لكتابة بيان POV؟', opts:['تخيّلات الفريق','الأبحاث الأكاديمية فقط','الرؤى المستخرجة مباشرة من بحث التعاطف','الخبرات السابقة للفريق'], a:2}
+  ],
+  ideate: [
+    {q:'ما أهم قاعدة في جلسة العصف الذهني؟', opts:['التركيز على الجودة فقط','عدم النقد أثناء توليد الأفكار','التقليل من عدد الأفكار','الاتفاق الفوري على فكرة واحدة'], a:1},
+    {q:'ما معنى حرف S في SCAMPER؟', opts:['صغّر','ضاعف','استبدل','سرّع'], a:2},
+    {q:'لماذا الكمية مهمة في بداية العصف الذهني؟', opts:['لملء الأوراق','لأن كثرة الأفكار تزيد احتمال وجود أفكار جيدة','لإرهاق الفريق','لا سبب منطقي'], a:1},
+    {q:'متى تبدأ بتقييم الأفكار في العصف الذهني؟', opts:['من البداية','بعد توليد عدد كافٍ من الأفكار','لا تقيّم أبداً','عند انتهاء الوقت'], a:1},
+    {q:'ما الهدف من مرحلة توليد الأفكار؟', opts:['اختيار حل واحد نهائي','توليد أكبر عدد ممكن من الأفكار المتنوعة','نقد أفكار الآخرين','وضع الخطة التنفيذية'], a:1},
+    {q:'ما معنى "البناء على أفكار الآخرين" في العصف الذهني؟', opts:['سرقة أفكارهم','تطوير وتعديل فكرة شخص آخر لتحسينها','نسخ أفكارهم بالضبط','رفض أفكارهم'], a:1},
+    {q:'ما الخطوة التالية بعد توليد الأفكار؟', opts:['البناء المباشر','تصفية وتقييم الأفكار باستخدام معايير محددة','نشرها على الإنترنت','العودة للتعاطف مباشرة'], a:1},
+    {q:'ما معنى حرف E في SCAMPER؟', opts:['عزّز','احذف أو أزل','افحص','اعمل'], a:1},
+    {q:'ما الخطأ في البدء بـ"الأفكار العملية" فقط في العصف الذهني؟', opts:['لا خطأ فيه','يحدّ من الإبداع ويمنع الأفكار الجريئة التي قد تكون الأفضل','يوفر الوقت','هو الأفضل دائماً'], a:1},
+    {q:'كيف نختار الأفكار بعد العصف الذهني؟', opts:['صوت الأغلبية','بناءً على معايير: قابلية التنفيذ، التأثير، الابتكار، التوافق مع POV','رأي المدير','الفكرة الأولى دائماً'], a:1}
+  ],
+  prototype: [
+    {q:'ما الهدف الأساسي من النموذج الأولي؟', opts:['الحصول على منتج نهائي','اختبار فرضيات والتعلم بأقل تكلفة وأسرع وقت','الحصول على تمويل','إرضاء العميل'], a:1},
+    {q:'ما نوع النموذج المناسب للبدء في معظم الحالات؟', opts:['النموذج الرقمي الكامل','النموذج الورقي أو الكرتوني','النموذج المطبوع ثلاثياً','النموذج الافتراضي'], a:1},
+    {q:'لماذا نبني أكثر من نموذج أولي؟', opts:['لإضاعة الوقت','لاختبار فرضيات مختلفة وتعلم شيء من كل نموذج','لإقناع المستثمرين','لا نبني أكثر من واحد'], a:1},
+    {q:'ما مبدأ "الفشل المبكر" في النمذجة؟', opts:['الفشل أمر سيئ يجب تجنبه','الفشل في مرحلة مبكرة بتكلفة منخفضة أفضل من الفشل لاحقاً بتكلفة عالية','الفشل يوقف المشروع','لا يوجد مصطلح كهذا'], a:1},
+    {q:'ما القاعدة الذهبية في بناء النموذج الأولي؟', opts:['ابنِ ببطء وإتقان','ابنِ بسرعة واختبر مبكراً','لا تبنِ قبل الحصول على تمويل','ابنِ النهائي من البداية'], a:1},
+    {q:'ما الفرق بين النموذج الأولي والمنتج النهائي؟', opts:['لا فرق','النموذج أداة تعلّم غير مكتملة، والمنتج النهائي حل جاهز للسوق','النموذج أفضل من المنتج','المنتج أرخص من النموذج'], a:1},
+    {q:'ماذا تفعل إذا فشل نموذجك الأولي في الاختبار؟', opts:['توقف عن المشروع','تعلّم من الفشل وكيّف أو ابنِ نموذجاً جديداً','احتفظ بنفس النموذج','ألوم المستخدمين'], a:1},
+    {q:'ما القيد الزمني الموصى به لبناء النموذج الأول؟', opts:['شهر كامل','ساعة إلى يوم واحد فقط','سنة','لا قيد زمني'], a:1},
+    {q:'لماذا النماذج الورقية مفيدة رغم بساطتها؟', opts:['لأنها الوحيدة المتاحة','لأنها سريعة ورخيصة وسهلة التعديل وتكشف المشاكل الأساسية','لأنها تبدو احترافية','لأنها كافية للإطلاق'], a:1},
+    {q:'ما أهمية توثيق عملية بناء النموذج؟', opts:['لا أهمية له','يساعد على التعلم، التكرار، وتشارك المعرفة مع الفريق','لأغراض شكلية فقط','لإقناع الإدارة'], a:1}
+  ],
+  test: [
+    {q:'ما الهدف من مرحلة الاختبار؟', opts:['إثبات أن فكرتك صحيحة','التعلم وتحسين الحل من خلال ردود فعل المستخدمين الحقيقيين','الانتهاء من المشروع','عرض النموذج'], a:1},
+    {q:'ما الأسلوب الأمثل أثناء مراقبة المستخدم في الاختبار؟', opts:['توجيهه وشرح كيفية الاستخدام','الصمت والمراقبة دون تدخل','التدخل عند كل خطأ','إيقاف الاختبار فوراً عند أي مشكلة'], a:1},
+    {q:'كم مستخدماً على الأقل يُوصى باختبارهم في الجولة الأولى؟', opts:['١','٣-٥','٢٠','لا يهم العدد'], a:1},
+    {q:'ماذا تفعل عندما يواجه المستخدم صعوبة في الاختبار؟', opts:['تتدخل وتساعده فوراً','تصمت وتراقب وتدوّن ملاحظاتك','تلغي الاختبار','تُبسّط النموذج على الفور'], a:1},
+    {q:'ما الفرق بين "التغذية الراجعة" و"الآراء"؟', opts:['لا فرق','التغذية الراجعة مبنية على تجربة فعلية، الآراء مبنية على تخمين','الآراء أهم','التغذية أقل قيمة'], a:1},
+    {q:'لماذا نسأل "لماذا؟" ثلاث مرات في الاختبار؟', opts:['للإطالة','للوصول إلى السبب الجذري خلف كل رد فعل','لإرهاق المستخدم','لا سبب منطقي'], a:1},
+    {q:'ما الذي تبحث عنه في الأنماط بعد الاختبار مع مستخدمين متعددين؟', opts:['الرأي الأكثر تكراراً فقط','كل ما يتكرر عند أكثر من مستخدم يشير لمشكلة أو ميزة حقيقية','الانتقادات فقط','المديح فقط'], a:1},
+    {q:'ما الموقف الصحيح تجاه النتائج السلبية في الاختبار؟', opts:['إخفاؤها','الترحيب بها لأنها معلومات قيّمة للتحسين','إلغاء المشروع','تجاهلها'], a:1},
+    {q:'متى تنتهي مرحلة الاختبار؟', opts:['بعد اختبار واحد','عندما تجمع ما يكفي من المعلومات لاتخاذ قرار التطوير','بعد أسبوع','عند موافقة الجميع'], a:1},
+    {q:'ما أهمية سيناريو الاختبار الموحّد مع جميع المستخدمين؟', opts:['لا أهمية له','لضمان مقارنة نتائج متشابهة ومنهجية','لتوفير الوقت','لإرضاء الفريق'], a:1}
+  ],
+  iterate: [
+    {q:'ما معنى "التكرار" في التفكير التصميمي؟', opts:['تكرار نفس الشيء بلا تغيير','دورة مستمرة من البناء والاختبار والتعلم والتحسين','الرجوع للبداية من الصفر','إعادة كتابة التقارير'], a:1},
+    {q:'ما أهم ما تستخرجه من جولة اختبار لتوظيفه في التكرار؟', opts:['المديح فقط','الأنماط المتكررة من ردود الفعل — إيجابية وسلبية','تقييمات النجوم','عدد المستخدمين'], a:1},
+    {q:'كيف تقرر ما يجب تعديله في التكرار؟', opts:['تُغيّر كل شيء','تُغيّر ما أثبت الاختبار أنه يُسبّب مشكلة — لا أكثر ولا أقل','تُغيّر ما يُعجبك شخصياً','لا تُغيّر شيئاً'], a:1},
+    {q:'لماذا نوثّق كل تعديل نجريه في التكرار؟', opts:['لا فائدة من التوثيق','لنفهم لماذا تحسّن أو لم يتحسّن الحل، وللتعلم مستقبلاً','كمتطلب إداري فقط','لإثبات أننا عملنا'], a:1},
+    {q:'ما معنى "الإصدار الثاني" في التكرار؟', opts:['الحل النهائي الكامل','نسخة محسّنة من النموذج بناءً على ما تعلمناه من الاختبار الأول','مشروع جديد كلياً','إصلاح الأخطاء التقنية فقط'], a:1},
+    {q:'متى يكون التكرار ناجحاً؟', opts:['عندما يُعجب الجميع','عندما تُحسّن تجربة المستخدم بشكل ملموس بناءً على بيانات حقيقية','عندما تُعجب المدير','عند انتهاء الوقت'], a:1},
+    {q:'هل التكرار يعني الفشل؟', opts:['نعم دائماً','لا — التكرار دليل على التعلم والتحسين المستمر','أحياناً','لا توجد إجابة'], a:1},
+    {q:'ما الفرق بين التكرار والمراجعة؟', opts:['لا فرق','التكرار: تغيير النموذج بناءً على اختبار. المراجعة: مراجعة الوثائق فقط','المراجعة أعمق','التكرار أسرع'], a:1},
+    {q:'ما الوقت المناسب للقول "انتهينا من التكرار"؟', opts:['بعد ثلاث دورات','عندما يُحقق الحل أهدافه ويلبّي احتياجات المستخدم بشكل مُرضٍ','بعد سنة','لا ننتهي أبداً'], a:1},
+    {q:'ما قيمة التأمل النهائي في آخر مشروع؟', opts:['لا قيمة له','يُعزّز التعلم ويساعدك على تطبيق ما اكتسبته في مشاريع مستقبلية','إجراء شكلي','لتقييم الفريق'], a:1}
+  ]
+};
+
+// ── Stage content ────────────────────────────────────────
+var STAGE_CONTENT = {
+  empathy: `<h3>ما هو التعاطف؟</h3><p>التعاطف هو القدرة على فهم تجربة الآخرين ومشاعرهم عمقاً — ليس فقط ما يقولونه، بل ما يشعرون به ويفكرون فيه.</p><div class="callout gold"><strong>🎯 هدف هذه المرحلة:</strong> اكتشاف الاحتياجات الحقيقية للمستخدم، وليس الاحتياجات التي يُعلن عنها.</div><h3>أدوات التعاطف</h3><h4>١. المقابلات</h4><p>اسأل أسئلة مفتوحة — "كيف؟" و"لماذا؟" بدلاً من "هل؟". استمع أكثر مما تتكلم. دوّن كل شيء.</p><h4>٢. الملاحظة الميدانية</h4><p>راقب المستخدمين في بيئتهم الطبيعية. سجّل ما تراه حرفياً في عمود، والتفسير في عمود آخر.</p><h4>٣. خريطة التعاطف</h4><p>أداة تساعدك على تنظيم ما تعلمته في أربعة محاور: يقول، يفكر، يفعل، يشعر.</p><div class="callout"><strong>⚠️ تجنّب:</strong> الافتراضات المسبقة. اذهب إلى الميدان بعقل فارغ تماماً.</div>`,
+  define: `<h3>من التعاطف إلى تحديد المشكلة</h3><p>بعد جمع المعلومات في مرحلة التعاطف، نحتاج لتحويل ما تعلمناه إلى مشكلة قابلة للحل.</p><h3>بيان وجهة النظر (POV)</h3><p>الصيغة: <strong>[المستخدم] يحتاج إلى [حاجة] لأن [استنتاج مفاجئ]</strong></p><div class="callout teal">✅ مثال: "أحمد (مهندس) يحتاج إلى طريقة لتذكّر مواعيده لأنه يركّز على العمل العميق ويفقد الإحساس بالوقت."</div><h3>أسئلة كيف يمكننا (HMW)</h3><p>HMW = How Might We. تحوّل الملاحظة إلى فرصة تصميمية. السؤال الجيد: واسع بما يكفي للإبداع، وضيق بما يكفي للتركيز.</p><ul><li>❌ ضيق: "كيف نبني تطبيق تذكير؟"</li><li>❌ واسع: "كيف نجعل الناس أكثر إنتاجية؟"</li><li>✅ مثالي: "كيف يمكننا مساعدة أحمد على الانتباه للوقت دون مقاطعة تركيزه؟"</li></ul>`,
+  ideate: `<h3>توليد الأفكار</h3><p>هدف هذه المرحلة هو إنتاج <strong>أكبر كمية ممكنة</strong> من الأفكار — الكمية تُولّد الجودة.</p><div class="callout red">🚫 <strong>قاعدة ذهبية:</strong> لا نقد ولا حكم أثناء جلسة العصف الذهني.</div><h3>قواعد العصف الذهني الأربعة</h3><ul><li>الكمية قبل الجودة</li><li>لا نقد أو تقييم</li><li>أفكار جريئة مرحّب بها</li><li>ابنِ على أفكار الآخرين</li></ul><h3>تقنية SCAMPER</h3><p>أداة منهجية لتوليد أفكار جديدة من الموجود:</p><ul><li><strong>S</strong>ubstitute — استبدل</li><li><strong>C</strong>ombine — ادمج</li><li><strong>A</strong>dapt — كيّف</li><li><strong>M</strong>odify — عدّل</li><li><strong>P</strong>ut to other uses — استخدم لأغراض أخرى</li><li><strong>E</strong>liminate — احذف</li><li><strong>R</strong>everse — اعكس</li></ul>`,
+  prototype: `<h3>النمذجة الأولية</h3><p>النموذج الأولي هو <strong>أسرع وأرخص</strong> طريقة لاختبار فكرتك قبل الاستثمار فيها.</p><div class="callout gold">⚡ القاعدة: ابنِ بسرعة، اختبر مبكراً، فشل بتكلفة منخفضة.</div><h3>أنواع النماذج</h3><ul><li><strong>نموذج ورقي:</strong> رسم على الورق — مناسب للتطبيقات والواجهات</li><li><strong>نموذج كرتوني:</strong> مناسب للمنتجات المادية</li><li><strong>نموذج رقمي:</strong> Figma أو PowerPoint — للخدمات</li><li><strong>نموذج مطبوع:</strong> طابعة ثلاثية الأبعاد — للقطع الدقيقة</li></ul><h3>قاعدة الساعة الواحدة</h3><p>أعطِ نفسك ساعة واحدة فقط لبناء النموذج. القيود الزمنية تحفّز الإبداع وتمنعك من الإفراط في التفاصيل.</p>`,
+  test: `<h3>مرحلة الاختبار</h3><p>الاختبار ليس للتحقق من أن فكرتك صحيحة — بل للتعلم وتحسين الحل.</p><div class="callout teal">🎯 هدفك: اكتشاف ما لا يعمل قبل الاستثمار الكبير.</div><h3>كيف تختبر؟</h3><ol><li>اختر ٣-٥ مستخدمين يمثّلون شريحتك المستهدفة</li><li>اعطهم مهمة محددة بلا توجيه مسبق</li><li>راقب وسجّل دون تدخل</li><li>اسأل "لماذا؟" عند كل تصرف غير متوقع</li><li>لخّص وابحث عن الأنماط</li></ol><h3>بعد الاختبار</h3><p>نظّم ملاحظاتك، حدّد الأنماط، وقرّر: هل نُعدّل؟ نُعيد؟ أم نتقدّم؟</p>`,
+  iterate: `<h3>مرحلة التكرار</h3><p>التكرار هو <strong>قلب التفكير التصميمي</strong>. بناءً على نتائج الاختبار، تُحسّن نموذجك وتُعيد الاختبار.</p><div class="callout gold">🔄 التكرار ليس فشلاً — هو دليل على التعلم والنضج.</div><h3>دورة التكرار</h3><ol><li>راجع نتائج الاختبار</li><li>حدّد أهم مشكلة للمعالجة</li><li>عدّل النموذج بشكل محدد ومدروس</li><li>أعد الاختبار مع مستخدمين</li><li>كرّر حتى تصل لحل يُلبّي الاحتياجات</li></ol><h3>التأمل النهائي</h3><p>بعد إكمال الدورة كاملة، تأمّل رحلتك: ما الذي تعلمته؟ كيف تغيّر تفكيرك؟ ما الذي ستفعله بشكل مختلف في مشروعك القادم؟</p>`
+};
+
+// ── Portal state ─────────────────────────────────────────
+var currentProject = null;
+var currentStage = 'empathy';
+var quizState = { questions:[], current:0, answers:[], score:0, submitted:false };
+
+function getProjectFromURL() {
+  var params = new URLSearchParams(window.location.search);
+  var pid = params.get('project');
+  var state = getUserState();
+  if (pid) {
+    var proj = (state.projects||[]).find(function(p){return p.id===pid;});
+    if (proj) return proj;
+  }
+  return (state.projects||[])[0] || null;
+}
+
+function isStageUnlocked(stageId, project) {
+  if (stageId === 'empathy') return true;
+  var stages = DT_STAGES.map(function(s){return s.id;});
+  var idx = stages.indexOf(stageId);
+  if (idx <= 0) return true;
+  var prevId = stages[idx-1];
+  var prev = (project.stageData||{})[prevId]||{};
+  return prev.contentViewed && prev.templatesDone && (prev.quizScore||0) >= 90;
+}
+
+function isStageComplete(stageId, project) {
+  var sd = (project.stageData||{})[stageId]||{};
+  return sd.contentViewed && sd.templatesDone && (sd.quizScore||0) >= 90;
+}
+
+function saveProject(project) {
+  var state = getUserState();
+  state.projects = (state.projects||[]).map(function(p){ return p.id===project.id ? project : p; });
+  saveUserState(state);
+}
+
+// ── Render ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  currentProject = getProjectFromURL();
+  if (!currentProject) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+  currentStage = currentProject.currentStage || 'empathy';
+  renderStageNav();
+  renderStage(currentStage);
+  document.getElementById('proj-title-sidebar').textContent = currentProject.title||'';
+});
+
+function renderStageNav() {
+  var nav = document.getElementById('stage-nav');
+  nav.innerHTML = '';
+  DT_STAGES.forEach(function(s) {
+    var unlocked = isStageUnlocked(s.id, currentProject);
+    var done = isStageComplete(s.id, currentProject);
+    var active = s.id === currentStage;
+    var btn = document.createElement('button');
+    btn.className = 'nav-item' + (active?' active':'');
+    btn.style.opacity = unlocked ? '1' : '0.45';
+    btn.onclick = function(){ if(unlocked) { currentStage=s.id; renderStage(s.id); } else showToast('🔒 أكمل المرحلة السابقة أولاً'); };
+    btn.innerHTML = '<span class="nav-icon">' + (done?'✅':active?s.icon:'🔒') + '</span>' + s.label;
+    nav.appendChild(btn);
+  });
+}
+
+function renderStage(stageId) {
+  currentStage = stageId;
+  currentProject.currentStage = stageId;
+  saveProject(currentProject);
+  renderStageNav();
+  var main = document.getElementById('portal-main');
+  var stage = DT_STAGES.find(function(s){return s.id===stageId;});
+  if (!stage) return;
+  if (!isStageUnlocked(stageId, currentProject)) {
+    main.innerHTML = '<div class="locked-stage"><div style="font-size:48px;margin-bottom:16px">🔒</div><h2>هذه المرحلة مغلقة</h2><p style="margin:12px 0 24px">أكمل المرحلة السابقة بنجاح للوصول إلى هذه المرحلة</p><button class="btn btn-primary btn-lg" onclick="renderStage(\''+getPrevStage(stageId)+'\')">← العودة للمرحلة السابقة</button></div>';
+    return;
+  }
+  var sd = (currentProject.stageData||{})[stageId]||{};
+  var templates = STAGE_TEMPLATES[stageId]||[];
+  var allTemplatesSubmitted = templates.every(function(t){ return (sd.submittedTemplates||[]).includes(t.id); });
+  var quizPassed = (sd.quizScore||0) >= 90;
+  main.innerHTML =
+    '<div class="stage-header">' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' +
+        '<span style="font-size:32px">' + stage.icon + '</span>' +
+        '<div>' +
+          '<div style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:2px">مرحلة ' + (DT_STAGES.indexOf(stage)+1) + ' من ٦</div>' +
+          '<h2 style="color:#fff;margin:0">' + stage.label + '</h2>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background:rgba(255,255,255,.08);border-radius:var(--r);padding:10px 12px;font-size:12px;color:rgba(255,255,255,.7)">' +
+        '<strong style="color:rgba(255,255,255,.5)">مشروعك:</strong> ' + (currentProject.title||'').substring(0,80) +
+      '</div>' +
+    '</div>' +
+    '<div class="checklist-row">' +
+      '<div class="checklist-item ' + (sd.contentViewed?'done':'pending') + '"><span class="check-icon">' + (sd.contentViewed?'✅':'📖') + '</span> قراءة محتوى المرحلة' + (sd.contentViewed?' — مكتمل':'') + '</div>' +
+      '<div class="checklist-item ' + (allTemplatesSubmitted?'done':'pending') + '"><span class="check-icon">' + (allTemplatesSubmitted?'✅':'📋') + '</span> تقديم جميع القوالب (' + ((sd.submittedTemplates||[]).length) + '/' + templates.length + ')' + (allTemplatesSubmitted?' — مكتمل':'') + '</div>' +
+      '<div class="checklist-item ' + (quizPassed?'done':'pending') + '"><span class="check-icon">' + (quizPassed?'✅':'📝') + '</span> اجتياز التقييم بـ 90%+' + (sd.quizScore?' — '+toAr(sd.quizScore)+'%':'') + '</div>' +
+    '</div>' +
+    '<div class="tab-nav">' +
+      '<button class="tab-btn active" id="tab-learn" onclick="switchTab(\'tab-learn\',\'panel-learn\',\'tab-btn\')">📖 التعلّم</button>' +
+      '<button class="tab-btn" id="tab-templates" onclick="switchTab(\'tab-templates\',\'panel-templates\',\'tab-btn\')">📋 القوالب</button>' +
+      '<button class="tab-btn" id="tab-quiz" onclick="switchTab(\'tab-quiz\',\'panel-quiz\',\'tab-btn\')">📝 التقييم</button>' +
+    '</div>' +
+    '<div class="tab-panel active" id="panel-learn">' +
+      '<div class="lesson-content">' + (STAGE_CONTENT[stageId]||'') + '</div>' +
+      '<div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap">' +
+        '<button class="btn btn-primary btn-lg" onclick="markContentViewed()">✅ قرأت المحتوى — متابعة إلى القوالب ←</button>' +
+        '<div style="background:var(--ink);border-radius:var(--r2);padding:12px 14px;flex:1;min-width:200px">' +
+          '<div style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:6px">💡 تلميح من مرشد AI</div>' +
+          '<div style="font-size:13px;color:rgba(255,255,255,.75)" id="ai-stage-hint">' + (getStageHint(stageId)||'استمر في التعلم!') + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="tab-panel" id="panel-templates">' +
+      renderTemplatesList(stageId, sd) +
+      '<div style="margin-top:20px">' +
+        (allTemplatesSubmitted ?
+          '<button class="btn btn-primary btn-lg" onclick="switchTab(\'tab-quiz\',\'panel-quiz\',\'tab-btn\')">✅ جميع القوالب مُقدَّمة — انتقل للتقييم ←</button>' :
+          '<div class="callout">أكمل تقديم جميع القوالب للانتقال للتقييم</div>'
+        ) +
+      '</div>' +
+    '</div>' +
+    '<div class="tab-panel" id="panel-quiz">' +
+      renderQuizPanel(stageId, sd) +
+    '</div>';
+
+  if (!sd.contentViewed) {
+    setTimeout(function(){
+      if (currentStage===stageId) markContentViewed(true);
+    }, 15000);
+  }
+}
+
+function renderTemplatesList(stageId, sd) {
+  var templates = STAGE_TEMPLATES[stageId]||[];
+  var submitted = sd.submittedTemplates||[];
+  return templates.map(function(t) {
+    var done = submitted.includes(t.id);
+    var savedData = null;
+    try { savedData = JSON.parse(localStorage.getItem('sh_tpl_'+currentProject.id+'_'+t.id)||'null'); } catch(e){}
+    var hasDraft = savedData && Object.values(savedData).some(function(v){return v&&v.trim();});
+    return '<div class="template-card ' + (done?'submitted':'') + '" onclick="openTemplateModal(\''+stageId+'\',\''+t.id+'\')">' +
+      '<div class="template-icon">' + t.icon + '</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:14px;font-weight:600;margin-bottom:2px">' + t.name + '</div>' +
+        '<div style="font-size:12px;color:var(--text3)">' + t.desc + '</div>' +
+      '</div>' +
+      '<div>' +
+        (done ?
+          '<span class="badge badge-teal">✓ مُقدَّم</span>' :
+          hasDraft ?
+            '<span class="badge badge-gold">مسودة</span>' :
+            '<span class="badge badge-gray">فارغ</span>'
+        ) +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderQuizPanel(stageId, sd) {
+  if ((sd.quizScore||0) >= 90) {
+    return '<div style="text-align:center;padding:32px"><div style="font-size:48px;margin-bottom:12px">🎉</div><h3>أحسنت! اجتزت التقييم</h3><div style="font-size:24px;font-weight:700;color:var(--teal);margin:8px 0">'+toAr(sd.quizScore)+'%</div>' + renderUnlockSection(stageId) + '</div>';
+  }
+  if (sd.quizScore) {
+    return '<div class="callout red">حصلت على '+toAr(sd.quizScore)+'% في المحاولة السابقة. تحتاج 90% للاجتياز.</div><button class="btn btn-primary btn-lg" onclick="startQuiz()">🔄 إعادة المحاولة</button><div id="quiz-area"></div>';
+  }
+  return '<div class="callout">' + (!(sd.contentViewed) ? '📖 اقرأ المحتوى أولاً قبل التقييم.' : !((sd.submittedTemplates||[]).length >= STAGE_TEMPLATES[stageId].length) ? '📋 قدّم جميع القوالب أولاً قبل التقييم.' : '✅ جاهز للتقييم!') + '</div>' +
+    (sd.contentViewed && (sd.submittedTemplates||[]).length >= STAGE_TEMPLATES[stageId].length ?
+      '<button class="btn btn-primary btn-lg" onclick="startQuiz()">ابدأ التقييم ←</button><div id="quiz-area"></div>' :
+      '<div id="quiz-area"></div>'
+    );
+}
+
+function renderUnlockSection(stageId) {
+  var stages = DT_STAGES.map(function(s){return s.id;});
+  var idx = stages.indexOf(stageId);
+  if (idx < stages.length-1) {
+    var nextStage = DT_STAGES[idx+1];
+    return '<div style="margin-top:20px"><div class="callout teal">🔓 تم فتح مرحلة: '+nextStage.icon+' '+nextStage.label+'!</div><button class="btn btn-primary btn-lg" onclick="renderStage(\''+nextStage.id+'\')">متابعة إلى '+nextStage.label+' ←</button></div>';
+  }
+  return '<div class="callout gold">🏆 لقد أكملت جميع مراحل التفكير التصميمي! مبروك!</div><a href="dashboard.html" class="btn btn-primary btn-lg">العودة للوحة التحكم ←</a>';
+}
+
+function startQuiz() {
+  var questions = STAGE_QUIZZES[currentStage]||[];
+  var shuffled = questions.slice().sort(function(){return Math.random()-.5;}).slice(0,10);
+  quizState = { questions:shuffled, current:0, answers:new Array(shuffled.length).fill(-1), score:0, submitted:false };
+  renderQuestion();
+}
+
+function renderQuestion() {
+  var area = document.getElementById('quiz-area');
+  if (!area) return;
+  var q = quizState.questions[quizState.current];
+  if (!q) return;
+  var dotsHTML = quizState.questions.map(function(_,i) {
+    var cls = i===quizState.current?'answered':quizState.answers[i]>=0?'answered':'';
+    return '<div class="quiz-dot '+cls+'" style="margin-left:4px"></div>';
+  }).join('');
+  area.innerHTML =
+    '<div class="quiz-container" style="margin-top:20px">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
+        '<span style="font-size:12px;color:var(--text3)">سؤال '+toAr(quizState.current+1)+' من '+toAr(quizState.questions.length)+'</span>' +
+        dotsHTML +
+      '</div>' +
+      '<div style="font-size:15px;font-weight:600;margin-bottom:16px;line-height:1.5">'+q.q+'</div>' +
+      q.opts.map(function(opt,i) {
+        return '<div class="quiz-option'+(quizState.answers[quizState.current]===i?' selected':'')+'" onclick="selectAnswer('+i+')">'+opt+'</div>';
+      }).join('') +
+      '<div style="display:flex;gap:10px;margin-top:16px">' +
+        (quizState.current>0?'<button class="btn btn-outline" onclick="prevQuestion()">← السابق</button>':'') +
+        (quizState.current<quizState.questions.length-1?
+          '<button class="btn btn-primary" onclick="nextQuestion()"'+(quizState.answers[quizState.current]<0?' disabled':'')+'>التالي ←</button>':
+          '<button class="btn btn-primary" onclick="submitQuiz()"'+(quizState.answers[quizState.current]<0?' disabled':'')+'>تقديم التقييم ✓</button>'
+        ) +
+      '</div>' +
+    '</div>';
+}
+
+function selectAnswer(idx) {
+  quizState.answers[quizState.current] = idx;
+  renderQuestion();
+}
+function nextQuestion() { if(quizState.current<quizState.questions.length-1){quizState.current++;renderQuestion();} }
+function prevQuestion() { if(quizState.current>0){quizState.current--;renderQuestion();} }
+
+function submitQuiz() {
+  var correct = quizState.questions.filter(function(q,i){return quizState.answers[i]===q.a;}).length;
+  var pct = Math.round(correct/quizState.questions.length*100);
+  if (!currentProject.stageData) currentProject.stageData = {};
+  if (!currentProject.stageData[currentStage]) currentProject.stageData[currentStage] = {};
+  var prevScore = currentProject.stageData[currentStage].quizScore || 0;
+  currentProject.stageData[currentStage].quizScore = Math.max(prevScore, pct);
+  saveProject(currentProject);
+  addXP(pct >= 90 ? 75 : 25);
+  var area = document.getElementById('quiz-area');
+  if (pct >= 90) {
+    showToast('🎉 ممتاز! ' + toAr(pct) + '% — تم فتح المرحلة التالية!');
+    var allDone = checkStageBadge(currentStage);
+    area.innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:48px;margin-bottom:12px">🎉</div><h3>ممتاز!</h3><div style="font-size:28px;font-weight:700;color:var(--teal);margin:8px 0">'+toAr(pct)+'%</div>' + renderUnlockSection(currentStage) + '</div>';
+  } else {
+    area.innerHTML = '<div style="background:var(--red-light);border-radius:var(--r2);padding:16px;margin-top:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--red)">'+toAr(pct)+'%</div><p style="color:var(--red);margin-top:4px">تحتاج 90% للاجتياز. راجع المحتوى وحاول مجدداً.</p><button class="btn btn-primary" style="margin-top:12px" onclick="startQuiz()">🔄 إعادة المحاولة</button></div>';
+    showToast('حصلت على ' + toAr(pct) + '% — تحتاج 90% للاجتياز');
+  }
+  renderStageNav();
+}
+
+function checkStageBadge(stageId) {
+  var state = getUserState();
+  var badgeMap = {empathy:'empathy_done',define:'define_done',ideate:'ideate_done',prototype:'proto_done',test:'test_done',iterate:'full_cycle'};
+  var badge = badgeMap[stageId];
+  if (badge && !(state.earnedBadges||[]).includes(badge)) {
+    state.earnedBadges = state.earnedBadges||[];
+    state.earnedBadges.push(badge);
+    saveUserState(state);
+    showToast('🏅 حصلت على شارة جديدة!');
+  }
+}
+
+function markContentViewed(silent) {
+  if (!currentProject.stageData) currentProject.stageData = {};
+  if (!currentProject.stageData[currentStage]) currentProject.stageData[currentStage] = {};
+  currentProject.stageData[currentStage].contentViewed = true;
+  saveProject(currentProject);
+  addXP(20);
+  if (!silent) {
+    switchTab('tab-templates','panel-templates','tab-btn');
+    showToast('✅ تم تسجيل قراءة المحتوى');
+    renderStage(currentStage);
+  }
+}
+
+function openTemplateModal(stageId, templateId) {
+  var templates = STAGE_TEMPLATES[stageId]||[];
+  var template = templates.find(function(t){return t.id===templateId;});
+  if (!template) return;
+  var sd = (currentProject.stageData||{})[stageId]||{};
+  var submitted = (sd.submittedTemplates||[]).includes(templateId);
+  var savedData = {};
+  try { savedData = JSON.parse(localStorage.getItem('sh_tpl_'+currentProject.id+'_'+templateId)||'{}'); } catch(e){}
+  var fieldsHTML = template.fields.map(function(f) {
+    var val = savedData[f.id]||'';
+    return '<div class="form-group">' +
+      '<label class="form-label">' + f.label + '</label>' +
+      (f.type==='textarea' ?
+        '<textarea class="inp textarea" id="tf_'+f.id+'" placeholder="'+f.placeholder+'" '+(submitted?'readonly':'')+'>'+val+'</textarea>' :
+        '<input class="inp" type="text" id="tf_'+f.id+'" placeholder="'+f.placeholder+'" value="'+val+'" '+(submitted?'readonly':'')+'>') +
+    '</div>';
+  }).join('');
+  document.getElementById('template-modal-content').innerHTML =
+    '<div style="font-size:28px;margin-bottom:8px">' + template.icon + '</div>' +
+    '<h3 style="margin-bottom:4px">' + template.name + '</h3>' +
+    '<p style="font-size:13px;margin-bottom:20px">' + template.desc + '</p>' +
+    (submitted ? '<div class="callout teal" style="margin-bottom:16px">✅ هذا القالب مُقدَّم بالفعل</div>' : '') +
+    '<div class="template-modal-body">' + fieldsHTML + '</div>' +
+    (!submitted ?
+      '<div style="display:flex;gap:10px;margin-top:20px">' +
+        '<button class="btn btn-outline" onclick="saveTemplateDraft(\''+stageId+'\',\''+templateId+'\')">💾 حفظ مسودة</button>' +
+        '<button class="btn btn-primary btn-full" onclick="submitTemplate(\''+stageId+'\',\''+templateId+'\')">تقديم القالب ✓</button>' +
+      '</div>' :
+      '<button class="btn btn-outline btn-full" style="margin-top:20px" onclick="closeModal(\'template-modal\')">إغلاق</button>'
+    );
+  openModal('template-modal');
+}
+
+function getTemplateData(template) {
+  var data = {};
+  template.fields.forEach(function(f) {
+    var el = document.getElementById('tf_'+f.id);
+    if (el) data[f.id] = el.value.trim();
+  });
+  return data;
+}
+
+function saveTemplateDraft(stageId, templateId) {
+  var templates = STAGE_TEMPLATES[stageId]||[];
+  var template = templates.find(function(t){return t.id===templateId;});
+  if (!template) return;
+  var data = getTemplateData(template);
+  localStorage.setItem('sh_tpl_'+currentProject.id+'_'+templateId, JSON.stringify(data));
+  showToast('💾 تم حفظ المسودة');
+}
+
+function submitTemplate(stageId, templateId) {
+  var templates = STAGE_TEMPLATES[stageId]||[];
+  var template = templates.find(function(t){return t.id===templateId;});
+  if (!template) return;
+  var data = getTemplateData(template);
+  var filled = Object.values(data).filter(function(v){return v&&v.trim();}).length;
+  if (filled < Math.ceil(template.fields.length/2)) {
+    showToast('يرجى ملء معظم حقول القالب قبل التقديم');
+    return;
+  }
+  localStorage.setItem('sh_tpl_'+currentProject.id+'_'+templateId, JSON.stringify(data));
+  if (!currentProject.stageData) currentProject.stageData = {};
+  if (!currentProject.stageData[stageId]) currentProject.stageData[stageId] = {};
+  if (!currentProject.stageData[stageId].submittedTemplates) currentProject.stageData[stageId].submittedTemplates = [];
+  if (!currentProject.stageData[stageId].submittedTemplates.includes(templateId)) {
+    currentProject.stageData[stageId].submittedTemplates.push(templateId);
+  }
+  saveProject(currentProject);
+  addXP(25);
+  closeModal('template-modal');
+  showToast('✅ تم تقديم القالب!');
+  renderStage(stageId);
+}
+
+function getPrevStage(stageId) {
+  var stages = DT_STAGES.map(function(s){return s.id;});
+  var idx = stages.indexOf(stageId);
+  return idx > 0 ? stages[idx-1] : 'empathy';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شكّل — مشغّل الدورة</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.player-layout{display:grid;grid-template-columns:1fr 280px;gap:0;height:calc(100vh - 58px);overflow:hidden}
+.player-main{overflow-y:auto;padding:24px}
+.player-sidebar{background:var(--white);border-right:1px solid var(--border);overflow-y:auto;padding:16px}
+.video-frame{background:var(--ink);border-radius:var(--r2);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;margin-bottom:20px;position:relative;overflow:hidden}
+.video-placeholder-icon{font-size:64px;opacity:.4}
+.lesson-list-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s;margin-bottom:2px}
+.lesson-list-item:hover{background:var(--warm2)}
+.lesson-list-item.active{background:rgba(235,200,76,.15);color:var(--ink);font-weight:600}
+.lesson-list-item.done{color:var(--teal)}
+.lesson-list-item.locked{opacity:.4;cursor:not-allowed}
+.lesson-num{width:24px;height:24px;border-radius:50%;background:var(--warm2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.lesson-list-item.active .lesson-num{background:var(--ink);color:var(--gold)}
+.lesson-list-item.done .lesson-num{background:var(--teal);color:#fff}
+.quiz-opt{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r);margin-bottom:8px;cursor:pointer;transition:all .15s;font-size:13px}
+.quiz-opt:hover{border-color:var(--gold-dark)}
+.quiz-opt.sel{border-color:var(--gold-dark);background:rgba(235,200,76,.08)}
+.quiz-opt.ok{border-color:var(--teal);background:var(--teal-light);color:var(--teal)}
+.quiz-opt.err{border-color:var(--red);background:var(--red-light);color:var(--red)}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<!-- Top nav -->
+<div class="top-nav">
+  <a href="index.html" class="logo-mark" style="gap:8px"><span data-logo="30"></span><span class="logo-name light" style="font-size:14px">شكّل</span></a>
+  <div id="course-title-nav" style="color:rgba(255,255,255,.7);font-size:13px"></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="nav-progress" style="font-size:12px;color:rgba(255,255,255,.5)"></div>
+    <a href="dashboard.html" class="btn btn-outline btn-sm" style="color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)">لوحة التحكم</a>
+  </div>
+</div>
+
+<div class="player-layout">
+<!-- MAIN PLAYER -->
+<div class="player-main">
+  <!-- Video -->
+  <div class="video-frame" id="video-frame">
+    <div class="video-placeholder-icon" id="video-placeholder-icon">📹</div>
+    <div id="lesson-iframe-container" style="position:absolute;inset:0"></div>
+  </div>
+
+  <!-- Lesson info -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px">
+    <div>
+      <div id="lesson-title" style="font-size:18px;font-weight:700;margin-bottom:4px">اختر درساً من القائمة</div>
+      <div id="lesson-meta" style="font-size:12px;color:var(--text3)"></div>
+    </div>
+    <div id="lesson-xp" style="background:rgba(235,200,76,.15);color:var(--gold-dark);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-nav">
+    <button class="tab-btn active" id="lt-content" onclick="switchTab('lt-content','lp-content','tab-btn')">📖 المحتوى</button>
+    <button class="tab-btn" id="lt-quiz" onclick="switchTab('lt-quiz','lp-quiz','tab-btn')">📝 التقييم</button>
+    <button class="tab-btn" id="lt-ai" onclick="switchTab('lt-ai','lp-ai','tab-btn')">🤖 المساعد</button>
+  </div>
+
+  <div class="tab-panel active" id="lp-content">
+    <div id="lesson-content-area" style="font-size:14px;line-height:1.8;color:var(--text2)">
+      <div class="callout">اختر درساً من القائمة على اليمين لبدء التعلّم</div>
+    </div>
+    <div id="complete-btn-area" style="margin-top:24px;display:none">
+      <button class="btn btn-primary btn-lg" id="complete-btn" onclick="completeCurrentLesson()">✅ إكمال الدرس والانتقال للتالي ←</button>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="lp-quiz">
+    <div id="quiz-area">
+      <div class="callout">أكمل قراءة محتوى الدرس أولاً ثم ابدأ التقييم</div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="lp-ai">
+    <div class="ai-panel">
+      <div id="ai-messages" style="max-height:300px;overflow-y:auto;margin-bottom:12px">
+        <div class="chat-bubble ai">
+          <div class="chat-avatar ai">م</div>
+          <div class="chat-msg">مرحباً! أنا مرشدك في هذه الدورة. اسألني عن أي شيء تحتاج توضيحاً.</div>
+        </div>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="ai-input" placeholder="اسأل سؤالاً..." onkeydown="if(event.key==='Enter')sendAI()">
+        <button class="btn btn-primary btn-sm" onclick="sendAI()">←</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR LESSON LIST -->
+<div class="player-sidebar">
+  <div id="course-info-sidebar" style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+    <div id="course-icon-sb" style="font-size:32px;margin-bottom:6px"></div>
+    <div id="course-title-sb" style="font-size:14px;font-weight:700;margin-bottom:4px"></div>
+    <div class="progress-track"><div class="progress-fill teal" id="course-progress-fill" style="width:0%"></div></div>
+    <div id="course-progress-label" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+  </div>
+  <div id="lessons-sidebar-list"></div>
+</div>
+</div>
+
+<script src="_shared.js"></script>
+<script>
+// ── Lessons per course ───────────────────────────────────
+var COURSE_LESSONS = {
+  dt:[
+    {id:'dt_1',title:'مقدمة في التفكير التصميمي',type:'video',dur:'١٢ دق',xp:50,
+     content:'<h3>ما هو التفكير التصميمي؟</h3><p>التفكير التصميمي هو منهجية إبداعية تركز على الإنسان لحل المشكلات المعقدة. طوّرتها مدرسة d.school في جامعة ستانفورد.</p><div class="callout gold"><strong>المبدأ الأساسي:</strong> ابدأ بفهم الإنسان — وليس بالحل الجاهز.</div><h3>المراحل الخمس</h3><ul><li><strong>التعاطف:</strong> فهم المستخدم عمقاً</li><li><strong>تحديد المشكلة:</strong> صياغة المشكلة الجوهرية</li><li><strong>توليد الأفكار:</strong> إنتاج أكبر عدد من الحلول</li><li><strong>النمذجة:</strong> بناء نماذج أولية سريعة</li><li><strong>الاختبار:</strong> اختبار الحلول مع مستخدمين حقيقيين</li></ul>',
+     quiz:[{q:'ما المبدأ الأساسي في التفكير التصميمي؟',opts:['الربح السريع','فهم الإنسان أولاً','التقنية الحديثة','التصميم الجمالي'],a:1},{q:'كم عدد مراحل التفكير التصميمي؟',opts:['٣','٤','٥','٦'],a:2},{q:'أين طُوِّرت منهجية التفكير التصميمي؟',opts:['MIT','Harvard','Stanford d.school','Oxford'],a:2}]},
+    {id:'dt_2',title:'مرحلة التعاطف — فهم المستخدم',type:'video',dur:'١٥ دق',xp:50,
+     content:'<h3>التعاطف في التصميم</h3><p>التعاطف هو فهم تجارب الآخرين ومشاعرهم — ما يقولونه، يفكرون فيه، يفعلونه، ويشعرون به.</p><h3>أدوات التعاطف</h3><ul><li><strong>المقابلات:</strong> أسئلة مفتوحة "كيف؟" و"لماذا؟"</li><li><strong>الملاحظة:</strong> في البيئة الطبيعية للمستخدم</li><li><strong>خريطة التعاطف:</strong> يقول، يفكر، يفعل، يشعر</li></ul><div class="callout">تجنّب الافتراضات — اذهب للميدان بعقل فارغ</div>',
+     quiz:[{q:'ما أدوات التعاطف الثلاثة الرئيسية؟',opts:['الإحصاء والتحليل','المقابلة والملاحظة وخريطة التعاطف','البحث الإلكتروني','الاستبيانات'],a:1},{q:'ما محاور خريطة التعاطف؟',opts:['يأكل/يشرب/ينام/يعمل','يقول/يفكر/يفعل/يشعر','يعمل/يلعب/يتعلم/يسافر','يحب/يكره/يخاف/يأمل'],a:1},{q:'ما الخطأ الأكبر في مرحلة التعاطف؟',opts:['مقابلة كثير من الناس','الافتراض المسبق دون بحث','توثيق الملاحظات','استخدام خريطة التعاطف'],a:1}]},
+    {id:'dt_3',title:'تحديد المشكلة وصياغة HMW',type:'text',dur:'١٨ دق',xp:75,
+     content:'<h3>من التعاطف إلى تحديد المشكلة</h3><p>بعد التعاطف، نصيغ المشكلة بوضوح باستخدام POV وأسئلة HMW.</p><h3>بيان POV</h3><p><strong>[المستخدم] يحتاج [الحاجة] لأن [الاستنتاج المفاجئ]</strong></p><div class="callout teal">✅ مثال: "سارة تحتاج طريقة للتعلم الذاتي لأنها لا تجد وقتاً في جدولها الدراسي المزدحم."</div><h3>أسئلة HMW</h3><p>كيف يمكننا...؟ السؤال الجيد يُنتج ١٠-٢٠ فكرة مختلفة.</p>',
+     quiz:[{q:'ما صيغة بيان POV؟',opts:['[المنتج] يحل [المشكلة]','[المستخدم] يحتاج [الحاجة] لأن [الاستنتاج]','[الوقت] مع [الموارد]','[الفريق] يبني [الحل]'],a:1},{q:'ما معنى HMW؟',opts:['How Much Work','How Might We','High Mission Work','Human Meaningful Way'],a:1},{q:'كم فكرة يجب أن يُنتج سؤال HMW الجيد؟',opts:['١-٢','٣-٤','١٠-٢٠','١٠٠+'],a:2}]},
+    {id:'dt_4',title:'توليد الأفكار والعصف الذهني',type:'video',dur:'٢٠ دق',xp:75,
+     content:'<h3>توليد الأفكار</h3><p>الهدف: أكبر عدد ممكن من الأفكار. الكمية تُولّد الجودة.</p><div class="callout red">🚫 لا نقد أثناء العصف الذهني</div><h3>قواعد العصف الذهني</h3><ul><li>الكمية قبل الجودة</li><li>لا نقد ولا تقييم</li><li>أفكار جريئة مرحّب بها</li><li>ابنِ على أفكار الآخرين</li></ul><h3>SCAMPER</h3><p>استبدل · ادمج · كيّف · عدّل · استخدم لغرض آخر · احذف · اعكس</p>',
+     quiz:[{q:'ما أهم قاعدة في العصف الذهني؟',opts:['التركيز على فكرة واحدة','عدم النقد أثناء توليد الأفكار','الهدوء والتركيز','البدء بالأفكار العملية'],a:1},{q:'ما حرف C في SCAMPER؟',opts:['Create','Combine','Cancel','Check'],a:1},{q:'لماذا الكمية مهمة في العصف الذهني؟',opts:['لإرهاق الفريق','لأن كثرة الأفكار ترفع احتمال وجود أفكار جيدة','لملء الأوراق','لا سبب'],a:1}]},
+    {id:'dt_5',title:'النمذجة والاختبار السريع',type:'lab',dur:'٢٥ دق',xp:100,
+     content:'<h3>النمذجة الأولية</h3><p>ابنِ بسرعة واختبر مبكراً — أرخص وأسرع طريقة لتعلم ما إذا كانت فكرتك تعمل.</p><h3>أنواع النماذج</h3><ul><li><strong>ورقي:</strong> للتطبيقات والواجهات</li><li><strong>كرتوني:</strong> للمنتجات المادية</li><li><strong>رقمي:</strong> Figma أو PowerPoint</li></ul><h3>الاختبار</h3><p>اختبر مع ٣-٥ مستخدمين حقيقيين. راقب ولا تتدخل. اسأل "لماذا؟" ثلاث مرات.</p>',
+     quiz:[{q:'ما القاعدة الذهبية في النمذجة؟',opts:['ابنِ بتأنٍّ وإتقان','ابنِ بسرعة واختبر مبكراً','انتظر التمويل','ابنِ النهائي مباشرة'],a:1},{q:'كم مستخدماً تختبر معهم؟',opts:['١','٣-٥','١٠٠','لا يهم'],a:1},{q:'ماذا تفعل عند فشل النموذج؟',opts:['توقف المشروع','تتعلم وتُكيّف','ترمي النموذج','تُعدّل البيانات'],a:1}]},
+    {id:'dt_6',title:'التكرار والتحسين المستمر',type:'exercise',dur:'٢٢ دق',xp:100,
+     content:'<h3>التكرار</h3><p>التكرار هو قلب التفكير التصميمي — دورة مستمرة من البناء، الاختبار، والتحسين.</p><div class="callout gold">🔄 التكرار ليس فشلاً — هو دليل على التعلم.</div><h3>دورة التكرار</h3><ol><li>راجع نتائج الاختبار</li><li>حدّد أهم مشكلة</li><li>عدّل النموذج بشكل محدد</li><li>أعد الاختبار</li><li>كرّر حتى تصل للحل المناسب</li></ol>',
+     quiz:[{q:'ما معنى التكرار في DT؟',opts:['تكرار نفس الشيء','دورة مستمرة من البناء والتعلم والتحسين','الرجوع للبداية فقط','إعادة الكتابة'],a:1},{q:'لماذا يُعدّ التكرار إيجابياً؟',opts:['لأنه يُطيل المشروع','لأنه دليل على التعلم والتحسين','لأنه يملأ الوقت','لا يُعدّ إيجابياً'],a:1},{q:'ما أول خطوة في دورة التكرار؟',opts:['بناء نموذج جديد','مراجعة نتائج الاختبار السابق','سؤال المدير','كتابة تقرير'],a:1}]},
+    {id:'dt_7',title:'مشروع تطبيقي شامل',type:'exercise',dur:'٤٠ دق',xp:200,
+     content:'<h3>طبّق ما تعلمته</h3><p>في هذا الدرس ستطبّق كل مراحل التفكير التصميمي على مشكلة حقيقية من بيئتك.</p><div class="callout gold">🎯 اختر مشكلة تواجهها في حياتك اليومية وطبّق عليها المراحل الخمس.</div><h3>خطوات المشروع</h3><ol><li>اختر مشكلة حقيقية</li><li>قابل ٣ أشخاص متأثرين بها</li><li>اكمل خريطة تعاطف</li><li>صُغ سؤال HMW</li><li>ولّد ١٠ أفكار</li><li>ابنِ نموذجاً بسيطاً</li><li>اختبره مع شخص واحد</li></ol>',
+     quiz:[{q:'ما خطوة مشروع التطبيق الأولى؟',opts:['بناء النموذج','اختيار مشكلة حقيقية','كتابة التقرير','رسم الواجهة'],a:1},{q:'كم شخص تقابلهم في مرحلة التعاطف؟',opts:['١','٣','١٠','لا يهم'],a:1},{q:'ما الهدف من المشروع التطبيقي؟',opts:['الحصول على شهادة','تطبيق كل مراحل DT على مشكلة حقيقية','كسب المال','إرضاء المدرس'],a:1}]}
+  ],
+  cad:[
+    {id:'cad_1',title:'مقدمة في Fusion 360',type:'video',dur:'٢٠ دق',xp:100,content:'<h3>Fusion 360</h3><p>برنامج CAD/CAM/CAE متكامل من Autodesk — مجاني للطلاب.</p><div class="callout gold">🆓 حمّله من: autodesk.com/products/fusion-360/personal</div><h3>ما يمكنك فعله</h3><ul><li>التصميم البارامتري</li><li>التجميع والحركة</li><li>مسارات التصنيع CAM</li><li>التحليل الهندسي FEA</li></ul>',quiz:[{q:'ما Fusion 360؟',opts:['متصفح إنترنت','برنامج CAD/CAM من Autodesk','لعبة فيديو','برنامج محاسبة'],a:1},{q:'ما تقنية التصميم في Fusion 360؟',opts:['تصميم ثابت','Parametric Design','تصميم يدوي','تصميم عشوائي'],a:1},{q:'هل Fusion 360 مجاني للطلاب؟',opts:['لا','نعم مجاناً','مجاني لأسبوع فقط','يحتاج اشتراكاً'],a:1}]},
+    {id:'cad_2',title:'رسم المقاطع ثنائية الأبعاد',type:'lab',dur:'٣٠ دق',xp:150,content:'<h3>Sketching</h3><p>المقطع ثنائي الأبعاد هو أساس كل تصميم ثلاثي.</p><h3>أساسيات Sketch</h3><ul><li>ابدأ دائماً من Origin Point</li><li>استخدم القيود (Constraints) لإبقاء التصميم ذكياً</li><li>اجعل المقطع Fully Constrained (أخضر)</li></ul><div class="callout">الخطوة التالية: Extrude لتحويل المقطع لجسم ثلاثي</div>',quiz:[{q:'ما أداة تحويل المقطع لجسم ثلاثي؟',opts:['Sketch','Extrude','Mirror','Pattern'],a:1},{q:'ما لون المقطع الجيد "Fully Constrained"؟',opts:['أحمر','أصفر','أخضر','أزرق'],a:2},{q:'من أين تبدأ الرسم في Fusion؟',opts:['أي نقطة','Origin Point','الزاوية','المنتصف'],a:1}]},
+    {id:'cad_3',title:'الأجسام الثلاثية الأبعاد',type:'lab',dur:'٣٥ دق',xp:150,content:'<h3>من 2D إلى 3D</h3><p>باستخدام Extrude وRevolve وSweep يمكنك تحويل أي مقطع لجسم ثلاثي.</p><ul><li><strong>Extrude:</strong> بثق المقطع مسافة معينة</li><li><strong>Revolve:</strong> دوران المقطع حول محور</li><li><strong>Sweep:</strong> بثق المقطع على مسار</li></ul>',quiz:[{q:'ما أمر Extrude؟',opts:['تدوير الجسم','بثق المقطع مسافة معينة','حذف الجسم','تلوين الجسم'],a:1},{q:'ما Revolve؟',opts:['بثق خطي','دوران المقطع حول محور','تصغير الجسم','عكس الجسم'],a:1},{q:'متى تستخدم Sweep؟',opts:['دائماً','عند بثق المقطع على مسار منحنٍ','لتلوين الجسم','لطباعة الجسم'],a:1}]},
+    {id:'cad_4',title:'التجميع والقطع المتعددة',type:'video',dur:'٢٨ دق',xp:150,content:'<h3>Assembly في Fusion 360</h3><p>بناء مجموعات من قطع متعددة وتعريف علاقاتها.</p><h3>أنواع Joints</h3><ul><li>Rigid: ثابت</li><li>Revolute: دوران</li><li>Slider: انزلاق</li></ul>',quiz:[{q:'ما وظيفة Assembly؟',opts:['رسم المقاطع','تجميع قطع متعددة في منتج واحد','طباعة الجسم','تلوين القطع'],a:1},{q:'ما Joint الثابت؟',opts:['Revolute','Slider','Rigid','Ball'],a:2},{q:'ما Joint الدوران؟',opts:['Rigid','Revolute','Slider','Pin-Slot'],a:1}]},
+    {id:'cad_5',title:'تصدير للطباعة ثلاثية الأبعاد',type:'exercise',dur:'٢٠ دق',xp:100,content:'<h3>من Fusion إلى الطابعة</h3><p>تصدير الملف بصيغة STL لاستخدامه في برنامج Slicer.</p><ol><li>File → Export → STL</li><li>اختر الدقة المناسبة</li><li>افتح في Cura للـ Slicing</li></ol>',quiz:[{q:'ما صيغة الملف للطباعة ثلاثية؟',opts:['DWG','PDF','STL','JPG'],a:2},{q:'ما برنامج Slicing الموصى به للمبتدئين؟',opts:['Fusion 360','Cura','AutoCAD','Blender'],a:1},{q:'ما الخطوة الأولى للتصدير في Fusion؟',opts:['Edit → Export','File → Export','View → Export','Help → Export'],a:1}]}
+  ]
+};
+
+// Add simple placeholder lessons for other courses
+['3dp','laser','ux','elec','cnc'].forEach(function(cid){
+  var c=COURSES.find(function(x){return x.id===cid;});
+  if(!c)return;
+  COURSE_LESSONS[cid]=[];
+  for(var i=1;i<=c.lessons;i++){
+    COURSE_LESSONS[cid].push({
+      id:cid+'_'+i,
+      title:'الدرس '+toAr(i)+' — '+c.title,
+      type:i%3===0?'exercise':i%2===0?'text':'video',
+      dur:toAr(10+i*5)+' دق',
+      xp:50+i*10,
+      content:'<div class="callout">محتوى هذا الدرس سيُضاف قريباً. هذا محتوى تجريبي للدرس '+toAr(i)+' في دورة '+c.title+'.</div>',
+      quiz:[{q:'سؤال تجريبي للدرس '+toAr(i),opts:['الإجابة أ','الإجابة ب (الصحيحة)','الإجابة ج','الإجابة د'],a:1}]
+    });
+  }
+});
+
+var currentCourse=null, currentLesson=null, qState={qs:[],cur:0,ans:[],done:false};
+
+function init(){
+  var params=new URLSearchParams(window.location.search);
+  var cid=params.get('course')||'dt';
+  var lid=params.get('lesson');
+  currentCourse=COURSES.find(function(c){return c.id===cid;})||COURSES[0];
+  document.getElementById('course-title-nav').textContent=currentCourse.title;
+  document.getElementById('course-icon-sb').textContent=currentCourse.icon;
+  document.getElementById('course-title-sb').textContent=currentCourse.title;
+  var state=getUserState();
+  if(!state.enrolledCourses.includes(cid)){
+    state.enrolledCourses.push(cid);
+    state.aiCredits=(state.aiCredits||0)+currentCourse.credits;
+    saveUserState(state);
+  }
+  renderSidebar();
+  var lessons=COURSE_LESSONS[cid]||[];
+  if(lid){
+    var l=lessons.find(function(x){return x.id===lid;});
+    if(l){openLesson(l.id);return;}
+  }
+  var state2=getUserState();
+  var firstIncomplete=lessons.find(function(l){return !(state2.completedLessons||[]).includes(l.id);});
+  if(firstIncomplete) openLesson(firstIncomplete.id);
+  else if(lessons.length) openLesson(lessons[0].id);
+}
+
+function renderSidebar(){
+  var lessons=COURSE_LESSONS[currentCourse.id]||[];
+  var state=getUserState();
+  var done=(state.completedLessons||[]);
+  var completed=done.filter(function(l){return l.startsWith(currentCourse.id+'_');}).length;
+  var pct=Math.round(completed/lessons.length*100);
+  document.getElementById('course-progress-fill').style.width=pct+'%';
+  document.getElementById('course-progress-label').textContent=toAr(completed)+'/'+toAr(lessons.length)+' دروس ('+toAr(pct)+'%)';
+  document.getElementById('nav-progress').textContent=toAr(completed)+'/'+toAr(lessons.length);
+  var list=document.getElementById('lessons-sidebar-list');
+  list.innerHTML='';
+  var TYPE_ICONS={video:'🎬',text:'📄',exercise:'✏️',lab:'🔬'};
+  lessons.forEach(function(l,i){
+    var isDone=done.includes(l.id);
+    var isActive=currentLesson&&currentLesson.id===l.id;
+    var isLocked=!isDone&&i>0&&!done.includes(lessons[i-1].id)&&currentCourse.id==='dt';
+    var item=document.createElement('div');
+    item.className='lesson-list-item'+(isActive?' active':isDone?' done':isLocked?' locked':'');
+    item.onclick=function(){if(!isLocked)openLesson(l.id);else showToast('🔒 أكمل الدرس السابق أولاً');};
+    item.innerHTML=
+      '<div class="lesson-num">'+(isDone?'✓':isActive?TYPE_ICONS[l.type]||'📖':toAr(i+1))+'</div>'+
+      '<div style="flex:1;overflow:hidden"><div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+l.title+'</div><div style="font-size:10px;color:var(--text3);margin-top:1px">'+l.dur+' · +'+toAr(l.xp)+' XP</div></div>';
+    list.appendChild(item);
+  });
+}
+
+function openLesson(lid){
+  var lessons=COURSE_LESSONS[currentCourse.id]||[];
+  var l=lessons.find(function(x){return x.id===lid;});
+  if(!l)return;
+  currentLesson=l;
+  document.getElementById('lesson-title').textContent=l.title;
+  document.getElementById('lesson-meta').textContent=l.dur+' · '+({video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'}[l.type]||'');
+  document.getElementById('lesson-xp').textContent='+'+toAr(l.xp)+' XP';
+  // Video
+  var frame=document.getElementById('video-frame');
+  var icon=document.getElementById('video-placeholder-icon');
+  var iframeContainer=document.getElementById('lesson-iframe-container');
+  iframeContainer.innerHTML='';
+  if(l.videoUrl){
+    var iframe=document.createElement('iframe');
+    iframe.src=l.videoUrl;
+    iframe.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:var(--r2)';
+    iframe.setAttribute('allow','autoplay;fullscreen');
+    iframeContainer.appendChild(iframe);
+    if(icon)icon.style.display='none';
+  } else {
+    if(icon){icon.style.display='';icon.textContent={video:'📹',text:'📄',exercise:'✏️',lab:'🔬'}[l.type]||'📖';}
+  }
+  // Content
+  document.getElementById('lesson-content-area').innerHTML=l.content||'';
+  document.getElementById('complete-btn-area').style.display='block';
+  var state=getUserState();
+  var isDone=(state.completedLessons||[]).includes(l.id);
+  var btn=document.getElementById('complete-btn');
+  if(isDone){
+    btn.textContent='✅ مكتمل';btn.disabled=true;btn.style.opacity='0.6';
+  } else {
+    btn.textContent='✅ إكمال الدرس والانتقال للتالي ←';btn.disabled=false;btn.style.opacity='1';
+  }
+  // Quiz
+  document.getElementById('quiz-area').innerHTML=
+    '<button class="btn btn-primary btn-lg" onclick="startQuiz()">ابدأ التقييم ←</button>'+
+    '<div id="quiz-questions"></div>';
+  renderSidebar();
+  switchTab('lt-content','lp-content','tab-btn');
+}
+
+function completeCurrentLesson(){
+  if(!currentLesson)return;
+  var state=getUserState();
+  if(!(state.completedLessons||[]).includes(currentLesson.id)){
+    state.completedLessons=state.completedLessons||[];
+    state.completedLessons.push(currentLesson.id);
+    saveUserState(state);
+    addXP(currentLesson.xp);
+    showToast('✅ ممتاز! +'+toAr(currentLesson.xp)+' XP');
+  }
+  var lessons=COURSE_LESSONS[currentCourse.id]||[];
+  var idx=lessons.findIndex(function(l){return l.id===currentLesson.id;});
+  if(idx<lessons.length-1) openLesson(lessons[idx+1].id);
+  else { showToast('🎉 أكملت الدورة!'); addXP(500); renderSidebar(); }
+  renderSidebar();
+}
+
+function startQuiz(){
+  if(!currentLesson||!currentLesson.quiz)return;
+  qState={qs:currentLesson.quiz.slice().sort(function(){return Math.random()-.5;}).slice(0,Math.min(3,currentLesson.quiz.length)),cur:0,ans:[],done:false};
+  renderQ();
+}
+
+function renderQ(){
+  var area=document.getElementById('quiz-questions');
+  if(qState.done||!qState.qs.length)return;
+  var q=qState.qs[qState.cur];
+  area.innerHTML=
+    '<div style="margin-top:20px;padding:16px;background:var(--warm3);border-radius:var(--r2)">'+
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">سؤال '+toAr(qState.cur+1)+' من '+toAr(qState.qs.length)+'</div>'+
+    '<div style="font-size:14px;font-weight:600;margin-bottom:14px">'+q.q+'</div>'+
+    q.opts.map(function(opt,i){return '<div class="quiz-opt'+(qState.ans[qState.cur]===i?' sel':'')+'" onclick="selQ('+i+')">'+opt+'</div>';}).join('')+
+    '<div style="margin-top:12px;display:flex;gap:8px">'+
+      (qState.cur>0?'<button class="btn btn-outline btn-sm" onclick="prevQ()">السابق</button>':'')+
+      (qState.cur<qState.qs.length-1?
+        '<button class="btn btn-primary btn-sm" onclick="nextQ()"'+(qState.ans[qState.cur]===undefined?' disabled':'')+'>التالي ←</button>':
+        '<button class="btn btn-primary btn-sm" onclick="finishQ()"'+(qState.ans[qState.cur]===undefined?' disabled':'')+'>إنهاء ✓</button>'
+      )+
+    '</div></div>';
+}
+function selQ(i){qState.ans[qState.cur]=i;renderQ();}
+function nextQ(){if(qState.cur<qState.qs.length-1){qState.cur++;renderQ();}}
+function prevQ(){if(qState.cur>0){qState.cur--;renderQ();}}
+function finishQ(){
+  var correct=qState.qs.filter(function(q,i){return qState.ans[i]===q.a;}).length;
+  var pct=Math.round(correct/qState.qs.length*100);
+  var area=document.getElementById('quiz-questions');
+  qState.done=true;
+  if(pct>=67){
+    area.innerHTML='<div style="text-align:center;padding:24px;background:var(--teal-light);border-radius:var(--r2);margin-top:16px"><div style="font-size:32px;margin-bottom:8px">🎉</div><div style="font-size:22px;font-weight:700;color:var(--teal)">'+toAr(pct)+'%</div><p style="color:var(--teal);margin-top:4px">أحسنت!</p><button class="btn btn-primary" style="margin-top:12px" onclick="completeCurrentLesson()">إكمال الدرس ←</button></div>';
+    addXP(30);
+  } else {
+    area.innerHTML='<div style="text-align:center;padding:20px;background:var(--red-light);border-radius:var(--r2);margin-top:16px"><div style="font-size:22px;font-weight:700;color:var(--red)">'+toAr(pct)+'%</div><p style="color:var(--red);margin-top:4px">راجع المحتوى وحاول مجدداً</p><button class="btn btn-primary" style="margin-top:12px" onclick="startQuiz()">🔄 إعادة</button></div>';
+  }
+}
+function sendAI(){
+  var inp=document.getElementById('ai-input');
+  var q=inp.value.trim();if(!q)return;
+  var msgs=document.getElementById('ai-messages');
+  msgs.innerHTML+='<div class="chat-bubble user"><div class="chat-avatar user">أ</div><div class="chat-msg">'+q+'</div></div>';
+  inp.value='';
+  var local=getLocalAnswer(q);
+  var ans=local?local.a:'سؤال جيد! راجع محتوى الدرس للإجابة، أو تواصل مع المرشدين في صفحة المرشدين.';
+  setTimeout(function(){
+    msgs.innerHTML+='<div class="chat-bubble ai"><div class="chat-avatar ai">م</div><div class="chat-msg">'+ans+'</div></div>';
+    msgs.scrollTop=msgs.scrollHeight;
+  },400);
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>

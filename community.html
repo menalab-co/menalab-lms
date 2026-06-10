@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شكّل — المجتمع</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.post-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-bottom:12px;transition:box-shadow .15s}
+.post-card:hover{box-shadow:var(--shadow)}
+.vote-col{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:40px}
+.vote-btn{background:none;border:none;cursor:pointer;font-size:18px;color:var(--text3);line-height:1;padding:2px}
+.vote-btn:hover{color:var(--gold-dark)}
+.vote-count{font-size:14px;font-weight:700}
+.reply-box{background:var(--warm3);border-radius:var(--r);padding:12px;margin-top:10px;display:none}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+<div class="modal-overlay" id="post-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('post-modal')">✕</button>
+    <h3 style="margin-bottom:16px">💬 منشور جديد</h3>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">العنوان *</label><input class="inp" id="p-title" placeholder="سؤالك أو موضوع النقاش..."></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">التفاصيل</label><textarea class="inp textarea" id="p-body" placeholder="اشرح أكثر..."></textarea></div>
+    <div class="form-group" style="margin-bottom:20px"><label class="form-label">التصنيف</label>
+      <select class="inp select" id="p-tag">
+        <option>عام</option><option>التعاطف</option><option>تحديد المشكلة</option>
+        <option>توليد الأفكار</option><option>النمذجة</option><option>الاختبار</option>
+      </select></div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="submitPost()">نشر ←</button>
+  </div>
+</div>
+<div class="app-layout">
+<aside class="sidebar">
+  <div class="sidebar-logo"><a href="index.html" class="logo-mark"><span data-logo="32"></span><span class="logo-name light" style="font-size:15px">شكّل</span></a></div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">🏠</span> لوحة التحكم</a>
+    <a href="courses.html" class="nav-item"><span class="nav-icon">📚</span> الدورات</a>
+    <a href="portal.html" class="nav-item"><span class="nav-icon">🎯</span> مشاريعي</a>
+    <a href="community.html" class="nav-item active"><span class="nav-icon">💬</span> المجتمع</a>
+    <a href="mentors.html" class="nav-item"><span class="nav-icon">🧑‍🏫</span> المرشدون</a>
+    <a href="events.html" class="nav-item"><span class="nav-icon">📅</span> الفعاليات</a>
+  </nav>
+</aside>
+<main class="main-content">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div><h2>المجتمع</h2><p style="margin-top:4px">تحدّث مع المتعلمين، شارك تقدّمك، واطرح أسئلتك</p></div>
+    <button class="btn btn-primary" onclick="openModal('post-modal')">+ منشور جديد</button>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="tag-filters">
+    <button class="filter-btn active" onclick="filterTag('')">الكل</button>
+    <button class="filter-btn" onclick="filterTag('التعاطف')">🔍 التعاطف</button>
+    <button class="filter-btn" onclick="filterTag('تحديد المشكلة')">🎯 تحديد المشكلة</button>
+    <button class="filter-btn" onclick="filterTag('توليد الأفكار')">💡 الأفكار</button>
+    <button class="filter-btn" onclick="filterTag('النمذجة')">🛠️ النمذجة</button>
+    <button class="filter-btn" onclick="filterTag('عام')">💬 عام</button>
+  </div>
+  <div id="posts-list"></div>
+</main>
+</div>
+<script src="_shared.js"></script>
+<script>
+var activeTag='';
+function filterTag(tag){
+  activeTag=tag;
+  document.querySelectorAll('#tag-filters .filter-btn').forEach(function(b){b.classList.remove('active');});
+  event.target.classList.add('active');
+  renderPosts();
+}
+function renderPosts(){
+  var posts=getPosts();
+  var filtered=activeTag?posts.filter(function(p){return p.tag===activeTag;}):posts;
+  var list=document.getElementById('posts-list');
+  list.innerHTML='';
+  filtered.sort(function(a,b){return b.votes-a.votes;}).forEach(function(p){
+    var card=document.createElement('div');
+    card.className='post-card';
+    var repliesHTML=(p.replies||[]).map(function(r){return '<div style="background:var(--warm2);border-radius:var(--r);padding:8px 10px;margin-top:6px;font-size:12px"><strong>'+r.author+':</strong> '+r.text+'</div>';}).join('');
+    card.innerHTML=
+      '<div style="display:flex;gap:12px">'+
+        '<div class="vote-col">'+
+          '<button class="vote-btn" onclick="votePost(\''+p.id+'\',1)">▲</button>'+
+          '<div class="vote-count" style="color:'+(p.votes>0?'var(--gold-dark)':'var(--text3)')+'">'+toAr(p.votes)+'</div>'+
+        '</div>'+
+        '<div style="flex:1">'+
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px">'+
+            (p.solved?'<span class="badge badge-teal">✓ محلول</span>':'')+
+            '<span class="badge badge-gray">'+p.tag+'</span>'+
+            '<span style="font-size:11px;color:var(--text3)">'+p.author+' · '+new Date(p.date).toLocaleDateString('ar')+'</span>'+
+          '</div>'+
+          '<div style="font-size:14px;font-weight:700;margin-bottom:4px">'+p.title+'</div>'+
+          (p.body?'<div style="font-size:13px;color:var(--text2);margin-bottom:8px">'+p.body+'</div>':'')+
+          repliesHTML+
+          '<div style="margin-top:8px;display:flex;gap:8px">'+
+            '<button onclick="toggleReply(\''+p.id+'\')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--blue)">💬 '+(p.replies||[]).length+' ردود</button>'+
+            (!(p.id.startsWith('s'))?'<button onclick="deletePost(\''+p.id+'\')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--red)">🗑️</button>':'')+
+          '</div>'+
+          '<div class="reply-box" id="reply-'+p.id+'">'+
+            '<input type="text" id="ri-'+p.id+'" class="inp" placeholder="اكتب ردك..." style="margin-bottom:8px">'+
+            '<button class="btn btn-primary btn-sm" onclick="submitReply(\''+p.id+'\')">إرسال</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    list.appendChild(card);
+  });
+  if(!filtered.length) list.innerHTML='<div style="text-align:center;padding:48px;color:var(--text3)">لا توجد منشورات — كن أول من يطرح سؤالاً!</div>';
+}
+function votePost(id,d){var p=getPosts();var post=p.find(function(x){return x.id===id;});if(post){post.votes=(post.votes||0)+d;savePosts(p);renderPosts();}}
+function toggleReply(id){var el=document.getElementById('reply-'+id);if(el)el.style.display=el.style.display==='block'?'none':'block';}
+function submitReply(id){var inp=document.getElementById('ri-'+id);if(!inp||!inp.value.trim())return;var p=getPosts();var post=p.find(function(x){return x.id===id;});if(post){if(!post.replies)post.replies=[];var u=getUser();post.replies.push({author:u?u.name:'متعلم',text:inp.value.trim()});savePosts(p);inp.value='';renderPosts();}}
+function deletePost(id){if(!confirm('حذف؟'))return;savePosts(getPosts().filter(function(p){return p.id!==id;}));renderPosts();}
+function submitPost(){
+  var title=document.getElementById('p-title').value.trim();
+  if(!title){showToast('يرجى كتابة العنوان');return;}
+  var u=getUser();
+  var posts=getPosts();
+  posts.unshift({id:'p_'+Date.now(),title,body:document.getElementById('p-body').value.trim(),tag:document.getElementById('p-tag').value,author:u?u.name:'متعلم',date:Date.now(),votes:0,solved:false,replies:[]});
+  savePosts(posts);closeModal('post-modal');document.getElementById('p-title').value='';document.getElementById('p-body').value='';
+  addXP(15);renderPosts();showToast('✅ تم نشر المنشور');
+}
+document.addEventListener('DOMContentLoaded',renderPosts);
+</script>
+</body>
+</html>
