@@ -9,17 +9,106 @@
 .admin-table th{background:var(--ink);color:var(--gold);padding:9px 12px;font-weight:600;text-align:right;font-size:12px}
 .admin-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
 .admin-table tr:hover td{background:var(--warm3)}
-.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px;text-align:center}
+.stat-val{font-size:28px;font-weight:700;margin-bottom:4px}
+.stat-lbl{font-size:12px;color:var(--text3)}
+.section-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:16px}
 </style>
 </head>
 <body>
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
-<div class="modal-overlay" id="login-modal">
-  <div class="modal-box" style="max-width:380px">
-    <div style="text-align:center;margin-bottom:20px"><div data-logo="44" style="display:inline-block"></div><h3 style="margin-top:10px">دخول الإدارة</h3></div>
-    <div id="login-err" style="display:none;background:var(--red-light);color:var(--red);padding:8px 12px;border-radius:var(--r);font-size:12px;margin-bottom:12px"></div>
+
+<div class="modal-overlay open" id="login-modal">
+  <div class="modal-box" style="max-width:360px;text-align:center">
+    <div data-logo="44" style="display:inline-block;margin-bottom:12px"></div>
+    <h3 style="margin-bottom:4px">دخول الإدارة</h3>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:20px">كلمة المرور: shakkel2025</p>
+    <div id="login-err" style="display:none;background:var(--red-light);color:var(--red);padding:8px;border-radius:var(--r);font-size:12px;margin-bottom:10px"></div>
     <input class="inp" id="a-pass" type="password" placeholder="كلمة المرور" dir="ltr" style="margin-bottom:14px" onkeydown="if(event.key==='Enter')doAdminLogin()">
     <button class="btn btn-primary btn-full btn-lg" onclick="doAdminLogin()">دخول ←</button>
+  </div>
+</div>
+
+<!-- LESSON EDIT MODAL -->
+<div class="modal-overlay" id="lesson-modal">
+  <div class="modal-box" style="max-width:580px">
+    <button class="modal-close" onclick="closeModal('lesson-modal')">✕</button>
+    <h3 style="margin-bottom:16px">✏️ تعديل الدرس</h3>
+    <input type="hidden" id="lm-course-id">
+    <input type="hidden" id="lm-lesson-id">
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">عنوان الدرس</label><input class="inp" id="lm-title" placeholder="عنوان الدرس"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group"><label class="form-label">رابط الفيديو (Vimeo/YouTube)</label><input class="inp" id="lm-video" placeholder="https://..." dir="ltr"></div>
+      <div class="form-group"><label class="form-label">المدة</label><input class="inp" id="lm-dur" placeholder="١٥ دقيقة"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">المحتوى (HTML)</label><textarea class="inp textarea" id="lm-content" style="min-height:100px" placeholder="محتوى الدرس..."></textarea></div>
+    <div class="form-group" style="margin-bottom:16px"><label class="form-label">سؤال تقييمي (JSON) — مثال: [{q:'السؤال',opts:['أ','ب','ج'],a:1}]</label><textarea class="inp textarea" id="lm-quiz" dir="ltr" style="font-family:monospace;min-height:60px" placeholder='[{"q":"...","opts":["أ","ب","ج"],"a":0}]'></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="saveLessonEdit()">حفظ التغييرات ✓</button>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('event-modal')">✕</button>
+    <h3 style="margin-bottom:16px">📅 فعالية جديدة</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group"><label class="form-label">العنوان</label><input class="inp" id="ev-title" placeholder="عنوان الفعالية"></div>
+      <div class="form-group"><label class="form-label">النوع</label>
+        <select class="inp select" id="ev-type"><option value="webinar">وبينار</option><option value="workshop">ورشة</option><option value="meetup">لقاء</option><option value="competition">مسابقة</option></select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group"><label class="form-label">التاريخ</label><input class="inp" id="ev-date" type="date"></div>
+      <div class="form-group"><label class="form-label">الوقت</label><input class="inp" id="ev-time" type="time"></div>
+      <div class="form-group"><label class="form-label">المضيف</label><input class="inp" id="ev-host" placeholder="اسم المضيف"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group"><label class="form-label">المنصة</label><input class="inp" id="ev-platform" placeholder="Zoom / حضوري..."></div>
+      <div class="form-group"><label class="form-label">المقاعد</label><input class="inp" id="ev-seats" type="number" placeholder="100"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group"><label class="form-label">السعر (0 = مجاني)</label><input class="inp" id="ev-price" type="number" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">رابط التسجيل</label><input class="inp" id="ev-link" dir="ltr" placeholder="https://..."></div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px"><label class="form-label">الوصف</label><textarea class="inp" id="ev-desc" placeholder="وصف الفعالية..."></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="saveEvent()">إضافة الفعالية ✓</button>
+  </div>
+</div>
+
+<!-- MENTOR MODAL -->
+<div class="modal-overlay" id="mentor-add-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('mentor-add-modal')">✕</button>
+    <h3 style="margin-bottom:16px">🧑‍🏫 مرشد جديد</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group"><label class="form-label">الاسم</label><input class="inp" id="ma-name" placeholder="الاسم الكامل"></div>
+      <div class="form-group"><label class="form-label">اللقب</label><input class="inp" id="ma-title" placeholder="خبير التفكير التصميمي..."></div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">نبذة</label><textarea class="inp" id="ma-bio" placeholder="نبذة عن المرشد..."></textarea></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">التخصصات (مفصولة بفاصلة)</label><input class="inp" id="ma-specs" placeholder="التعاطف، HMW، ورش العمل"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="form-group"><label class="form-label">اسم المستخدم (للبوابة)</label><input class="inp" id="ma-user" dir="ltr" placeholder="username"></div>
+      <div class="form-group"><label class="form-label">اللون</label><input class="inp" id="ma-color" type="color" value="#EBC84C"></div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveMentor()">إضافة المرشد ✓</button>
+  </div>
+</div>
+
+<!-- QA EDIT MODAL -->
+<div class="modal-overlay" id="qa-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('qa-modal')">✕</button>
+    <h3 style="margin-bottom:16px">🤖 تعديل سؤال وجواب</h3>
+    <input type="hidden" id="qa-id">
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">السؤال</label><input class="inp" id="qa-q" placeholder="السؤال..."></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">الإجابة</label><textarea class="inp textarea" id="qa-a" placeholder="الإجابة..."></textarea></div>
+    <div class="form-group" style="margin-bottom:16px"><label class="form-label">الكلمات المفتاحية (مفصولة بفاصلة)</label><input class="inp" id="qa-keys" dir="ltr" placeholder="empathy, تعاطف, مستخدم"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary btn-full" onclick="saveQA()">حفظ ✓</button>
+      <button class="btn btn-outline" onclick="deleteQA(document.getElementById('qa-id').value)">🗑️ حذف</button>
+    </div>
   </div>
 </div>
 
@@ -28,11 +117,13 @@
   <div class="sidebar-logo"><a href="index.html" class="logo-mark"><span data-logo="32"></span><span class="logo-name light" style="font-size:15px">شكّل</span></a></div>
   <nav class="sidebar-nav">
     <div class="sidebar-section">الإدارة</div>
-    <button class="nav-item active" id="nav-overview" onclick="showSection('overview')"><span class="nav-icon">📊</span> نظرة عامة</button>
-    <button class="nav-item" id="nav-users" onclick="showSection('users')"><span class="nav-icon">👥</span> المستخدمون</button>
-    <button class="nav-item" id="nav-projects" onclick="showSection('projects')"><span class="nav-icon">🎯</span> المشاريع</button>
-    <button class="nav-item" id="nav-requests" onclick="showSection('requests')"><span class="nav-icon">📬</span> طلبات المرشدين</button>
+    <button class="nav-item active" id="nav-stats" onclick="showSection('stats')"><span class="nav-icon">📊</span> الإحصائيات</button>
+    <button class="nav-item" id="nav-content" onclick="showSection('content')"><span class="nav-icon">📚</span> المحتوى</button>
+    <button class="nav-item" id="nav-qa" onclick="showSection('qa')"><span class="nav-icon">🤖</span> مكتبة AI</button>
     <button class="nav-item" id="nav-events" onclick="showSection('events')"><span class="nav-icon">📅</span> الفعاليات</button>
+    <button class="nav-item" id="nav-mentors" onclick="showSection('mentors')"><span class="nav-icon">🧑‍🏫</span> المرشدون</button>
+    <button class="nav-item" id="nav-users" onclick="showSection('users')"><span class="nav-icon">👥</span> المستخدمون</button>
+    <button class="nav-item" id="nav-requests" onclick="showSection('requests')"><span class="nav-icon">📬</span> الطلبات</button>
     <div class="sidebar-section">النظام</div>
     <a href="index.html" class="nav-item"><span class="nav-icon">🌐</span> عرض الموقع</a>
     <button class="nav-item" onclick="adminLogout()"><span class="nav-icon">🚪</span> خروج</button>
@@ -40,61 +131,74 @@
 </aside>
 
 <main class="main-content">
-  <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between">
-    <div><h2 id="section-title">نظرة عامة</h2><p id="section-sub">إحصائيات المنصة</p></div>
-    <button class="btn btn-outline btn-sm" onclick="exportData()">📥 تصدير CSV</button>
+  <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+    <h2 id="section-title">الإحصائيات</h2>
+    <button class="btn btn-outline btn-sm" onclick="exportData()">📥 CSV</button>
   </div>
 
-  <!-- OVERVIEW -->
-  <div id="sec-overview">
-    <div class="stat-row">
-      <div class="card"><div style="font-size:22px;margin-bottom:6px">👥</div><div style="font-size:26px;font-weight:700" id="stat-users">—</div><div style="font-size:12px;color:var(--text3)">مستخدمون</div></div>
-      <div class="card"><div style="font-size:22px;margin-bottom:6px">🎯</div><div style="font-size:26px;font-weight:700" id="stat-proj">—</div><div style="font-size:12px;color:var(--text3)">مشاريع</div></div>
-      <div class="card"><div style="font-size:22px;margin-bottom:6px">📬</div><div style="font-size:26px;font-weight:700" id="stat-reqs">—</div><div style="font-size:12px;color:var(--text3)">طلبات مرشدين</div></div>
-      <div class="card"><div style="font-size:22px;margin-bottom:6px">💬</div><div style="font-size:26px;font-weight:700" id="stat-posts">—</div><div style="font-size:12px;color:var(--text3)">منشورات</div></div>
+  <!-- STATS -->
+  <div id="sec-stats">
+    <div class="stat-cards">
+      <div class="stat-card"><div style="font-size:28px;margin-bottom:6px">👥</div><div class="stat-val" id="s-users" style="color:var(--blue)">—</div><div class="stat-lbl">مستخدمون</div></div>
+      <div class="stat-card"><div style="font-size:28px;margin-bottom:6px">🎯</div><div class="stat-val" id="s-proj" style="color:var(--gold-dark)">—</div><div class="stat-lbl">مشاريع</div></div>
+      <div class="stat-card"><div style="font-size:28px;margin-bottom:6px">💬</div><div class="stat-val" id="s-posts" style="color:var(--teal)">—</div><div class="stat-lbl">منشورات</div></div>
+      <div class="stat-card"><div style="font-size:28px;margin-bottom:6px">📬</div><div class="stat-val" id="s-reqs" style="color:var(--purple)">—</div><div class="stat-lbl">طلبات مرشدين</div></div>
     </div>
-    <div class="card">
-      <h4 style="margin-bottom:12px">الدورات الأكثر تسجيلاً</h4>
-      <div id="courses-stats"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="section-card"><h4 style="margin-bottom:12px">الدورات المسجّلة</h4><div id="course-stats"></div></div>
+      <div class="section-card"><h4 style="margin-bottom:12px">مستوى المستخدم الحالي</h4><div id="user-level-stats"></div></div>
     </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="sec-content" style="display:none">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="course-filter-btns">
+      <button class="filter-btn active" onclick="filterContentCourse('')">الكل</button>
+    </div>
+    <div id="content-lessons-list"></div>
+  </div>
+
+  <!-- QA LIBRARY -->
+  <div id="sec-qa" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <p style="font-size:13px;color:var(--text2)">مكتبة الأسئلة والأجوبة المحلية للمساعد الذكي</p>
+      <button class="btn btn-primary btn-sm" onclick="openQAModal(null)">+ إضافة سؤال</button>
+    </div>
+    <div id="qa-list"></div>
+  </div>
+
+  <!-- EVENTS -->
+  <div id="sec-events" style="display:none">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+      <button class="btn btn-primary btn-sm" onclick="openModal('event-modal')">+ فعالية جديدة</button>
+    </div>
+    <div id="events-list-admin"></div>
+  </div>
+
+  <!-- MENTORS -->
+  <div id="sec-mentors" style="display:none">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+      <button class="btn btn-primary btn-sm" onclick="openModal('mentor-add-modal')">+ مرشد جديد</button>
+    </div>
+    <div id="mentors-list-admin"></div>
   </div>
 
   <!-- USERS -->
   <div id="sec-users" style="display:none">
-    <div class="card" style="overflow-x:auto">
-      <table class="admin-table" id="users-table">
-        <thead><tr><th>الاسم</th><th>البريد</th><th>XP</th><th>المستوى</th><th>المشاريع</th><th>الإجراء</th></tr></thead>
-        <tbody id="users-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- PROJECTS -->
-  <div id="sec-projects" style="display:none">
-    <div class="card" style="overflow-x:auto">
+    <div class="section-card" style="overflow-x:auto">
       <table class="admin-table">
-        <thead><tr><th>المشروع</th><th>المستخدم</th><th>المرحلة الحالية</th><th>المراحل المكتملة</th><th>التاريخ</th></tr></thead>
-        <tbody id="projects-tbody"></tbody>
+        <thead><tr><th>الاسم</th><th>البريد</th><th>XP</th><th>المستوى</th><th>المشاريع</th><th>الإجراءات</th></tr></thead>
+        <tbody id="users-tbody"></tbody>
       </table>
     </div>
   </div>
 
   <!-- REQUESTS -->
   <div id="sec-requests" style="display:none">
-    <div class="card" style="overflow-x:auto">
+    <div class="section-card" style="overflow-x:auto">
       <table class="admin-table">
         <thead><tr><th>النوع</th><th>الطالب</th><th>المرشد</th><th>التفاصيل</th><th>التاريخ</th><th>الحالة</th></tr></thead>
         <tbody id="requests-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- EVENTS -->
-  <div id="sec-events" style="display:none">
-    <div class="card" style="overflow-x:auto">
-      <table class="admin-table">
-        <thead><tr><th>العنوان</th><th>النوع</th><th>التاريخ</th><th>المسجّلون</th><th>المقاعد</th><th>الحالة</th></tr></thead>
-        <tbody id="events-tbody"></tbody>
       </table>
     </div>
   </div>
@@ -103,12 +207,27 @@
 
 <script src="_shared.js"></script>
 <script>
-var ADMIN_PASS='shakkel2025';
+// Course lessons data (reference from course-player)
+var ADMIN_LESSONS = {
+  dt:   [{id:'dt_1',title:'مقدمة في التفكير التصميمي'},{id:'dt_2',title:'مرحلة التعاطف'},{id:'dt_3',title:'تحديد المشكلة وHMW'},{id:'dt_4',title:'توليد الأفكار'},{id:'dt_5',title:'النمذجة والاختبار'},{id:'dt_6',title:'التكرار'},{id:'dt_7',title:'مشروع تطبيقي'}],
+  cad:  [{id:'cad_1',title:'مقدمة في Fusion 360'},{id:'cad_2',title:'رسم المقاطع 2D'},{id:'cad_3',title:'الأجسام 3D'},{id:'cad_4',title:'التجميع'},{id:'cad_5',title:'التصدير للطباعة'}],
+  '3dp':[{id:'3dp_1',title:'مقدمة الطباعة ثلاثية الأبعاد'},{id:'3dp_2',title:'أنواع المواد'},{id:'3dp_3',title:'إعدادات Cura'},{id:'3dp_4',title:'تصحيح الأخطاء'}],
+  laser:[{id:'laser_1',title:'أساسيات قطع الليزر'},{id:'laser_2',title:'تصميم ملفات الليزر'},{id:'laser_3',title:'السلامة والتشغيل'}],
+  ux:   [{id:'ux_1',title:'مقدمة UX'},{id:'ux_2',title:'بحث المستخدم'},{id:'ux_3',title:'Wireframing'},{id:'ux_4',title:'Prototyping في Figma'},{id:'ux_5',title:'اختبار الاستخدام'},{id:'ux_6',title:'Design System'},{id:'ux_7',title:'Handoff للمطور'},{id:'ux_8',title:'مشروع تطبيقي'}],
+  elec: [{id:'elec_1',title:'مقدمة الإلكترونيات'},{id:'elec_2',title:'LED والمقاومات'},{id:'elec_3',title:'المستشعرات'},{id:'elec_4',title:'مشاريع IoT'},{id:'elec_5',title:'مشروع نهائي'}],
+  cnc:  [{id:'cnc_1',title:'مبادئ CNC Router'},{id:'cnc_2',title:'برمجة G-code'},{id:'cnc_3',title:'مشروع تطبيقي'}]
+};
+
+var _activeCourseFilter = '';
+var _adminEvents = JSON.parse(localStorage.getItem('sh_admin_events')||'[]');
+var _adminMentors = JSON.parse(localStorage.getItem('sh_admin_mentors')||'[]');
+
 function doAdminLogin(){
   var p=document.getElementById('a-pass').value;
-  if(p===ADMIN_PASS){
+  if(p==='shakkel2025'){
     localStorage.setItem('sh_admin','1');
-    document.getElementById('login-modal').classList.remove('open');
+    closeModal('login-modal');
+    document.getElementById('login-modal').style.display='none';
     document.getElementById('admin-app').style.display='flex';
     renderAll();
   } else {
@@ -121,110 +240,328 @@ function adminLogout(){localStorage.removeItem('sh_admin');window.location.href=
 document.addEventListener('DOMContentLoaded',function(){
   if(localStorage.getItem('sh_admin')==='1'){
     document.getElementById('login-modal').classList.remove('open');
+    document.getElementById('login-modal').style.display='none';
     document.getElementById('admin-app').style.display='flex';
     renderAll();
-  } else {
-    openModal('login-modal');
   }
 });
 
 function showSection(sec){
-  ['overview','users','projects','requests','events'].forEach(function(s){
-    document.getElementById('sec-'+s).style.display=s===sec?'':'none';
-    document.getElementById('nav-'+s).classList.toggle('active',s===sec);
+  ['stats','content','qa','events','mentors','users','requests'].forEach(function(s){
+    var el=document.getElementById('sec-'+s);
+    if(el) el.style.display=s===sec?'':'none';
+    var nav=document.getElementById('nav-'+s);
+    if(nav) nav.classList.toggle('active',s===sec);
   });
-  var titles={overview:'نظرة عامة',users:'المستخدمون',projects:'المشاريع',requests:'طلبات المرشدين',events:'الفعاليات'};
+  var titles={stats:'الإحصائيات',content:'إدارة المحتوى',qa:'مكتبة AI',events:'الفعاليات',mentors:'المرشدون',users:'المستخدمون',requests:'الطلبات'};
   document.getElementById('section-title').textContent=titles[sec]||sec;
 }
 
 function renderAll(){
+  renderStats();
+  renderContent();
+  renderQA();
+  renderEventsAdmin();
+  renderMentorsAdmin();
+  renderUsers();
+  renderRequests();
+}
+
+function renderStats(){
   var state=getUserState();
   var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
   var posts=getPosts();
-  var projects=state.projects||[];
-
-  // Stats
-  document.getElementById('stat-users').textContent='١';
-  document.getElementById('stat-proj').textContent=toAr(projects.length);
-  document.getElementById('stat-reqs').textContent=toAr(reqs.length);
-  document.getElementById('stat-posts').textContent=toAr(posts.length);
-
-  // Courses stats
-  var cs=document.getElementById('courses-stats');
+  document.getElementById('s-users').textContent='١';
+  document.getElementById('s-proj').textContent=toAr((state.projects||[]).length);
+  document.getElementById('s-posts').textContent=toAr(posts.length);
+  document.getElementById('s-reqs').textContent=toAr(reqs.length);
+  var cs=document.getElementById('course-stats');
   cs.innerHTML=COURSES.map(function(c){
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'+
-      '<span style="font-size:20px">'+c.icon+'</span><span style="flex:1;font-size:13px">'+c.title+'</span>'+
-      '<span class="badge '+(c.free?'badge-free':'badge-gray')+'">'+(c.free?'مجاني':''+toAr(c.price)+' ر.س')+'</span>'+
+    var enrolled=(state.enrolledCourses||[]).includes(c.id);
+    var completed=(state.completedLessons||[]).filter(function(l){return l.startsWith(c.id+'_');}).length;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">'+
+      '<span>'+c.icon+'</span><span style="flex:1;font-size:12px">'+c.title+'</span>'+
+      (enrolled?'<span class="badge badge-teal">مسجّل — '+toAr(completed)+'/'+toAr(c.lessons)+'</span>':'<span class="badge badge-gray">—</span>')+
     '</div>';
   }).join('');
+  var level=getLevelFromXP(state.xp);
+  var xpData=getXPToNext(state.xp);
+  document.getElementById('user-level-stats').innerHTML=
+    '<div style="font-size:32px;margin-bottom:8px">'+level.icon+'</div>'+
+    '<div style="font-size:18px;font-weight:700;margin-bottom:4px">'+level.label+'</div>'+
+    '<div style="font-size:13px;color:var(--text3);margin-bottom:10px">'+toAr(state.xp)+' XP</div>'+
+    '<div class="progress-track"><div class="progress-fill" style="width:'+xpData.pct+'%"></div></div>'+
+    (xpData.nextLabel?'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+toAr(xpData.remaining)+' XP للمستوى التالي: '+xpData.nextLabel+'</div>':'');
+}
 
-  // Users
-  var u=getUser();
-  var tb=document.getElementById('users-tbody');
-  tb.innerHTML='';
-  if(u){
+function filterContentCourse(cid){
+  _activeCourseFilter=cid;
+  document.querySelectorAll('#course-filter-btns .filter-btn').forEach(function(b){b.classList.remove('active');});
+  event.target.classList.add('active');
+  renderContent();
+}
+
+function renderContent(){
+  // Build filter buttons
+  var btnContainer=document.getElementById('course-filter-btns');
+  if(btnContainer.children.length<=1){
+    COURSES.forEach(function(c){
+      var btn=document.createElement('button');
+      btn.className='filter-btn';
+      btn.textContent=c.icon+' '+c.title.substring(0,12);
+      btn.onclick=function(){filterContentCourse(c.id);};
+      btnContainer.appendChild(btn);
+    });
+  }
+  var list=document.getElementById('content-lessons-list');
+  list.innerHTML='';
+  var courses=_activeCourseFilter?COURSES.filter(function(c){return c.id===_activeCourseFilter;}):COURSES;
+  courses.forEach(function(c){
+    var lessons=ADMIN_LESSONS[c.id]||[];
+    var section=document.createElement('div');
+    section.className='section-card';
+    section.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:22px">'+c.icon+'</span><h4>'+c.title+'</h4></div>'+
+      '<div style="display:flex;flex-direction:column;gap:6px">'+
+      lessons.map(function(l){
+        var custom=JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
+        var hasVideo=!!(custom.videoUrl||'');
+        return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--warm3);border-radius:var(--r)">'+
+          '<span style="font-size:12px;flex:1">'+l.title+'</span>'+
+          (hasVideo?'<span class="badge badge-teal">📹 فيديو</span>':'<span class="badge badge-gray">بدون فيديو</span>')+
+          '<button onclick="openLessonEdit(\''+c.id+'\',\''+l.id+'\')" class="btn btn-outline btn-sm">✏️ تعديل</button>'+
+          '</div>';
+      }).join('')+
+      '</div>';
+    list.appendChild(section);
+  });
+}
+
+function openLessonEdit(courseId, lessonId){
+  var lessons=ADMIN_LESSONS[courseId]||[];
+  var lesson=lessons.find(function(l){return l.id===lessonId;});
+  if(!lesson) return;
+  var custom=JSON.parse(localStorage.getItem('sh_lesson_'+lessonId)||'{}');
+  document.getElementById('lm-course-id').value=courseId;
+  document.getElementById('lm-lesson-id').value=lessonId;
+  document.getElementById('lm-title').value=custom.title||lesson.title||'';
+  document.getElementById('lm-video').value=custom.videoUrl||'';
+  document.getElementById('lm-dur').value=custom.dur||'';
+  document.getElementById('lm-content').value=custom.content||'';
+  document.getElementById('lm-quiz').value=custom.quiz?JSON.stringify(custom.quiz):'';
+  openModal('lesson-modal');
+}
+
+function saveLessonEdit(){
+  var lessonId=document.getElementById('lm-lesson-id').value;
+  var quizRaw=document.getElementById('lm-quiz').value.trim();
+  var quizData=null;
+  if(quizRaw){try{quizData=JSON.parse(quizRaw);}catch(e){showToast('خطأ في صيغة JSON للتقييم');return;}}
+  var custom={
+    title:document.getElementById('lm-title').value.trim(),
+    videoUrl:document.getElementById('lm-video').value.trim(),
+    dur:document.getElementById('lm-dur').value.trim(),
+    content:document.getElementById('lm-content').value.trim(),
+    quiz:quizData
+  };
+  localStorage.setItem('sh_lesson_'+lessonId,JSON.stringify(custom));
+  closeModal('lesson-modal');
+  showToast('✅ تم حفظ الدرس');
+  renderContent();
+}
+
+function renderQA(){
+  var lib=getQALibrary();
+  var list=document.getElementById('qa-list');
+  list.innerHTML='';
+  lib.forEach(function(qa){
+    var item=document.createElement('div');
+    item.style.cssText='background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start';
+    item.innerHTML=
+      '<div style="flex:1">'+
+        '<div style="font-size:13px;font-weight:600;margin-bottom:4px">'+qa.q+'</div>'+
+        '<div style="font-size:12px;color:var(--text2)">'+qa.a.substring(0,100)+(qa.a.length>100?'...':'')+'</div>'+
+        (qa.auto?'<span class="badge badge-gold" style="margin-top:4px">تلقائي من AI</span>':'')+
+      '</div>'+
+      '<button onclick="openQAModal(\''+qa.id+'\')" class="btn btn-outline btn-sm">✏️</button>';
+    list.appendChild(item);
+  });
+  var addBtn=document.createElement('button');
+  addBtn.className='btn btn-outline btn-full';
+  addBtn.textContent='+ إضافة سؤال جديد';
+  addBtn.onclick=function(){openQAModal(null);};
+  list.appendChild(addBtn);
+}
+
+function openQAModal(id){
+  var lib=getQALibrary();
+  var qa=id?lib.find(function(q){return q.id===id;}):null;
+  document.getElementById('qa-id').value=id||'';
+  document.getElementById('qa-q').value=qa?qa.q:'';
+  document.getElementById('qa-a').value=qa?qa.a:'';
+  document.getElementById('qa-keys').value=qa?(qa.keys||[]).join(','):'';
+  openModal('qa-modal');
+}
+
+function saveQA(){
+  var lib=getQALibrary();
+  var id=document.getElementById('qa-id').value;
+  var q=document.getElementById('qa-q').value.trim();
+  var a=document.getElementById('qa-a').value.trim();
+  var keys=document.getElementById('qa-keys').value.split(',').map(function(k){return k.trim();}).filter(Boolean);
+  if(!q||!a){showToast('يرجى ملء السؤال والإجابة');return;}
+  if(id){
+    var idx=lib.findIndex(function(x){return x.id===id;});
+    if(idx>=0) lib[idx]={id,keys,q,a};
+  } else {
+    lib.push({id:'qa_'+Date.now(),keys,q,a});
+  }
+  saveQALibrary(lib);
+  closeModal('qa-modal');
+  showToast('✅ تم الحفظ');
+  renderQA();
+}
+
+function deleteQA(id){
+  if(!confirm('حذف هذا السؤال؟')) return;
+  var lib=getQALibrary().filter(function(q){return q.id!==id;});
+  saveQALibrary(lib);
+  closeModal('qa-modal');
+  renderQA();
+  showToast('تم الحذف');
+}
+
+function renderEventsAdmin(){
+  var allEvents=EVENTS.concat(_adminEvents);
+  var list=document.getElementById('events-list-admin');
+  list.innerHTML='';
+  allEvents.forEach(function(e){
+    var card=document.createElement('div');
+    card.className='section-card';
+    card.style.padding='14px';
+    card.innerHTML=
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<div><div style="font-size:13px;font-weight:600">'+e.title+'</div>'+
+        '<div style="font-size:11px;color:var(--text3)">'+e.date+' · '+e.host+' · '+e.platform+'</div></div>'+
+        '<span style="margin-right:auto" class="badge '+(e.free?'badge-free':'badge-paid')+'">'+(e.free?'مجاني':toAr(e.price)+' ر.س')+'</span>'+
+        '<span class="badge badge-gray">'+toAr(e.reg||0)+'/'+toAr(e.seats||0)+'</span>'+
+      '</div>';
+    list.appendChild(card);
+  });
+}
+
+function saveEvent(){
+  var price=parseInt(document.getElementById('ev-price').value)||0;
+  var ev={
+    id:'ev_'+Date.now(),
+    title:document.getElementById('ev-title').value.trim(),
+    type:document.getElementById('ev-type').value,
+    date:document.getElementById('ev-date').value,
+    time:document.getElementById('ev-time').value,
+    dur:'٩٠ دقيقة',
+    host:document.getElementById('ev-host').value.trim(),
+    platform:document.getElementById('ev-platform').value.trim(),
+    seats:parseInt(document.getElementById('ev-seats').value)||100,
+    price:price,
+    free:price===0,
+    link:document.getElementById('ev-link').value.trim()||'https://eventbrite.com',
+    desc:document.getElementById('ev-desc').value.trim(),
+    reg:0, tags:[]
+  };
+  if(!ev.title||!ev.date){showToast('يرجى ملء العنوان والتاريخ');return;}
+  _adminEvents.push(ev);
+  localStorage.setItem('sh_admin_events',JSON.stringify(_adminEvents));
+  closeModal('event-modal');
+  showToast('✅ تمت إضافة الفعالية');
+  renderEventsAdmin();
+}
+
+function renderMentorsAdmin(){
+  var allMentors=MENTORS.concat(_adminMentors);
+  var list=document.getElementById('mentors-list-admin');
+  list.innerHTML='';
+  allMentors.forEach(function(m){
+    var card=document.createElement('div');
+    card.className='section-card';
+    card.style.cssText='padding:14px;display:flex;align-items:center;gap:12px';
+    card.innerHTML=
+      '<div style="width:40px;height:40px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">'+m.av+'</div>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.name+'</div><div style="font-size:11px;color:var(--text3)">'+m.title+'</div></div>'+
+      '<span class="badge '+(m.available?'badge-teal':'badge-gray')+'">'+(m.available?'متاح':'غير متاح')+'</span>'+
+      '<span style="font-size:12px;color:var(--text3)">⭐ '+m.rating+'</span>';
+    list.appendChild(card);
+  });
+}
+
+function saveMentor(){
+  var name=document.getElementById('ma-name').value.trim();
+  var title=document.getElementById('ma-title').value.trim();
+  if(!name||!title){showToast('يرجى ملء الاسم واللقب');return;}
+  var specs=document.getElementById('ma-specs').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var mentor={
+    id:'m_'+Date.now(),
+    name:name,
+    title:title,
+    bio:document.getElementById('ma-bio').value.trim(),
+    specs:specs,
+    av:name.charAt(0),
+    color:document.getElementById('ma-color').value,
+    available:true,
+    rating:5.0,
+    sessions:0,
+    responseTime:'٤٨ ساعة',
+    username:document.getElementById('ma-user').value.trim()
+  };
+  _adminMentors.push(mentor);
+  localStorage.setItem('sh_admin_mentors',JSON.stringify(_adminMentors));
+  closeModal('mentor-add-modal');
+  showToast('✅ تمت إضافة المرشد');
+  renderMentorsAdmin();
+}
+
+function renderUsers(){
+  var state=getUserState();
+  var user=getUser();
+  var tbody=document.getElementById('users-tbody');
+  tbody.innerHTML='';
+  if(user){
     var level=getLevelFromXP(state.xp);
     var tr=document.createElement('tr');
-    tr.innerHTML='<td><strong>'+u.name+'</strong></td><td style="direction:ltr">'+u.email+'</td>'+
-      '<td style="color:var(--gold-dark);font-weight:600">'+toAr(state.xp)+' XP</td>'+
+    tr.innerHTML='<td><strong>'+user.name+'</strong></td>'+
+      '<td style="direction:ltr;font-size:12px">'+user.email+'</td>'+
+      '<td style="color:var(--gold-dark);font-weight:600">'+toAr(state.xp)+'</td>'+
       '<td>'+level.icon+' '+level.label+'</td>'+
-      '<td>'+toAr(projects.length)+' مشروع</td>'+
-      '<td><span class="badge badge-teal">نشط</span></td>';
-    tb.appendChild(tr);
+      '<td>'+toAr((state.projects||[]).length)+'</td>'+
+      '<td><button onclick="resetUserPassword(\''+user.id+'\')" class="btn btn-outline btn-sm">🔑 إعادة كلمة المرور</button></td>';
+    tbody.appendChild(tr);
   }
+}
 
-  // Projects
-  var ptb=document.getElementById('projects-tbody');
-  ptb.innerHTML='';
-  projects.forEach(function(p){
-    var stage=DT_STAGES.find(function(s){return s.id===p.currentStage;})||DT_STAGES[0];
-    var tr=document.createElement('tr');
-    tr.innerHTML='<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+p.problem+'">'+p.title.substring(0,40)+'</td>'+
-      '<td>'+(u?u.name:'زائر')+'</td>'+
-      '<td>'+stage.icon+' '+stage.label+'</td>'+
-      '<td>'+toAr(Object.keys(p.stageData||{}).filter(function(k){var sd=p.stageData[k];return sd.contentViewed&&sd.templatesDone&&(sd.quizScore||0)>=90;}).length)+'/٦</td>'+
-      '<td>'+new Date(p.createdAt).toLocaleDateString('ar')+'</td>';
-    ptb.appendChild(tr);
-  });
+function resetUserPassword(userId){
+  showToast('✅ تم إرسال رابط إعادة تعيين كلمة المرور (تجريبي)');
+}
 
-  // Requests
-  var rtb=document.getElementById('requests-tbody');
-  rtb.innerHTML='';
+function renderRequests(){
+  var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
+  var tbody=document.getElementById('requests-tbody');
+  tbody.innerHTML='';
   reqs.forEach(function(r){
     var m=MENTORS.find(function(x){return x.id===r.mentorId;})||{name:'—'};
     var tr=document.createElement('tr');
-    tr.innerHTML='<td><span class="badge '+(r.type==='question'?'badge-blue':'badge-teal')+'">'+( r.type==='question'?'سؤال':'جلسة')+'</span></td>'+
+    tr.innerHTML='<td><span class="badge '+(r.type==='question'?'badge-blue':'badge-teal')+'">'+(r.type==='question'?'سؤال':'جلسة')+'</span></td>'+
       '<td>'+r.student+'</td><td>'+m.name+'</td>'+
-      '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.question||r.topic||'—')+'</td>'+
-      '<td>'+new Date(r.date).toLocaleDateString('ar')+'</td>'+
+      '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">'+(r.question||r.topic||'—')+'</td>'+
+      '<td style="font-size:11px">'+new Date(r.date).toLocaleDateString('ar')+'</td>'+
       '<td><span class="badge badge-gold">'+r.status+'</span></td>';
-    rtb.appendChild(tr);
+    tbody.appendChild(tr);
   });
-
-  // Events
-  var etb=document.getElementById('events-tbody');
-  etb.innerHTML='';
-  EVENTS.forEach(function(e){
-    var tr=document.createElement('tr');
-    tr.innerHTML='<td>'+e.title+'</td>'+
-      '<td>'+e.type+'</td><td>'+e.date+'</td>'+
-      '<td>'+toAr(e.reg)+'</td><td>'+toAr(e.seats)+'</td>'+
-      '<td><span class="badge '+(e.free?'badge-free':'badge-paid')+'">'+(e.free?'مجاني':toAr(e.price)+' ر.س')+'</span></td>';
-    etb.appendChild(tr);
-  });
+  if(!reqs.length) tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">لا توجد طلبات</td></tr>';
 }
 
 function exportData(){
   var state=getUserState();
-  var rows=[['نوع','بيانات']];
-  rows.push(['المستخدم',getUser()?getUser().name:'لا يوجد']);
-  rows.push(['XP',state.xp]);
-  rows.push(['المشاريع',(state.projects||[]).length]);
+  var rows=[['نوع','قيمة'],['XP',state.xp],['المشاريع',(state.projects||[]).length],['الدروس المكتملة',(state.completedLessons||[]).length],['AI Credits',state.aiCredits]];
   var csv=rows.map(function(r){return r.join(',');}).join('\n');
-  var a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='shakkel-export.csv';
-  a.click();
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='shakkel-stats.csv';a.click();
 }
 </script>
 </body>
