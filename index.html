@@ -57,6 +57,8 @@
 </head>
 <body>
 
+<div id="greeting-bar" style="display:none"></div>
+<div id="purchase-modal" class="modal-overlay"><div class="modal-box"><button class="modal-close" onclick="closeModal('purchase-modal')">✕</button><div id="purchase-modal-body"></div></div></div>
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
 <!-- IDEA INPUT MODAL -->
@@ -157,7 +159,7 @@
       <a href="events.html">الفعاليات</a>
     </div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" style="color:rgba(255,255,255,.7)" onclick="openModal('login-modal')">دخول</button>
+      <a href="#contact" class="btn btn-ghost" style="color:rgba(255,255,255,.7)">تواصل معنا</a><button class="btn btn-ghost" style="color:rgba(255,255,255,.7)" onclick="openModal('login-modal')">دخول</button>
       <button class="btn btn-primary" onclick="openModal('signup-modal')">ابدأ مجاناً</button>
     </div>
   </nav>
@@ -242,6 +244,21 @@
     <div><div class="stat-num">٦</div><div class="stat-lbl">مراحل تصميمية</div></div>
     <div><div class="stat-num">٤</div><div class="stat-lbl">مرشدون خبراء</div></div>
     <div><div class="stat-num">٧</div><div class="stat-lbl">مستويات إنجاز</div></div>
+  </div>
+</section>
+
+
+<!-- CONTACT -->
+<section id="contact" style="background:var(--white);padding:80px 24px;text-align:center">
+  <div style="max-width:600px;margin:0 auto">
+    <h2>تواصل معنا</h2>
+    <p style="margin:12px 0 32px">هل لديك سؤال أو اقتراح؟ نحن نحب أن نسمع منك</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <input class="inp" id="c-name" placeholder="الاسم">
+      <input class="inp" id="c-email" type="email" placeholder="البريد الإلكتروني" dir="ltr">
+    </div>
+    <textarea class="inp textarea" id="c-msg" placeholder="رسالتك..." style="margin-bottom:14px"></textarea>
+    <button class="btn btn-primary btn-lg btn-full" onclick="sendContact()">إرسال الرسالة ←</button>
   </div>
 </section>
 
@@ -351,6 +368,12 @@ function playVideo() {
 
 // Render courses preview
 document.addEventListener('DOMContentLoaded', function() {
+  // Hide dashboard nav link if not logged in
+  var user = getUser();
+  if (!user) {
+    document.querySelectorAll('a[href="dashboard.html"]').forEach(function(a){ a.style.display='none'; });
+  }
+
   var grid = document.getElementById('courses-grid');
   COURSES.slice(0,6).forEach(function(c) {
     var card = document.createElement('a');
@@ -364,6 +387,17 @@ document.addEventListener('DOMContentLoaded', function() {
     grid.appendChild(card);
   });
 });
+
+function sendContact() {
+  var name = document.getElementById('c-name').value.trim();
+  var email = document.getElementById('c-email').value.trim();
+  var msg = document.getElementById('c-msg').value.trim();
+  if (!name || !msg) { showToast('يرجى ملء الاسم والرسالة'); return; }
+  showToast('✅ شكراً ' + name + '! سنرد عليك قريباً على ' + (email||'بريدك'));
+  document.getElementById('c-name').value = '';
+  document.getElementById('c-email').value = '';
+  document.getElementById('c-msg').value = '';
+}
 </script>
 </body>
 </html>
