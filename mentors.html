@@ -13,28 +13,51 @@
 </style>
 </head>
 <body>
+<div id="greeting-bar" style="display:none"></div>
+<div id="purchase-modal" class="modal-overlay"><div class="modal-box"><button class="modal-close" onclick="closeModal('purchase-modal')">✕</button><div id="purchase-modal-body"></div></div></div>
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<!-- MENTOR MODAL -->
 <div class="modal-overlay" id="mentor-modal">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:540px">
     <button class="modal-close" onclick="closeModal('mentor-modal')">✕</button>
-    <div id="mentor-modal-name" style="font-size:16px;font-weight:700;margin-bottom:4px"></div>
-    <div id="mentor-modal-title" style="font-size:13px;color:var(--text2);margin-bottom:20px"></div>
+    <div id="mentor-modal-name" style="font-size:16px;font-weight:700;margin-bottom:2px"></div>
+    <div id="mentor-modal-title" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
     <div class="tab-nav">
       <button class="tab-btn active" id="mt-q" onclick="switchTab('mt-q','mp-q','tab-btn')">❓ سؤال</button>
-      <button class="tab-btn" id="mt-s" onclick="switchTab('mt-s','mp-s','tab-btn')">📅 جلسة</button>
+      <button class="tab-btn" id="mt-s" onclick="switchTab('mt-s','mp-s','tab-btn')">📅 حجز جلسة</button>
     </div>
+
+    <!-- Question tab -->
     <div class="tab-panel active" id="mp-q">
-      <textarea class="inp textarea" id="m-question" placeholder="اكتب سؤالك..."></textarea>
+      <textarea class="inp textarea" id="m-question" placeholder="اكتب سؤالك بالتفصيل..."></textarea>
       <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="sendMentorMsg('question')">إرسال السؤال ←</button>
     </div>
+
+    <!-- Session booking tab with calendar -->
     <div class="tab-panel" id="mp-s">
-      <div class="form-group" style="margin-bottom:12px"><label class="form-label">الموضوع</label><input class="inp" id="m-topic" placeholder="موضوع الجلسة..."></div>
-      <div class="form-group" style="margin-bottom:12px"><label class="form-label">الوقت المفضل</label><input class="inp" id="m-time" placeholder="الخميس مساءً مثلاً..."></div>
-      <div class="form-group" style="margin-bottom:20px"><label class="form-label">ملاحظات</label><textarea class="inp" id="m-notes" placeholder="أي تفاصيل إضافية..."></textarea></div>
-      <button class="btn btn-teal btn-full" onclick="sendMentorMsg('session')">إرسال الطلب ←</button>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">موضوع الجلسة *</label>
+        <input class="inp" id="m-topic" placeholder="موضوع الجلسة...">
+      </div>
+      <div class="form-label" style="margin-bottom:6px">اختر اليوم</div>
+      <div class="calendar-container">
+        <div id="booking-calendar"></div>
+      </div>
+      <div id="time-slot-section" style="display:none">
+        <div class="form-label" style="margin-bottom:6px">اختر الوقت</div>
+        <div class="time-slots" id="time-slots"></div>
+      </div>
+      <div id="booking-summary" style="display:none;background:var(--teal-light);border-radius:var(--r);padding:10px 12px;margin-top:10px;font-size:13px;color:var(--teal)"></div>
+      <div class="form-group" style="margin-top:12px;margin-bottom:14px">
+        <label class="form-label">ملاحظات إضافية</label>
+        <textarea class="inp" id="m-notes" placeholder="أي تفاصيل إضافية تريد مشاركتها مع المرشد..."></textarea>
+      </div>
+      <button class="btn btn-teal btn-full" onclick="sendMentorMsg('session')">تأكيد الحجز ←</button>
     </div>
   </div>
 </div>
+
 <div class="app-layout">
 <aside class="sidebar">
   <div class="sidebar-logo"><a href="index.html" class="logo-mark"><span data-logo="32"></span><span class="logo-name light" style="font-size:15px">شكّل</span></a></div>
@@ -52,58 +75,131 @@
   <div class="mentors-grid" id="mentors-grid"></div>
 </main>
 </div>
+
 <script src="_shared.js"></script>
 <script>
-var _currentMentor=null;
-function renderMentors(){
-  var grid=document.getElementById('mentors-grid');
-  grid.innerHTML='';
-  MENTORS.forEach(function(m){
-    var card=document.createElement('div');
-    card.className='mentor-card';
-    var stars='⭐'.repeat(Math.floor(m.rating));
-    card.innerHTML=
-      (!m.available?'<div style="float:left"><span class="badge badge-gray">غير متاح</span></div>':'')+
-      '<div style="display:flex;gap:12px;margin-bottom:12px">'+
-        '<div class="mentor-avatar" style="background:'+m.color+'">'+m.av+'</div>'+
-        '<div><div style="font-size:15px;font-weight:700">'+m.name+'</div><div style="font-size:12px;color:var(--text2)">'+m.title+'</div><div style="font-size:11px;color:var(--text3)">'+stars+' '+m.rating+' · '+toAr(m.sessions)+' جلسة</div></div>'+
-      '</div>'+
-      '<p style="font-size:13px;margin-bottom:12px">'+m.bio+'</p>'+
-      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">'+
-        m.specs.map(function(s){return '<span class="badge badge-gray">'+s+'</span>';}).join('')+
-      '</div>'+
-      '<div style="font-size:11px;color:var(--text3);margin-bottom:14px">⏱ وقت الرد: '+m.responseTime+'</div>'+
-      '<div style="display:flex;gap:8px">'+
-        '<button onclick="openMentorModal(\''+m.id+'\',\'question\')" '+(m.available?'':'disabled')+' class="btn btn-outline btn-sm" style="flex:1">❓ سؤال</button>'+
-        '<button onclick="openMentorModal(\''+m.id+'\',\'session\')" '+(m.available?'':'disabled')+' class="btn btn-teal btn-sm" style="flex:1">📅 جلسة</button>'+
+var _currentMentor = null;
+var _selectedDate = null;
+var _selectedTime = null;
+
+function renderMentors() {
+  var grid = document.getElementById('mentors-grid');
+  grid.innerHTML = '';
+  MENTORS.forEach(function(m) {
+    var card = document.createElement('div');
+    card.className = 'mentor-card';
+    var stars = '⭐'.repeat(Math.floor(m.rating));
+    card.innerHTML =
+      (!m.available ? '<div style="float:left"><span class="badge badge-gray">غير متاح</span></div>' : '') +
+      '<div style="display:flex;gap:12px;margin-bottom:12px">' +
+        '<div class="mentor-avatar" style="background:'+m.color+'">'+m.av+'</div>' +
+        '<div><div style="font-size:15px;font-weight:700">'+m.name+'</div>' +
+        '<div style="font-size:12px;color:var(--text2)">'+m.title+'</div>' +
+        '<div style="font-size:11px;color:var(--text3)">'+stars+' '+m.rating+' · '+toAr(m.sessions)+' جلسة</div></div>' +
+      '</div>' +
+      '<p style="font-size:13px;margin-bottom:12px">'+m.bio+'</p>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">' +
+        m.specs.map(function(s){ return '<span class="badge badge-gray">'+s+'</span>'; }).join('') +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text3);margin-bottom:14px">⏱ وقت الرد: '+m.responseTime+'</div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button onclick="openMentorModal(\''+m.id+'\',\'question\')" '+(m.available?'':'disabled')+' class="btn btn-outline btn-sm" style="flex:1">❓ سؤال</button>' +
+        '<button onclick="openMentorModal(\''+m.id+'\',\'session\')" '+(m.available?'':'disabled')+' class="btn btn-teal btn-sm" style="flex:1">📅 حجز جلسة</button>' +
       '</div>';
     grid.appendChild(card);
   });
 }
-function openMentorModal(id,tab){
-  _currentMentor=id;
-  var m=MENTORS.find(function(x){return x.id===id;});
-  if(!m)return;
-  document.getElementById('mentor-modal-name').textContent=m.name;
-  document.getElementById('mentor-modal-title').textContent=m.title;
-  switchTab('mt-'+tab.charAt(0),'mp-'+tab.charAt(0),'tab-btn');
+
+function openMentorModal(id, tab) {
+  _currentMentor = id;
+  _selectedDate = null;
+  _selectedTime = null;
+  var m = MENTORS.find(function(x){ return x.id === id; });
+  if (!m) return;
+  document.getElementById('mentor-modal-name').textContent = m.name;
+  document.getElementById('mentor-modal-title').textContent = m.title;
+  switchTab('mt-' + tab.charAt(0), 'mp-' + tab.charAt(0), 'tab-btn');
+  document.getElementById('time-slot-section').style.display = 'none';
+  document.getElementById('booking-summary').style.display = 'none';
   openModal('mentor-modal');
+  if (tab === 'session') {
+    setTimeout(function() {
+      renderCalendar('booking-calendar', function(dateStr) {
+        _selectedDate = dateStr;
+        showTimeSlots(dateStr);
+      });
+    }, 100);
+  }
 }
-function sendMentorMsg(type){
-  var u=getUser();
-  var req={id:'r_'+Date.now(),mentorId:_currentMentor,type,student:u?u.name:'متعلم',date:Date.now(),status:'pending'};
-  if(type==='question') req.question=document.getElementById('m-question').value.trim();
-  else { req.topic=document.getElementById('m-topic').value.trim(); req.time=document.getElementById('m-time').value; req.notes=document.getElementById('m-notes').value; }
-  if(type==='question'&&!req.question){showToast('يرجى كتابة السؤال');return;}
-  if(type==='session'&&!req.topic){showToast('يرجى كتابة موضوع الجلسة');return;}
-  var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
+
+function showTimeSlots(dateStr) {
+  var section = document.getElementById('time-slot-section');
+  var container = document.getElementById('time-slots');
+  section.style.display = 'block';
+  var times = ['09:00','10:00','11:00','14:00','15:00','16:00','17:00','19:00'];
+  container.innerHTML = '';
+  times.forEach(function(t) {
+    var slot = document.createElement('div');
+    slot.className = 'time-slot' + (_selectedTime === t ? ' selected' : '');
+    slot.textContent = t;
+    slot.onclick = function() {
+      _selectedTime = t;
+      container.querySelectorAll('.time-slot').forEach(function(s){ s.classList.remove('selected'); });
+      slot.classList.add('selected');
+      updateBookingSummary(dateStr, t);
+    };
+    container.appendChild(slot);
+  });
+}
+
+function updateBookingSummary(date, time) {
+  var summary = document.getElementById('booking-summary');
+  summary.style.display = 'block';
+  var m = MENTORS.find(function(x){ return x.id === _currentMentor; });
+  var dateObj = new Date(date);
+  var dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  var formatted = dayNames[dateObj.getDay()] + ' ' + dateObj.toLocaleDateString('ar-SA', {year:'numeric',month:'long',day:'numeric'});
+  summary.innerHTML = '✅ <strong>موعدك المختار:</strong> ' + formatted + ' الساعة ' + time + (m ? ' مع ' + m.name : '');
+}
+
+function sendMentorMsg(type) {
+  var u = getUser();
+  if (type === 'session') {
+    var topic = document.getElementById('m-topic').value.trim();
+    if (!topic) { showToast('يرجى كتابة موضوع الجلسة'); return; }
+    if (!_selectedDate) { showToast('يرجى اختيار يوم من الروزنامة'); return; }
+    if (!_selectedTime) { showToast('يرجى اختيار وقت الجلسة'); return; }
+  } else {
+    var q = document.getElementById('m-question').value.trim();
+    if (!q) { showToast('يرجى كتابة السؤال'); return; }
+  }
+  var req = {
+    id: 'r_' + Date.now(),
+    mentorId: _currentMentor,
+    type: type,
+    student: u ? u.name : 'متعلم',
+    date: Date.now(),
+    status: 'pending'
+  };
+  if (type === 'question') {
+    req.question = document.getElementById('m-question').value.trim();
+  } else {
+    req.topic = document.getElementById('m-topic').value.trim();
+    req.bookingDate = _selectedDate;
+    req.bookingTime = _selectedTime;
+    req.notes = document.getElementById('m-notes').value;
+  }
+  var reqs = JSON.parse(localStorage.getItem('sh_mentor_reqs') || '[]');
   reqs.push(req);
-  localStorage.setItem('sh_mentor_reqs',JSON.stringify(reqs));
+  localStorage.setItem('sh_mentor_reqs', JSON.stringify(reqs));
   closeModal('mentor-modal');
-  document.getElementById('m-question').value='';document.getElementById('m-topic').value='';
-  showToast('✅ تم الإرسال — سيرد المرشد خلال '+MENTORS.find(function(m){return m.id===_currentMentor;}).responseTime);
+  document.getElementById('m-question').value = '';
+  document.getElementById('m-topic').value = '';
+  var m = MENTORS.find(function(x){ return x.id === _currentMentor; });
+  showToast('✅ تم الإرسال — سيرد ' + (m ? m.name : 'المرشد') + ' خلال ' + (m ? m.responseTime : '٤٨ ساعة'));
 }
-document.addEventListener('DOMContentLoaded',renderMentors);
+
+document.addEventListener('DOMContentLoaded', renderMentors);
 </script>
 </body>
 </html>
