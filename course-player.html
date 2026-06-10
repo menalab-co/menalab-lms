@@ -26,6 +26,17 @@
 </style>
 </head>
 <body>
+<div id="greeting-bar" style="display:none"></div>
+<div id="purchase-modal" class="modal-overlay"><div class="modal-box"><button class="modal-close" onclick="closeModal('purchase-modal')">✕</button><div id="purchase-modal-body"></div></div></div>
+<div id="completion-modal" class="modal-overlay">
+  <div class="modal-box" style="text-align:center;max-width:520px">
+    <div style="font-size:64px;margin-bottom:12px">🎉</div>
+    <h2 id="comp-title" style="margin-bottom:8px">أحسنت! أكملت الدورة</h2>
+    <p id="comp-msg" style="margin-bottom:24px;color:var(--text2)">لقد أتممت هذه الدورة بنجاح. ما التالي؟</p>
+    <div id="comp-other-courses" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;text-align:right"></div>
+    <button class="btn btn-outline btn-full" onclick="closeModal('completion-modal')">لاحقاً</button>
+  </div>
+</div>
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
 <!-- Top nav -->
@@ -203,7 +214,7 @@ function renderSidebar(){
   lessons.forEach(function(l,i){
     var isDone=done.includes(l.id);
     var isActive=currentLesson&&currentLesson.id===l.id;
-    var isLocked=!isDone&&i>0&&!done.includes(lessons[i-1].id)&&currentCourse.id==='dt';
+    var isLocked=!isDone&&!isLessonUnlocked(i);
     var item=document.createElement('div');
     item.className='lesson-list-item'+(isActive?' active':isDone?' done':isLocked?' locked':'');
     item.onclick=function(){if(!isLocked)openLesson(l.id);else showToast('🔒 أكمل الدرس السابق أولاً');};
@@ -256,6 +267,17 @@ function openLesson(lid){
   switchTab('lt-content','lp-content','tab-btn');
 }
 
+function isLessonUnlocked(lessonIdx) {
+  if(lessonIdx<=0) return true;
+  var lessons=COURSE_LESSONS[currentCourse.id]||[];
+  var prev=lessons[lessonIdx-1];
+  if(!prev) return true;
+  var state=getUserState();
+  var done=(state.completedLessons||[]).includes(prev.id);
+  var score=(state.quizScores||{})[prev.id]||0;
+  return done && score>=67; // 67% for courses (softer than DT portal)
+}
+
 function completeCurrentLesson(){
   if(!currentLesson)return;
   var state=getUserState();
@@ -266,11 +288,45 @@ function completeCurrentLesson(){
     addXP(currentLesson.xp);
     showToast('✅ ممتاز! +'+toAr(currentLesson.xp)+' XP');
   }
+  renderSidebar();
   var lessons=COURSE_LESSONS[currentCourse.id]||[];
   var idx=lessons.findIndex(function(l){return l.id===currentLesson.id;});
-  if(idx<lessons.length-1) openLesson(lessons[idx+1].id);
-  else { showToast('🎉 أكملت الدورة!'); addXP(500); renderSidebar(); }
-  renderSidebar();
+  var allDone=lessons.every(function(l){return (getUserState().completedLessons||[]).includes(l.id);});
+  if(allDone){
+    showCourseCompletion();
+  } else if(idx<lessons.length-1){
+    var nextIdx=idx+1;
+    if(isLessonUnlocked(nextIdx)){
+      openLesson(lessons[nextIdx].id);
+    } else {
+      showToast('✅ أكمل اختبار هذا الدرس أولاً لفتح التالي');
+    }
+  }
+}
+
+function showCourseCompletion(){
+  addXP(300);
+  var state=getUserState();
+  if(!state.earnedBadges) state.earnedBadges=[];
+  var badge=currentCourse.badge||'🏅';
+  if(!state.earnedBadges.includes(currentCourse.id+'_done')){
+    state.earnedBadges.push(currentCourse.id+'_done');
+    saveUserState(state);
+  }
+  document.getElementById('comp-title').textContent='أحسنت! أكملت "'+currentCourse.title+'"';
+  document.getElementById('comp-msg').textContent='حصلت على شارة '+badge+' وأضفت '+(currentCourse.xp||300)+' XP لرصيدك!';
+  var otherDiv=document.getElementById('comp-other-courses');
+  var others=COURSES.filter(function(c){
+    return c.id!==currentCourse.id && !(getUserState().enrolledCourses||[]).includes(c.id);
+  }).slice(0,4);
+  otherDiv.innerHTML=others.map(function(c){
+    return '<a href="course-player.html?course='+c.id+'" onclick="closeModal(&quot;completion-modal&quot;)" style="border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-decoration:none;color:inherit;display:block" >' +
+      '<div style="font-size:24px;margin-bottom:6px">'+c.icon+'</div>' +
+      '<div style="font-size:12px;font-weight:600;margin-bottom:2px">'+c.title+'</div>' +
+      '<span class="badge '+(c.free?'badge-free':'badge-paid')+'">'+(c.free?'مجاني':toAr(c.price)+' ر.س')+'</span>' +
+    '</a>';
+  }).join('');
+  openModal('completion-modal');
 }
 
 function startQuiz(){
@@ -304,6 +360,13 @@ function finishQ(){
   var pct=Math.round(correct/qState.qs.length*100);
   var area=document.getElementById('quiz-questions');
   qState.done=true;
+  // Save score to state for lesson gating
+  if(currentLesson){
+    var state=getUserState();
+    if(!state.quizScores) state.quizScores={};
+    state.quizScores[currentLesson.id]=Math.max(state.quizScores[currentLesson.id]||0,pct);
+    saveUserState(state);
+  }
   if(pct>=67){
     area.innerHTML='<div style="text-align:center;padding:24px;background:var(--teal-light);border-radius:var(--r2);margin-top:16px"><div style="font-size:32px;margin-bottom:8px">🎉</div><div style="font-size:22px;font-weight:700;color:var(--teal)">'+toAr(pct)+'%</div><p style="color:var(--teal);margin-top:4px">أحسنت!</p><button class="btn btn-primary" style="margin-top:12px" onclick="completeCurrentLesson()">إكمال الدرس ←</button></div>';
     addXP(30);
