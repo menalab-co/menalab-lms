@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="_shared.css">
 </head>
 <body>
+<div id="greeting-bar" style="display:none"></div>
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 <div class="modal-overlay open" id="login-modal">
   <div class="modal-box" style="max-width:380px">
@@ -91,6 +92,9 @@ document.addEventListener('DOMContentLoaded',function(){
   if(sess){
     currentMentor=MENTORS.find(function(m){return m.id===sess.id;});
     if(currentMentor){
+      // Load any saved profile edits
+      var customProfiles=JSON.parse(localStorage.getItem('sh_mentor_profiles')||'{}');
+      if(customProfiles[currentMentor.id]) Object.assign(currentMentor, customProfiles[currentMentor.id]);
       document.getElementById('login-modal').classList.remove('open');
       document.getElementById('portal-app').style.display='flex';
       renderAll();
@@ -178,14 +182,15 @@ function renderAll(){
 
   // Profile
   document.getElementById('profile-content').innerHTML=
-    '<div style="display:flex;flex-direction:column;gap:12px">'+
-      '<div class="form-group"><label class="form-label">الاسم</label><input class="inp" value="'+currentMentor.name+'" readonly></div>'+
-      '<div class="form-group"><label class="form-label">اللقب</label><input class="inp" value="'+currentMentor.title+'" readonly></div>'+
-      '<div class="form-group"><label class="form-label">نبذة</label><textarea class="inp textarea" readonly>'+currentMentor.bio+'</textarea></div>'+
-      '<div class="form-group"><label class="form-label">التخصصات</label><input class="inp" value="'+currentMentor.specs.join(' · ')+'" readonly></div>'+
-      '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--warm3);border-radius:var(--r2)">'+
-        '<span style="font-size:13px">حالة الاستقبال:</span>'+
-        '<button onclick="toggleAvailability()" class="btn '+(currentMentor.available?'btn-teal':'btn-outline')+' btn-sm">'+( currentMentor.available?'✅ متاح — اضغط لإيقاف':'⛔ غير متاح — اضغط للتفعيل')+'</button>'+
+'<div style="display:flex;flex-direction:column;gap:12px">'+
+      '<div class="form-group"><label class="form-label">الاسم</label><input class="inp" id="pf-name" value="'+currentMentor.name+'"></div>'+
+      '<div class="form-group"><label class="form-label">اللقب</label><input class="inp" id="pf-title" value="'+currentMentor.title+'"></div>'+
+      '<div class="form-group"><label class="form-label">نبذة</label><textarea class="inp textarea" id="pf-bio">'+currentMentor.bio+'</textarea></div>'+
+      '<div class="form-group"><label class="form-label">التخصصات (مفصولة بفاصلة)</label><input class="inp" id="pf-specs" value="'+currentMentor.specs.join(', ')+'"></div>'+
+      '<div class="form-group"><label class="form-label">وقت الرد</label><input class="inp" id="pf-response" value="'+currentMentor.responseTime+'"></div>'+
+      '<div style="display:flex;gap:10px;margin-top:4px">'+
+        '<button onclick="saveProfile()" class="btn btn-primary btn-full">حفظ الملف الشخصي ✓</button>'+
+        '<button onclick="toggleAvailability()" class="btn '+(currentMentor.available?'btn-teal':'btn-outline')+' btn-sm">'+( currentMentor.available?'✅ متاح':'⛔ غير متاح')+'</button>'+
       '</div>'+
     '</div>';
 }
@@ -206,6 +211,26 @@ function updateSession(id,status){
   localStorage.setItem('sh_mentor_reqs',JSON.stringify(reqs));
   showToast(status==='accepted'?'✅ تم قبول الجلسة':'تم رفض الطلب');renderAll();
 }
+function saveProfile(){
+  var name = document.getElementById('pf-name').value.trim();
+  var title = document.getElementById('pf-title').value.trim();
+  var bio = document.getElementById('pf-bio').value.trim();
+  var specs = document.getElementById('pf-specs').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var responseTime = document.getElementById('pf-response').value.trim();
+  if (!name) { showToast('يرجى إدخال الاسم'); return; }
+  currentMentor.name = name;
+  currentMentor.title = title;
+  currentMentor.bio = bio;
+  currentMentor.specs = specs;
+  currentMentor.responseTime = responseTime;
+  // Save custom mentor data
+  var customMentors = JSON.parse(localStorage.getItem('sh_mentor_profiles') || '{}');
+  customMentors[currentMentor.id] = { name, title, bio, specs, responseTime };
+  localStorage.setItem('sh_mentor_profiles', JSON.stringify(customMentors));
+  showToast('✅ تم حفظ الملف الشخصي');
+  renderAll();
+}
+
 function toggleAvailability(){
   currentMentor.available=!currentMentor.available;
   showToast(currentMentor.available?'✅ أنت الآن متاح للطلاب':'⛔ تم إيقاف الاستقبال');
