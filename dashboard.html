@@ -3,2086 +3,405 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>شكّل مستقبلك — MenaLab</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;900&family=Cairo:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>شكّل — لوحة التحكم</title>
+<link rel="stylesheet" href="_shared.css">
 <style>
-:root{--ink:#212121;--accent:#EBC84C;--accent2:#D4A017;--teal:#2E7D32;--blue:#1565C0;--purple:#6A1B9A;--red:#dc2626;--surface:#fff;--surface2:#EDEAE6;--surface3:#E5E0D8;--border:rgba(33,33,33,0.12);--border2:rgba(33,33,33,0.22);--text:#212121;--text2:#4a4840;--text3:#8a8678;--r:10px;--r2:16px;--shadow:0 2px 12px rgba(0,0,0,0.07);--shadow2:0 8px 32px rgba(0,0,0,0.12)}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Kufi Arabic','Cairo',sans-serif;background:var(--surface2);color:var(--text);min-height:100vh;direction:rtl}
-.app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:220px;min-width:220px;background:var(--ink);display:flex;flex-direction:column}
-.logo-area{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-mark{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:white}
-.logo-text{color:white;font-size:16px;font-weight:700;line-height:1.1}
-.logo-sub{color:rgba(255,255,255,0.45);font-size:10px;letter-spacing:1px}
-.user-card{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px}
-.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0}
-.user-info .name{color:rgba(255,255,255,0.9);font-size:13px;font-weight:600}
-.user-info .level{display:inline-flex;align-items:center;gap:4px;background:rgba(224,92,42,0.25);color:var(--accent2);font-size:10px;padding:1px 7px;border-radius:20px;margin-top:2px}
-.xp-bar-wrap{padding:10px 18px 4px}
-.xp-label{color:rgba(255,255,255,0.4);font-size:10px;margin-bottom:5px;display:flex;justify-content:space-between}
-.xp-label span{color:var(--accent2);font-weight:600}
-.xp-track{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
-.xp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .6s ease}
-nav{padding:12px 10px;flex:1;overflow-y:auto}
-.nav-section{margin-bottom:18px}
-.nav-label{color:rgba(255,255,255,0.3);font-size:9px;font-weight:600;letter-spacing:1.5px;padding:0 8px 6px;text-transform:uppercase}
-.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,0.55);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px}
-.nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85)}
-.nav-item.active{background:rgba(224,92,42,0.2);color:white}
-.nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
-.nav-badge{margin-right:auto;background:var(--accent);color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:16px;flex-shrink:0}
-.page-title{font-size:17px;font-weight:700;flex:1}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-.btn-primary{background:var(--accent);color:#212121}
-.btn-primary:hover{background:#c94d1e}
-.btn-outline{background:white;color:var(--text);border:1px solid var(--border2)}
-.btn-outline:hover{background:var(--surface2)}
-.content{flex:1;overflow-y:auto;padding:24px}
-.view{display:none}
-.view.active{display:block;animation:fadeSlide .2s ease}
-@keyframes fadeSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.card{background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);padding:18px 20px}
-.card-title{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.stat-card{background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);padding:16px 18px}
-.stat-val{font-size:24px;font-weight:800;line-height:1;margin-bottom:3px}
-.stat-lbl{color:var(--text2);font-size:11px}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.dt-path{display:flex;flex-direction:column;gap:6px;padding:4px 0}
-.dt-phase{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:all .15s}
-.dt-phase:hover:not(.locked){border-color:var(--border2);transform:translateX(-2px)}
-.dt-phase.done{background:#f0fdf7;border-color:#b6f0da}
-.dt-phase.active-phase{background:#fff7f3;border-color:var(--accent);box-shadow:0 0 0 2px rgba(224,92,42,0.12)}
-.dt-phase.locked{opacity:.45;cursor:not-allowed}
-.phase-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
-.phase-dot.done{background:var(--teal);color:white}
-.phase-dot.act{background:var(--accent);color:white}
-.phase-dot.lck{background:var(--surface3);color:var(--text3)}
-.phase-info{flex:1}
-.phase-name{font-size:13px;font-weight:600}
-.phase-desc{font-size:11px;color:var(--text2);margin-top:1px}
-.phase-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px}
-.pb-done{background:#dcfce7;color:#166534}
-.pb-act{background:#fef3ec;color:var(--accent)}
-.pb-lck{background:var(--surface3);color:var(--text3)}
-.module-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px}
-.module-tab{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:white;color:var(--text2);transition:all .15s}
-.module-tab.active{background:var(--ink);color:white;border-color:var(--ink)}
-.lessons-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.lesson-card{background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
-.lesson-card:hover:not(.lcard-locked){box-shadow:var(--shadow2);transform:translateY(-2px)}
-.lcard-locked{cursor:not-allowed}
-.lesson-thumb{height:100px;display:flex;align-items:center;justify-content:center;font-size:36px;position:relative}
-.play-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
-.lesson-card:hover .play-overlay{opacity:1}
-.play-circle{width:34px;height:34px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink)}
-.lesson-body{padding:12px 14px}
-.ltype{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:6px;display:inline-block;margin-bottom:6px}
-.tv{background:#e8f4ff;color:var(--blue)}.tt{background:#f0fdf7;color:var(--teal)}.te{background:#fff7f3;color:var(--accent)}.tl{background:#f5f0ff;color:var(--purple)}
-.lesson-title{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3}
-.lesson-meta{display:flex;align-items:center;gap:10px;font-size:10px;color:var(--text3);margin-top:8px}
-.lp-bar{height:3px;background:var(--surface3);border-radius:2px;margin-top:10px;overflow:hidden}
-.lp-fill{height:100%;border-radius:2px;background:var(--teal)}
-.lock-ov{position:absolute;inset:0;background:rgba(248,247,244,0.85);display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:var(--r2)}
-.player-layout{display:grid;grid-template-columns:1fr 290px;gap:16px}
-.video-box{background:#0a0a14;border-radius:var(--r2);overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative}
-.vid-ph{text-align:center;color:rgba(255,255,255,0.6)}
-.vid-controls{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.8));padding:18px 14px 10px;display:flex;align-items:center;gap:10px}
-.ctrl{background:none;border:none;color:white;font-size:15px;cursor:pointer;opacity:.85}
-.ctrl:hover{opacity:1}
-.prog-track{flex:1;height:3px;background:rgba(255,255,255,0.25);border-radius:2px;cursor:pointer}
-.prog-fill{height:100%;background:var(--accent);border-radius:2px;width:35%}
-.ctrl-time{font-size:11px;color:rgba(255,255,255,0.7);font-family:'IBM Plex Mono',monospace}
-.lesson-content{padding:16px 0}
-.lesson-content h3{font-size:16px;font-weight:700;margin-bottom:10px}
-.lesson-content p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px}
-.callout{border-right:3px solid var(--accent);padding:10px 14px;background:#fff7f3;border-radius:0 8px 8px 0;margin:12px 0}
-.sp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px}
-.sp-title{font-size:12px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.ll-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:11px;color:var(--text2);transition:background .15s}
-.ll-item:hover{background:var(--surface2)}
-.ll-item.ll-act{background:#fff7f3;color:var(--accent);font-weight:600}
-.ll-item.ll-done{color:var(--teal)}
-.ll-num{width:18px;height:18px;border-radius:5px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
-.ll-item.ll-act .ll-num{background:var(--accent);color:white}
-.ll-item.ll-done .ll-num{background:#dcfce7;color:var(--teal)}
-.quiz-wrap{max-width:660px;margin:0 auto}
-.quiz-hdr{text-align:center;padding:16px 0 24px}
-.q-tag-ph{display:inline-flex;align-items:center;gap:6px;background:#fff7f3;color:var(--accent);border:1px solid rgba(224,92,42,0.2);font-size:11px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:12px}
-.quiz-title{font-size:22px;font-weight:800;margin-bottom:6px}
-.quiz-sub{color:var(--text2);font-size:13px}
-.qpb{display:flex;align-items:center;gap:10px;margin-bottom:24px}
-.qpb-dots{display:flex;gap:5px;flex:1}
-.qpb-dot{height:4px;flex:1;border-radius:2px;background:var(--surface3);transition:background .3s}
-.qd-done{background:var(--teal)}.qd-act{background:var(--accent)}
-.qpb-cnt{font-size:11px;color:var(--text2);white-space:nowrap}
-.q-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px 24px;margin-bottom:12px}
-.q-num{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
-.q-text{font-size:15px;font-weight:700;line-height:1.45;margin-bottom:18px}
-.opts{display:flex;flex-direction:column;gap:8px}
-.opt{display:flex;align-items:center;gap:12px;padding:11px 15px;border-radius:12px;border:1.5px solid var(--border);background:white;cursor:pointer;text-align:right;transition:all .15s;width:100%;font-family:'Cairo',sans-serif;font-size:13px}
-.opt:hover{border-color:var(--accent);background:#fff7f3}
-.opt.sel{border-color:var(--accent);background:#fff7f3;color:var(--accent)}
-.opt.ok{border-color:var(--teal);background:#f0fdf7;color:var(--teal)}
-.opt.bad{border-color:#ef4444;background:#fef2f2;color:#dc2626}
-.opt-l{width:26px;height:26px;border-radius:8px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--text2);transition:all .15s}
-.opt.sel .opt-l{background:var(--accent);color:white}
-.opt.ok .opt-l{background:var(--teal);color:white}
-.opt.bad .opt-l{background:#ef4444;color:white}
-.fb-box{padding:12px 15px;border-radius:12px;margin-top:10px;font-size:12px;display:none}
-.fb-box.fb-show{display:block}
-.fb-ok{background:#f0fdf7;border:1px solid #b6f0da;color:#166534}
-.fb-bad{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
-.q-actions{display:flex;gap:10px;margin-top:16px}
-.quiz-results{background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:28px;text-align:center;display:none}
-.res-circle{width:100px;height:100px;border-radius:50%;margin:0 auto 18px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px solid var(--teal);background:radial-gradient(circle,#f0fdf7,white)}
-.res-score{font-size:30px;font-weight:900;color:var(--teal);line-height:1}
-.res-max{font-size:12px;color:var(--text3)}
-.xp-gain-badge{display:inline-flex;align-items:center;gap:8px;background:#fef3ec;border:1px solid rgba(224,92,42,0.2);padding:7px 16px;border-radius:30px;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:20px}
-.search-bar{display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--border2);border-radius:12px;padding:8px 14px;margin-bottom:12px}
-.search-bar input{flex:1;border:none;outline:none;font-family:'Cairo',sans-serif;font-size:13px;background:none;direction:rtl}
-.map-box{background:#eaf4fb;border-radius:var(--r2);border:1px solid var(--border);height:360px;position:relative;overflow:hidden;margin-bottom:14px}
-.fab-popup{position:absolute;background:white;border:1px solid var(--border);border-radius:12px;padding:11px 13px;box-shadow:var(--shadow2);font-size:12px;min-width:175px;pointer-events:none;display:none;z-index:5}
-.fab-popup.show{display:block}
-.fp-name{font-weight:700;font-size:13px;margin-bottom:3px}
-.fp-city{color:var(--text2);font-size:11px;margin-bottom:6px}
-.fp-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
-.fp-tag{font-size:9px;padding:2px 7px;border-radius:5px;background:#f0f0f8;color:var(--blue);font-weight:600}
-.fp-contact{color:var(--teal);font-size:11px}
-.fab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.fab-card{background:white;border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:all .15s}
-.fab-card:hover{box-shadow:var(--shadow);border-color:var(--border2)}
-.fc-name{font-size:12px;font-weight:700;margin-bottom:3px}
-.fc-city{font-size:10px;color:var(--text2);margin-bottom:7px}
-.fc-tags{display:flex;gap:4px;flex-wrap:wrap}
-.fc-tag{font-size:9px;padding:2px 6px;border-radius:5px;background:var(--surface2);color:var(--text2)}
-.chat-layout{display:grid;grid-template-columns:1fr 270px;gap:16px;height:calc(100vh - 110px);max-height:680px}
-.chat-main{display:flex;flex-direction:column;background:white;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
-.chat-hdr{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.ai-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;font-size:15px;color:white;flex-shrink:0}
-.ai-name{font-size:14px;font-weight:700}
-.ai-status{font-size:11px;color:var(--teal);display:flex;align-items:center;gap:4px}
-.sdot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
-.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
-.msg{display:flex;gap:8px;max-width:88%}
-.msg.user{align-self:flex-end;flex-direction:row-reverse}
-.m-av{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-top:2px}
-.m-av.ai{background:linear-gradient(135deg,var(--purple),var(--blue));color:white;font-size:12px}
-.m-av.user{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
-.m-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.55}
-.msg.ai .m-bubble{background:var(--surface2);color:var(--text);border-radius:4px 14px 14px 14px}
-.msg.user .m-bubble{background:var(--ink);color:white;border-radius:14px 4px 14px 14px}
-.m-time{font-size:10px;color:var(--text3);margin-top:3px;padding:0 4px}
-.typing-ind{display:flex;gap:4px;padding:10px 13px}
-.tdot{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:bounce 1.2s infinite}
-.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
-@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-.chat-input-wrap{border-top:1px solid var(--border);padding:10px 13px;display:flex;gap:8px;align-items:flex-end}
-.chat-inp{flex:1;border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-size:13px;resize:none;outline:none;transition:border .15s;direction:rtl;max-height:90px;min-height:36px}
-.chat-inp:focus{border-color:var(--accent)}
-.send-btn{width:34px;height:34px;border-radius:10px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;flex-shrink:0;transition:background .15s}
-.send-btn:hover{background:#c94d1e}
-.send-btn:disabled{background:var(--surface3);cursor:not-allowed}
-.quick-q{padding:9px 11px;border-radius:10px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;font-family:'Cairo',sans-serif;text-align:right;transition:all .15s;color:var(--text2)}
-.quick-q:hover{border-color:var(--accent);color:var(--accent);background:#fff7f3}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--ink);color:white;padding:12px 20px;border-radius:14px;font-size:13px;font-weight:600;z-index:1000;transition:transform .4s ease;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow2)}
-.toast.show{transform:translateX(-50%) translateY(0)}
-.comp-banner{background:linear-gradient(135deg,var(--teal),#0c6e56);border-radius:var(--r2);padding:16px 20px;color:white;display:flex;align-items:center;gap:14px;margin-bottom:20px}
-.cb-btn{margin-right:auto;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Cairo',sans-serif;transition:background .15s}
-.cb-btn:hover{background:rgba(255,255,255,0.3)}
-.badges-row{display:flex;gap:8px;flex-wrap:wrap}
-.badge-item{display:flex;flex-direction:column;align-items:center;width:60px;gap:3px}
-.badge-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px}
-.badge-icon.earned{box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-.badge-icon.locked-b{filter:grayscale(1);opacity:.35;border:2px dashed var(--border2)}
-.badge-name{font-size:9px;color:var(--text2);text-align:center;line-height:1.2}
-.act-list{display:flex;flex-direction:column;gap:0}
-.act-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start}
-.act-item:last-child{border-bottom:none}
-.act-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
-.act-txt{font-size:12px;flex:1}
-.act-time{font-size:10px;color:var(--text3);white-space:nowrap}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);padding:16px}
+.stat-val{font-size:26px;font-weight:700;margin-bottom:2px}
+.stat-lbl{font-size:12px;color:var(--text3)}
+.project-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:14px;transition:box-shadow .2s}
+.project-card:hover{box-shadow:var(--shadow)}
+.stage-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.stage-dot.done{background:var(--gold)}
+.stage-dot.active{background:var(--ink)}
+.stage-dot.locked{background:var(--warm2);border:1px solid var(--border2)}
+.empty-projects{border:2px dashed var(--border2);border-radius:var(--r2);padding:40px;text-align:center;background:var(--warm3)}
+.course-progress-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;display:flex;align-items:center;gap:12px}
+.badge-shelf{display:flex;flex-wrap:wrap;gap:10px}
+.badge-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px;background:var(--white);border:1px solid var(--border);border-radius:var(--r2);min-width:70px;text-align:center}
+.badge-icon{font-size:26px}
+.badge-name{font-size:10px;color:var(--text3);font-weight:500}
+.ai-panel{background:var(--ink);border-radius:var(--r2);padding:16px}
+.ai-msg{background:rgba(255,255,255,.08);border-radius:var(--r);padding:12px;font-size:13px;color:rgba(255,255,255,.85);margin-bottom:12px;line-height:1.6}
+.ai-input-row{display:flex;gap:8px}
+.ai-input{flex:1;padding:9px 12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);color:#fff;font-family:inherit;font-size:13px;outline:none}
+.ai-input::placeholder{color:rgba(255,255,255,.4)}
+@media(max-width:900px){.stat-cards{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-<div class="toast" id="toast">🏆 <span id="toast-msg"></span></div>
-<div class="app">
-<div class="sidebar">
-  <div class="logo-area"><div class="logo"><svg width="36" height="36" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="80" height="80" rx="16" fill="#212121"/>
-<path d="M26 54 L36 30 L44 38 Z" stroke="#EBC84C" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
-<line x1="26" y1="54" x2="22" y2="58" stroke="#EBC84C" stroke-width="1.8" stroke-linecap="round"/>
-<line x1="44" y1="38" x2="56" y2="26" stroke="#EBC84C" stroke-width="1.4" stroke-linecap="round"/>
-<circle cx="56" cy="26" r="3" stroke="#EBC84C" stroke-width="1.4" fill="none"/>
-<circle cx="56" cy="26" r="1" fill="#EBC84C"/>
-<circle cx="36" cy="30" r="3" stroke="#EBC84C" stroke-width="1.4" fill="none"/>
-</svg><div><div class="logo-text" style="font-size:15px">شكّل</div><div class="logo-sub">LEARNING PLATFORM</div></div></div></div>
-  <div class="user-card"><div class="avatar">أح</div><div class="user-info"><div class="name">أحمد الرشيد</div><div class="level" id="level-badge">⚡ مستوى ١ — مستكشف</div></div></div>
-  <div class="xp-bar-wrap"><div class="xp-label">نقاط الخبرة <span id="xp-lbl">0 / 1000 XP</span></div><div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div></div>
-  <nav>
-    <div class="nav-section">
-      <div class="nav-label">الرئيسية</div>
-      <div class="nav-item active" id="nav-dashboard" onclick="showView('dashboard')"><span class="nav-icon">🏠</span> لوحة التحكم</div>
-      <div class="nav-item" id="nav-lessons" onclick="showView('lessons')"><span class="nav-icon">📚</span> الدروس</div>
-      <div class="nav-item" id="nav-quiz" onclick="showView('quiz')"><span class="nav-icon">✅</span> التقييمات <span class="nav-badge">4</span></div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">الموارد</div>
-      <div class="nav-item" id="nav-map" onclick="showView('map')"><span class="nav-icon">🗺️</span> خريطة الفاب لابات</div>
-      <div class="nav-item" id="nav-templates" onclick="showView('templates')"><span class="nav-icon">📋</span> القوالب</div>
-      <div class="nav-item" id="nav-community" onclick="showView('community')"><span class="nav-icon">💬</span> المجتمع</div>
-      <div class="nav-item" id="nav-mentors" onclick="showView('mentors')"><span class="nav-icon">🧑‍🏫</span> المرشدون</div>
-      <div class="nav-item" id="nav-events" onclick="showView('events')"><span class="nav-icon">📅</span> الفعاليات</div>
-      <div class="nav-item" id="nav-chat" onclick="showView('chat')"><span class="nav-icon">🤖</span> المساعد الذكي</div>
-    </div>
-    <div style="padding:10px;border-top:1px solid rgba(255,255,255,0.06);margin-top:4px">
-      <div class="nav-item" onclick="logout()" style="color:rgba(255,120,120,0.7)">
-        <span class="nav-icon">🚪</span> تسجيل الخروج
-      </div>
-    </div>
-  </nav>
-</div>
-<div class="main">
-  <div class="topbar"><div><div class="page-title" id="page-title">لوحة التحكم</div></div><div style="display:flex;gap:8px;align-items:center"><span style="font-size:12px;color:var(--text2)">🔥 ٧ أيام</span><button class="btn btn-primary" onclick="showView('lessons')">▶ متابعة التعلم</button></div></div>
-  <div class="content">
 
-    <div class="view active" id="view-dashboard">
-      <div class="stats-grid">
-        <div class="stat-card"><div style="font-size:22px;margin-bottom:8px">🎯</div><div class="stat-val" id="s-lessons" style="color:var(--accent)">٠</div><div class="stat-lbl">دروس مكتملة</div></div>
-        <div class="stat-card"><div style="font-size:22px;margin-bottom:8px">⚡</div><div class="stat-val" id="s-xp" style="color:var(--purple)">٠</div><div class="stat-lbl">نقاط الخبرة</div></div>
-        <div class="stat-card"><div style="font-size:22px;margin-bottom:8px">🔥</div><div class="stat-val" style="color:var(--teal)">٧</div><div class="stat-lbl">أيام متتالية</div></div>
-        <div class="stat-card"><div style="font-size:22px;margin-bottom:8px">🏅</div><div class="stat-val" id="s-badges" style="color:var(--accent2)">٠</div><div class="stat-lbl">شارات مكتسبة</div></div>
-      </div>
-      <div id="comp-banner-area"></div>
-      <div class="grid-2">
-        <div class="card"><div class="card-title">🧠 مسار التفكير التصميمي</div><div class="dt-path" id="dt-path-dash"></div></div>
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <div class="card"><div class="card-title">🏅 الشارات</div><div class="badges-row" id="badges-row"></div></div>
-          <div class="card"><div class="card-title">⏱️ آخر النشاطات</div><div class="act-list" id="activity-list"></div></div>
-        </div>
-      </div>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<!-- NEW PROJECT MODAL -->
+<div class="modal-overlay" id="new-project-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('new-project-modal')">✕</button>
+    <div style="font-size:32px;margin-bottom:12px">💡</div>
+    <h3 style="margin-bottom:6px">مشروع جديد</h3>
+    <p style="margin-bottom:20px;font-size:13px">أدخل فكرتك أو المشكلة التي تريد حلها</p>
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">الفكرة أو المشكلة *</label>
+      <textarea class="inp textarea" id="np-idea" placeholder="صف المشكلة أو الفكرة بالتفصيل..."></textarea>
     </div>
-
-    <div class="view" id="view-lessons">
-      <div class="module-tabs" id="mod-tabs"></div>
-      <div class="lessons-grid" id="lessons-grid"></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">من يتأثر؟</label>
+      <input class="inp" id="np-who" type="text" placeholder="الفئة المستهدفة">
     </div>
-
-    <div class="view" id="view-player">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-        <button class="btn btn-outline" onclick="showView('lessons')" style="padding:6px 12px;font-size:12px;">← عودة</button>
-        <div id="player-bc" style="font-size:13px;color:var(--text2)"></div>
-        <span style="margin-right:auto;background:#fef3ec;color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;" id="player-xp-badge">+XP</span>
-      </div>
-      <div class="player-layout">
-        <div>
-          <div class="video-box" id="video-box">
-            <div class="vid-ph" id="vid-placeholder"><div style="font-size:52px;margin-bottom:10px" id="pl-icon">🎬</div><div style="font-size:15px;color:white;font-weight:600;margin-bottom:5px" id="pl-title"></div><div style="font-size:12px;opacity:.5" id="pl-dur"></div></div>
-            <div class="vid-controls" id="vid-controls">
-              <button class="ctrl" id="pp-btn" onclick="togglePlay()">▶</button>
-              <div class="prog-track" onclick="seekVid(event)"><div class="prog-fill" id="vid-prog"></div></div>
-              <span class="ctrl-time" id="vid-time">0:00 / 0:00</span>
-            </div>
-          </div>
-          <div class="lesson-content" id="lesson-text-area"></div>
-          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-            <button class="btn btn-primary" id="complete-btn" onclick="completeLesson()">✓ إكمال الدرس (+XP)</button>
-            <button class="btn btn-outline" onclick="showView('quiz')">📝 اختبار الدرس</button>
-            <button class="btn btn-outline" onclick="showView('chat')">🤖 اسأل المساعد</button>
-          </div>
-          <div id="lesson-templates-section" style="display:none;margin-top:16px">
-            <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📋 القوالب المرتبطة بهذا الدرس</div>
-            <div id="lesson-templates-list" style="display:flex;flex-direction:column;gap:8px"></div>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <div class="sp-card"><div class="sp-title">📋 محتوى الوحدة</div><div id="sidebar-ll"></div></div>
-          <div class="sp-card"><div class="sp-title">🎯 أهداف التعلم</div><ul id="lesson-objectives" style="font-size:12px;color:var(--text2);padding-right:14px;display:flex;flex-direction:column;gap:5px;line-height:1.5"></ul></div>
-        </div>
-      </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label class="form-label">المجال</label>
+      <select class="inp select" id="np-domain">
+        <option value="education">التعليم</option><option value="health">الصحة</option>
+        <option value="environment">البيئة</option><option value="community">المجتمع</option>
+        <option value="business">الأعمال</option><option value="technology">التقنية</option>
+        <option value="other">أخرى</option>
+      </select>
     </div>
-
-    <div class="view" id="view-quiz">
-      <div class="quiz-wrap">
-        <div class="quiz-hdr"><div class="q-tag-ph">🧠 التفكير التصميمي</div><div class="quiz-title">تقييم الوحدة</div><div class="quiz-sub">أجب على الأسئلة للانتقال إلى المرحلة التالية</div></div>
-        <div class="qpb"><div class="qpb-dots" id="qpb-dots"></div><div class="qpb-cnt" id="qpb-cnt">١ / ٥</div></div>
-        <div id="q-area"></div>
-        <div class="q-actions" id="q-actions">
-          <button class="btn btn-primary" id="chk-btn" onclick="checkAns()" disabled>تحقق من الإجابة</button>
-          <button class="btn btn-outline" id="nxt-btn" onclick="nextQ()" style="display:none">التالي ←</button>
-        </div>
-        <div class="quiz-results" id="quiz-results">
-          <div class="res-circle"><div class="res-score" id="res-score">٠</div><div class="res-max" id="res-max">من ٥</div></div>
-          <div style="font-size:20px;font-weight:800;margin-bottom:8px" id="res-title">نتيجتك</div>
-          <div style="color:var(--text2);font-size:13px;margin-bottom:18px" id="res-msg"></div>
-          <div class="xp-gain-badge" id="res-xp">⚡ +٠ XP</div>
-          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-            <button class="btn btn-primary" id="unlock-next-btn" onclick="goToNextLesson()">🔓 الدرس التالي ←</button>
-            <button class="btn btn-outline" onclick="showView('lessons')">📚 قائمة الدروس</button>
-            <button class="btn btn-outline" id="retry-quiz-btn" onclick="initQuiz()">🔄 إعادة</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="view" id="view-map">
-      <div class="search-bar"><span>🔍</span><input type="text" placeholder="ابحث عن فاب لاب..." oninput="filterFabs(this.value)"></div>
-      <div class="module-tabs" style="margin-bottom:12px">
-        <div class="module-tab active" onclick="filterFabsByTag(this,'')">الكل</div>
-        <div class="module-tab" onclick="filterFabsByTag(this,'3D Print')">🖨️ طباعة ثلاثية</div>
-        <div class="module-tab" onclick="filterFabsByTag(this,'Laser')">🔆 ليزر</div>
-        <div class="module-tab" onclick="filterFabsByTag(this,'CNC')">⚙️ CNC</div>
-        <div class="module-tab" onclick="filterFabsByTag(this,'Electronics')">💡 إلكترونيات</div>
-      </div>
-      <div class="map-box">
-        <svg id="world-svg" width="100%" viewBox="0 0 900 450" preserveAspectRatio="xMidYMid meet">
-          <rect width="900" height="450" fill="#c8e6f0"/>
-          <path d="M70,60 L130,55 L170,80 L180,110 L160,150 L140,180 L120,210 L100,230 L80,220 L60,190 L50,160 L55,120 L70,90Z" fill="#d4e8c2" stroke="#b0c8a0" stroke-width="0.8"/>
-          <path d="M130,230 L155,225 L170,240 L175,270 L168,310 L155,340 L138,360 L120,355 L108,330 L105,295 L112,265 L122,245Z" fill="#d4e8c2" stroke="#b0c8a0" stroke-width="0.8"/>
-          <path d="M380,55 L420,50 L440,65 L445,85 L430,100 L410,105 L395,95 L375,90 L370,75Z" fill="#d4e8c2" stroke="#b0c8a0" stroke-width="0.8"/>
-          <path d="M375,120 L420,115 L445,130 L455,160 L450,200 L440,240 L420,270 L400,280 L378,268 L360,240 L355,200 L360,165 L365,140Z" fill="#d4e8c2" stroke="#b0c8a0" stroke-width="0.8"/>
-          <path d="M445,100 L490,95 L510,110 L515,135 L500,150 L475,155 L455,145 L445,125Z" fill="#e8d8b0" stroke="#c8b888" stroke-width="0.8"/>
-          <path d="M490,50 L600,45 L680,55 L720,70 L730,100 L710,130 L680,145 L640,150 L600,145 L565,130 L535,120 L510,110 L490,95 L480,75Z" fill="#d4e8c2" stroke="#b0c8a0" stroke-width="0.8"/>
-          <path d="M670,260 L730,255 L760,270 L765,300 L750,330 L720,345 L690,340 L665,320 L660,290Z" fill="#d4e8c2" stroke="#b0c8a0" stroke-width="0.8"/>
-          <g id="fab-dots-g"></g>
-        </svg>
-        <div class="fab-popup" id="fab-popup"><div class="fp-name" id="fp-name"></div><div class="fp-city" id="fp-city"></div><div class="fp-tags" id="fp-tags"></div><div class="fp-contact" id="fp-contact"></div></div>
-      </div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px" id="fab-count-lbl">عرض ١٢ مختبراً</div>
-      <div class="fab-grid" id="fab-grid"></div>
-    </div>
-
-    <div class="view" id="view-chat">
-      <div class="chat-layout">
-        <div class="chat-main">
-          <div class="chat-hdr"><div class="ai-av">🤖</div><div><div class="ai-name">مساعد شكّل مستقبلك</div><div class="ai-status"><div class="sdot"></div> متاح — يعمل بـ Claude AI</div></div><button class="btn btn-outline" style="margin-right:auto;font-size:11px" onclick="clearChat()">🗑️ جديد</button></div>
-          <div class="chat-msgs" id="chat-msgs">
-            <div class="msg ai"><div class="m-av ai">🤖</div><div><div class="m-bubble">مرحباً! أنا مساعد شكّل مستقبلك 👋 يمكنني مساعدتك في التفكير التصميمي، Fusion 360، الطباعة ثلاثية الأبعاد، CNC، قطع الليزر، والإلكترونيات. اسألني أي شيء!</div><div class="m-time">الآن</div></div></div>
-          </div>
-          <div class="chat-input-wrap">
-            <textarea class="chat-inp" id="chat-inp" placeholder="اكتب سؤالك هنا..." rows="1" onkeydown="handleKey(event)" oninput="autoSize(this)"></textarea>
-            <button class="send-btn" id="send-btn-el" onclick="sendMsg()">➤</button>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div class="card" style="padding:14px"><div class="card-title" style="margin-bottom:10px;font-size:13px">💡 أسئلة مقترحة</div><div style="display:flex;flex-direction:column;gap:6px" id="quick-qs"></div></div>
-          <div class="card" style="padding:14px"><div class="card-title" style="margin-bottom:8px;font-size:13px">📊 الدرس الحالي</div><div style="font-size:12px;color:var(--text2)" id="current-lesson-chat">مرحلة التعاطف</div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TEMPLATES VIEW -->
-    <div class="view" id="view-templates">
-      <div style="margin-bottom:20px">
-        <div style="font-size:18px;font-weight:800;margin-bottom:6px">📋 قوالب التفكير التصميمي</div>
-        <div style="font-size:13px;color:var(--text2)">اضغط على أي قالب لفتحه وملئه. يتم حفظ بياناتك تلقائياً عند الإغلاق.</div>
-      </div>
-      <div id="templates-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"></div>
-    </div>
-
-    <!-- TEMPLATE MODAL -->
-    <div id="template-modal" style="position:fixed;inset:0;background:rgba(10,10,20,0.7);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:20px;backdrop-filter:blur(4px);overflow-y:auto">
-      <div style="background:white;border-radius:20px;width:100%;max-width:800px;margin:0 auto;position:relative">
-        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:white;z-index:2;border-radius:20px 20px 0 0">
-          <div style="font-size:22px" id="tpl-modal-icon"></div>
-          <div style="flex:1">
-            <div style="font-size:15px;font-weight:800" id="tpl-modal-title"></div>
-            <div style="font-size:11px;color:var(--text2)" id="tpl-modal-phase"></div>
-          </div>
-          <button onclick="saveTemplate();showToast('تم الحفظ ✓')" style="background:var(--teal);color:white;border:none;padding:7px 14px;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer">💾 حفظ</button>
-          <button onclick="printTemplate()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:7px 12px;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer">🖨️ طباعة</button>
-          <button onclick="closeTemplateModal()" style="width:28px;height:28px;border-radius:50%;background:var(--surface2);border:none;cursor:pointer;font-size:14px">✕</button>
-        </div>
-        <div id="tpl-modal-body" style="padding:20px"></div>
-      </div>
-    </div>
-
-<style>
-.comm-filter{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:white;color:var(--text2);transition:all .15s;font-family:Cairo,sans-serif}
-.comm-filter:hover{border-color:var(--accent);color:var(--accent)}
-.comm-filter.active{background:var(--ink);color:white;border-color:var(--ink)}
-.post-card{background:white;border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;margin-bottom:12px;transition:box-shadow .15s}
-.post-card:hover{box-shadow:var(--shadow)}
-.reply-form{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
-</style>
-
-    <!-- COMMUNITY VIEW -->
-    <div class="view" id="view-community">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-        <div style="flex:1">
-          <div style="font-size:18px;font-weight:800;margin-bottom:4px">💬 مجتمع المتعلمين</div>
-          <div style="font-size:13px;color:var(--text2)">اطرح سؤالاً أو شارك في نقاش مع زملائك</div>
-        </div>
-        <button onclick="openPostModal()" style="background:var(--accent);color:#212121;border:none;padding:9px 18px;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:600;cursor:pointer">+ طرح سؤال جديد</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="community-filters">
-        <button onclick="filterPosts('')" class="comm-filter active" data-tag="">الكل</button>
-        <button onclick="filterPosts('التعاطف')" class="comm-filter" data-tag="التعاطف">🔍 التعاطف</button>
-        <button onclick="filterPosts('تحديد المشكلة')" class="comm-filter" data-tag="تحديد المشكلة">🎯 تحديد المشكلة</button>
-        <button onclick="filterPosts('توليد الأفكار')" class="comm-filter" data-tag="توليد الأفكار">💡 الأفكار</button>
-        <button onclick="filterPosts('النمذجة')" class="comm-filter" data-tag="النمذجة">🛠️ النمذجة</button>
-        <button onclick="filterPosts('عام')" class="comm-filter" data-tag="عام">💬 عام</button>
-      </div>
-      <div id="posts-list"></div>
-    </div>
-
-    <!-- POST MODAL -->
-    <div id="post-modal" style="position:fixed;inset:0;background:rgba(10,10,20,0.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
-      <div style="background:white;border-radius:20px;padding:28px;width:100%;max-width:520px;position:relative">
-        <button onclick="document.getElementById('post-modal').style.display='none'" style="position:absolute;top:12px;left:12px;width:28px;height:28px;border-radius:50%;background:var(--surface2);border:none;cursor:pointer;font-size:14px">✕</button>
-        <div style="font-size:16px;font-weight:800;margin-bottom:18px">💬 طرح سؤال جديد</div>
-        <div style="margin-bottom:12px">
-          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الموضوع *</label>
-          <input id="post-title" type="text" placeholder="اكتب سؤالك أو موضوع النقاش..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;direction:rtl;outline:none">
-        </div>
-        <div style="margin-bottom:12px">
-          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">التفاصيل</label>
-          <textarea id="post-body" placeholder="اشرح سؤالك بالتفصيل..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;direction:rtl;outline:none;resize:vertical;min-height:80px"></textarea>
-        </div>
-        <div style="margin-bottom:18px">
-          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">التصنيف</label>
-          <select id="post-tag" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;direction:rtl;outline:none">
-            <option value="عام">💬 عام</option>
-            <option value="التعاطف">🔍 التعاطف</option>
-            <option value="تحديد المشكلة">🎯 تحديد المشكلة</option>
-            <option value="توليد الأفكار">💡 توليد الأفكار</option>
-            <option value="النمذجة">🛠️ النمذجة</option>
-            <option value="الاختبار">🧪 الاختبار</option>
-          </select>
-        </div>
-        <button onclick="submitPost()" style="background:var(--accent);color:#212121;border:none;padding:10px 20px;border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;font-weight:600;cursor:pointer;width:100%">نشر السؤال ←</button>
-      </div>
-    </div>
-
-    <!-- MENTORS VIEW -->
-    <div class="view" id="view-mentors">
-      <div style="margin-bottom:20px">
-        <div style="font-size:18px;font-weight:800;margin-bottom:4px">🧑‍🏫 المرشدون</div>
-        <div style="font-size:13px;color:var(--text2)">تواصل مع مرشد متخصص أو احجز جلسة إرشاد</div>
-      </div>
-      <div id="mentors-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px"></div>
-    </div>
-
-    <!-- MENTOR REQUEST MODAL -->
-    <div id="mentor-modal" style="position:fixed;inset:0;background:rgba(10,10,20,0.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
-      <div style="background:white;border-radius:20px;padding:28px;width:100%;max-width:500px;position:relative">
-        <button onclick="document.getElementById('mentor-modal').style.display='none'" style="position:absolute;top:12px;left:12px;width:28px;height:28px;border-radius:50%;background:var(--surface2);border:none;cursor:pointer;font-size:14px">✕</button>
-        <div style="font-size:16px;font-weight:800;margin-bottom:6px" id="mentor-modal-title">التواصل مع المرشد</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:18px" id="mentor-modal-name"></div>
-        <div style="display:flex;gap:8px;margin-bottom:16px">
-          <button onclick="switchMentorTab('question')" id="tab-question" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--accent);background:#fff7f3;color:var(--accent);font-family:Cairo,sans-serif;font-size:13px;font-weight:600;cursor:pointer">❓ طرح سؤال</button>
-          <button onclick="switchMentorTab('session')" id="tab-session" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:white;color:var(--text2);font-family:Cairo,sans-serif;font-size:13px;cursor:pointer">📅 حجز جلسة</button>
-        </div>
-        <div id="mentor-question-tab">
-          <textarea id="mentor-question" placeholder="اكتب سؤالك للمرشد..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;direction:rtl;outline:none;resize:vertical;min-height:100px;margin-bottom:12px"></textarea>
-          <button onclick="sendMentorQuestion()" style="background:var(--accent);color:#212121;border:none;padding:10px 20px;border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;font-weight:600;cursor:pointer;width:100%">إرسال السؤال ←</button>
-        </div>
-        <div id="mentor-session-tab" style="display:none">
-          <div style="margin-bottom:12px">
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الموضوع المطلوب</label>
-            <input id="session-topic" type="text" placeholder="مثال: مراجعة خريطة التعاطف الخاصة بي" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;direction:rtl;outline:none">
-          </div>
-          <div style="margin-bottom:12px">
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الأوقات المفضلة</label>
-            <input id="session-time" type="text" placeholder="مثال: الخميس مساءً أو الجمعة صباحاً" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;direction:rtl;outline:none">
-          </div>
-          <div style="margin-bottom:16px">
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">ملاحظات إضافية</label>
-            <textarea id="session-notes" placeholder="أي تفاصيل تريد مشاركتها مع المرشد..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;direction:rtl;outline:none;resize:vertical;min-height:70px"></textarea>
-          </div>
-          <button onclick="sendSessionRequest()" style="background:var(--teal);color:white;border:none;padding:10px 20px;border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;font-weight:600;cursor:pointer;width:100%">إرسال طلب الجلسة ←</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- EVENTS VIEW -->
-    <div class="view" id="view-events">
-      <div style="margin-bottom:22px">
-        <div style="font-size:18px;font-weight:800;margin-bottom:5px">📅 الفعاليات القادمة</div>
-        <div style="font-size:13px;color:var(--text2)">وبينارات مجانية، لقاءات مجتمعية، وورش عمل حضورية</div>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap" id="event-filters">
-        <button onclick="filterEvents('')" class="comm-filter active" data-type="">الكل</button>
-        <button onclick="filterEvents('webinar')" class="comm-filter" data-type="webinar">🎙️ وبينار</button>
-        <button onclick="filterEvents('meetup')" class="comm-filter" data-type="meetup">🤝 لقاء مجتمعي</button>
-        <button onclick="filterEvents('workshop')" class="comm-filter" data-type="workshop">🛠️ ورشة عمل</button>
-        <button onclick="filterEvents('competition')" class="comm-filter" data-type="competition">🏆 مسابقة</button>
-      </div>
-      <div id="events-list" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
-    </div>
-
-    <!-- ENROLLMENT MODAL -->
-    <div id="enroll-modal" style="position:fixed;inset:0;background:rgba(10,10,20,0.72);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
-      <div style="background:white;border-radius:22px;padding:32px;width:100%;max-width:460px;position:relative;text-align:center">
-        <button onclick="document.getElementById('enroll-modal').style.display='none'" style="position:absolute;top:12px;left:12px;width:28px;height:28px;border-radius:50%;background:var(--surface2);border:none;cursor:pointer;font-size:14px">✕</button>
-        <div style="font-size:40px;margin-bottom:14px" id="enroll-icon"></div>
-        <div style="font-size:18px;font-weight:800;margin-bottom:6px" id="enroll-title"></div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:18px" id="enroll-desc"></div>
-        <div style="background:var(--surface2);border-radius:14px;padding:16px;margin-bottom:20px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-size:13px;color:var(--text2)">رسوم الدورة</span>
-            <span style="font-size:20px;font-weight:800;color:var(--accent)" id="enroll-price"></span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-size:13px;color:var(--text2)">رصيد AI المُرفق</span>
-            <span style="font-size:14px;font-weight:700;color:var(--purple)" id="enroll-credits"></span>
-          </div>
-          <div style="height:1px;background:var(--border);margin:10px 0"></div>
-          <div style="font-size:12px;color:var(--text3);line-height:1.6" id="enroll-includes"></div>
-        </div>
-        <div id="enroll-free-section" style="display:none">
-          <button onclick="completeEnrollment()" style="width:100%;padding:13px;background:var(--teal);color:white;border:none;border-radius:12px;font-family:Cairo,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">✓ التسجيل مجاناً</button>
-        </div>
-        <div id="enroll-paid-section" style="display:none">
-          <div style="background:#fef3ec;border:1px solid rgba(224,92,42,0.2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
-            💳 سيتم تفعيل الدورة بعد إتمام الدفع. يتوفر خيار الدفع بالبطاقة أو التحويل البنكي.
-          </div>
-          <button onclick="simulatePayment()" style="width:100%;padding:13px;background:var(--accent);color:#212121;border:none;border-radius:12px;font-family:Cairo,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">💳 إتمام الدفع والتسجيل</button>
-          <button onclick="document.getElementById('enroll-modal').style.display='none'" style="width:100%;padding:10px;background:none;color:var(--text2);border:none;font-family:Cairo,sans-serif;font-size:13px;cursor:pointer">ليس الآن</button>
-        </div>
-        <div id="enroll-success-section" style="display:none">
-          <div style="font-size:48px;margin-bottom:12px">🎉</div>
-          <div style="font-size:16px;font-weight:800;margin-bottom:8px">تم التسجيل بنجاح!</div>
-          <div style="font-size:13px;color:var(--text2);margin-bottom:20px" id="enroll-success-msg"></div>
-          <button onclick="document.getElementById('enroll-modal').style.display='none';showView('lessons')" style="width:100%;padding:12px;background:var(--accent);color:#212121;border:none;border-radius:12px;font-family:Cairo,sans-serif;font-size:14px;font-weight:700;cursor:pointer">ابدأ التعلم الآن ←</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- NO CREDITS MODAL -->
-    <div id="no-credits-modal" style="position:fixed;inset:0;background:rgba(10,10,20,0.72);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
-      <div style="background:white;border-radius:22px;padding:32px;width:100%;max-width:400px;text-align:center">
-        <div style="font-size:44px;margin-bottom:14px">🔋</div>
-        <div style="font-size:18px;font-weight:800;margin-bottom:8px">نفد رصيد AI الخاص بك</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6">لقد استخدمت جميع رسائل AI المرفقة مع دورتك الحالية. سجّل في دورة إضافية للحصول على رصيد جديد.</div>
-        <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:18px;font-size:13px;color:var(--text2)">
-          💡 يمكنك استمرار التعلم من خلال الدروس والتقييمات والقوالب دون الحاجة لرصيد AI
-        </div>
-        <button onclick="document.getElementById('no-credits-modal').style.display='none';showView('lessons')" style="width:100%;padding:12px;background:var(--accent);color:#212121;border:none;border-radius:12px;font-family:Cairo,sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📚 متابعة الدروس</button>
-        <button onclick="document.getElementById('no-credits-modal').style.display='none'" style="width:100%;padding:10px;background:none;color:var(--text2);border:none;font-family:Cairo,sans-serif;font-size:13px;cursor:pointer">إغلاق</button>
-      </div>
-    </div>
-
-    </div>
-
+    <button class="btn btn-primary btn-full btn-lg" onclick="createProject()">ابدأ المشروع ←</button>
   </div>
 </div>
+
+<div class="app-layout">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <a href="index.html" class="logo-mark">
+      <span data-logo="32"></span>
+      <span class="logo-name light" style="font-size:15px">شكّل</span>
+    </a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">الرئيسية</div>
+    <a href="dashboard.html" class="nav-item active"><span class="nav-icon">🏠</span> لوحة التحكم</a>
+    <a href="courses.html" class="nav-item"><span class="nav-icon">📚</span> الدورات</a>
+    <div class="sidebar-section">تعلّم</div>
+    <a href="portal.html" class="nav-item"><span class="nav-icon">🎯</span> مشاريعي</a>
+    <a href="community.html" class="nav-item"><span class="nav-icon">💬</span> المجتمع</a>
+    <a href="mentors.html" class="nav-item"><span class="nav-icon">🧑‍🏫</span> المرشدون</a>
+    <a href="events.html" class="nav-item"><span class="nav-icon">📅</span> الفعاليات</a>
+  </nav>
+  <div class="sidebar-user">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div id="user-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--ink)">م</div>
+      <div>
+        <div id="user-name" style="color:#fff;font-size:13px;font-weight:600">متعلم</div>
+        <div id="user-level" style="font-size:11px;color:rgba(255,255,255,.4)">🔍 مستكشف</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:5px;display:flex;justify-content:space-between">
+      <span>XP</span><span id="xp-label" style="color:var(--gold);font-weight:600">0</span>
+    </div>
+    <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    <div style="margin-top:10px;font-size:10px;color:rgba(255,255,255,.3);display:flex;justify-content:space-between">
+      <span>رصيد AI</span><span id="credits-label" style="color:var(--gold)">50</span>
+    </div>
+    <button onclick="doLogout()" style="margin-top:12px;width:100%;padding:7px;background:rgba(255,0,0,.08);border:none;border-radius:var(--r);color:rgba(255,100,100,.7);font-family:inherit;font-size:12px;cursor:pointer;text-align:right">🚪 خروج</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h2 id="welcome-title">لوحة التحكم</h2>
+      <p id="welcome-sub" style="font-size:13px;margin-top:2px">مرحباً! تتبّع تقدّمك ومشاريعك من هنا</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('new-project-modal')">+ مشروع جديد</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-cards">
+    <div class="stat-card">
+      <div style="font-size:20px;margin-bottom:8px">⚡</div>
+      <div class="stat-val" id="stat-xp" style="color:var(--gold)">0</div>
+      <div class="stat-lbl">نقاط XP</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:20px;margin-bottom:8px">🎯</div>
+      <div class="stat-val" id="stat-projects">0</div>
+      <div class="stat-lbl">مشاريع</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:20px;margin-bottom:8px">📚</div>
+      <div class="stat-val" id="stat-courses">1</div>
+      <div class="stat-lbl">دورات مسجّلة</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:20px;margin-bottom:8px">🏅</div>
+      <div class="stat-val" id="stat-badges">0</div>
+      <div class="stat-lbl">شارات</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:20px">
+    <div>
+      <!-- PROJECTS -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3>مشاريعي</h3>
+        <button class="btn btn-outline btn-sm" onclick="openModal('new-project-modal')">+ إضافة</button>
+      </div>
+      <div id="projects-container"></div>
+
+      <!-- MY COURSES -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 14px">
+        <h3>دوراتي</h3>
+        <a href="courses.html" class="btn btn-ghost btn-sm">استعرض الكل ←</a>
+      </div>
+      <div id="courses-container" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- AI MENTOR -->
+      <div>
+        <h3 style="margin-bottom:12px">🤖 مرشد AI</h3>
+        <div class="ai-panel">
+          <div class="ai-msg" id="ai-hint">مرحباً! أنا مرشدك الذكي. يمكنك سؤالي عن أي موضوع في التفكير التصميمي أو التصنيع الرقمي.</div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="ai-q" type="text" placeholder="اسأل سؤالاً..." onkeydown="if(event.key==='Enter')askAI()">
+            <button class="btn btn-primary btn-sm" onclick="askAI()">←</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BADGES -->
+      <div>
+        <h3 style="margin-bottom:12px">🏅 شاراتي</h3>
+        <div class="badge-shelf" id="badges-shelf"></div>
+      </div>
+
+      <!-- QUICK LINKS -->
+      <div>
+        <h3 style="margin-bottom:12px">روابط سريعة</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="mentors.html" class="card" style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:12px 14px">
+            <span style="font-size:20px">🧑‍🏫</span>
+            <div><div style="font-size:13px;font-weight:600">المرشدون</div><div style="font-size:11px;color:var(--text3)">اسأل خبيراً</div></div>
+            <span style="margin-right:auto;color:var(--text3)">←</span>
+          </a>
+          <a href="community.html" class="card" style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:12px 14px">
+            <span style="font-size:20px">💬</span>
+            <div><div style="font-size:13px;font-weight:600">المجتمع</div><div style="font-size:11px;color:var(--text3)">تحدّث مع المتعلمين</div></div>
+            <span style="margin-right:auto;color:var(--text3)">←</span>
+          </a>
+          <a href="events.html" class="card" style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:12px 14px">
+            <span style="font-size:20px">📅</span>
+            <div><div style="font-size:13px;font-weight:600">الفعاليات</div><div style="font-size:11px;color:var(--text3)">وبينارات وورش عمل</div></div>
+            <span style="margin-right:auto;color:var(--text3)">←</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
 </div>
 
+<script src="_shared.js"></script>
 <script>
-
-(function(){
-  const u = localStorage.getItem('ml_user');
-  if(!u){
-    // Create guest session so dashboard works without signup
-    const guest = {name:'زائر',email:'guest@shakkel.com',guest:true};
-    localStorage.setItem('ml_user', JSON.stringify(guest));
-    window.__mlUser = guest;
-  } else {
-    window.__mlUser = JSON.parse(u);
+document.addEventListener('DOMContentLoaded', function() {
+  var user = getUser();
+  if (!user) {
+    var guest = {name:'زائر',email:'guest@shakkel.com',id:'guest'};
+    setUser(guest);
+    user = guest;
   }
-})();
+  renderDashboard();
+});
 
+function renderDashboard() {
+  var user = getUser();
+  var state = getUserState();
+  var level = getLevelFromXP(state.xp);
+  var xpData = getXPToNext(state.xp);
 
-// ── Clear stale localStorage data from old versions ──────
-(function(){
-  var SITE_VERSION = '3.0';
-  var storedVersion = localStorage.getItem('ml_version');
-  if(storedVersion !== SITE_VERSION){
-    // Keep user account but clear all stale state
-    var user = localStorage.getItem('ml_user');
-    var users = localStorage.getItem('ml_users');
-    localStorage.clear();
-    if(user) localStorage.setItem('ml_user', user);
-    if(users) localStorage.setItem('ml_users', users);
-    localStorage.setItem('ml_version', SITE_VERSION);
+  // Update sidebar
+  var initials = user.name ? user.name.charAt(0) : 'م';
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-name').textContent = user.name || 'متعلم';
+  document.getElementById('user-level').textContent = level.icon + ' ' + level.label;
+  document.getElementById('xp-label').textContent = toAr(state.xp) + ' XP';
+  document.getElementById('xp-fill').style.width = xpData.pct + '%';
+  document.getElementById('credits-label').textContent = toAr(state.aiCredits || 0);
+
+  // Welcome
+  var hour = new Date().getHours();
+  var greet = hour < 12 ? 'صباح الخير' : hour < 17 ? 'مساء الخير' : 'مساء النور';
+  document.getElementById('welcome-title').textContent = greet + '، ' + (user.name || 'متعلم') + '!';
+
+  // Stats
+  document.getElementById('stat-xp').textContent = toAr(state.xp);
+  document.getElementById('stat-projects').textContent = toAr((state.projects||[]).length);
+  document.getElementById('stat-courses').textContent = toAr((state.enrolledCourses||[]).length);
+  document.getElementById('stat-badges').textContent = toAr((state.earnedBadges||[]).length);
+
+  // Projects
+  renderProjects(state);
+
+  // Courses
+  renderEnrolledCourses(state);
+
+  // Badges
+  renderBadges(state);
+
+  // AI hint
+  var hint = 'مرحباً ' + (user.name||'متعلم') + '! يمكنك سؤالي عن أي موضوع في التفكير التصميمي أو التصنيع الرقمي.';
+  if ((state.projects||[]).length > 0) {
+    var proj = state.projects[state.projects.length-1];
+    var stage = DT_STAGES.find(function(s){return s.id===proj.currentStage;});
+    if (stage) hint = 'لديك مشروع في مرحلة ' + stage.label + '. ' + (getStageHint(stage.id)||'استمر في العمل!');
   }
-})();
-
-// ── Load live content from content.json (published by admin) ──
-async function loadLiveContent(){
-  try{
-    const res = await fetch('/content.json?v='+Date.now());
-    if(!res.ok) return; // fall back to hardcoded defaults
-    const data = await res.json();
-    if(data.lessons && data.lessons.length){
-      // Merge with hardcoded: live content wins
-      data.lessons.forEach(function(l){
-        const idx = LESSONS.findIndex(function(x){return x.id===l.id;});
-        if(idx>=0) LESSONS[idx]=l; else LESSONS.push(l);
-      });
-    }
-    if(data.questions && data.questions.length){
-      QUESTIONS_BANK.length = 0;
-      data.questions.forEach(function(q){ QUESTIONS_BANK.push(q); });
-    }
-    if(data.modules && data.modules.length){
-      MODULES.length = 0;
-      data.modules.forEach(function(m){ MODULES.push(m); });
-    }
-    if(data.courses && data.courses.length){
-      COURSES.length = 0;
-      data.courses.forEach(function(c){ COURSES.push(c); });
-    }
-    if(data.events && data.events.length){
-      EVENTS_DATA.length = 0;
-      data.events.forEach(function(e){ EVENTS_DATA.push(e); });
-    }
-    // Re-render everything with live content
-    renderDashboard();
-    renderLessons();
-    renderEvents();
-  }catch(e){
-    // Silently fall back to defaults if fetch fails
-  }
+  document.getElementById('ai-hint').textContent = hint;
 }
 
-let MODULES=[{id:'all',label:'جميع الوحدات'},{id:'dt',label:'🧠 التفكير التصميمي'},{id:'cad',label:'🖥️ Fusion 360'},{id:'3dp',label:'🖨️ الطباعة ثلاثية الأبعاد'},{id:'cnc',label:'⚙️ CNC'},{id:'laser',label:'🔆 قطع الليزر'},{id:'elec',label:'💡 الإلكترونيات'}];
-// COURSES (modules that require enrollment)
-let COURSES = [
-  {id:'dt', title:'التفكير التصميمي', icon:'🧠', price:49, free:false, credits:50,
-   desc:'مسار كامل عبر المراحل الخمس بمنهج d.school', lessons:5, badge:'الأكثر شعبية'},
-  {id:'cad', title:'Fusion 360 للمبتدئين', icon:'🖥️', price:39, free:false, credits:30,
-   desc:'من الصفر إلى تصميم قطع ثلاثية الأبعاد قابلة للتصنيع', lessons:2, badge:''},
-  {id:'3dp', title:'الطباعة ثلاثية الأبعاد', icon:'🖨️', price:29, free:false, credits:30,
-   desc:'إعداد الطابعة، اختيار المواد، وطباعة أول نموذج', lessons:2, badge:''},
-  {id:'laser', title:'قطع الليزر', icon:'🔆', price:29, free:false, credits:20,
-   desc:'أساسيات القطع والنقش بالليزر للمبتدئين', lessons:1, badge:''},
-  {id:'elec', title:'الإلكترونيات وArduino', icon:'💡', price:39, free:false, credits:40,
-   desc:'برمجة الإلكترونيات من الصفر مع مشاريع عملية', lessons:1, badge:''},
-  {id:'cnc', title:'تصنيع CNC', icon:'⚙️', price:29, free:false, credits:20,
-   desc:'مبادئ التفريز CNC وبرمجة G-code', lessons:1, badge:''},
-];
-
-var LESSON_CONTENT = {
-  1: `<h3>ما هو التفكير التصميمي؟</h3><p>التفكير التصميمي (Design Thinking) هو منهجية إبداعية تركز على <strong>الإنسان</strong> أولاً لحل المشكلات المعقدة. طوّرتها مدرسة d.school في جامعة ستانفورد وتستخدمها اليوم شركات مثل Apple و Google و IDEO.</p><div class="callout"><p>💡 <strong>المبدأ الأساسي:</strong> ابدأ بفهم الإنسان — وليس بالحل الجاهز.</p></div><h3>لماذا التفكير التصميمي؟</h3><p>معظمنا يقفز مباشرة إلى الحلول قبل أن يفهم المشكلة الحقيقية. التفكير التصميمي يعكس هذا المنطق: نقضي وقتاً طويلاً في فهم المشكلة، ووقتاً أقصر في إيجاد الحل.</p><h3>المراحل الخمس</h3><ul><li><strong>التعاطف (Empathize):</strong> فهم المستخدم عمقاً</li><li><strong>تحديد المشكلة (Define):</strong> صياغة المشكلة الجوهرية</li><li><strong>توليد الأفكار (Ideate):</strong> إنتاج أكبر عدد من الحلول</li><li><strong>النمذجة (Prototype):</strong> بناء نماذج أولية سريعة</li><li><strong>الاختبار (Test):</strong> اختبار الحلول مع مستخدمين حقيقيين</li></ul><div class="callout"><p>🔄 <strong>مهم:</strong> العملية ليست خطية — يمكنك العودة لأي مرحلة في أي وقت.</p></div>`,
-  2: `<h3>ما هو التعاطف؟</h3><p>التعاطف هو القدرة على فهم تجارب الآخرين ومشاعرهم عمقاً — ليس فقط ما يقولونه، بل ما يشعرون به ويفكرون فيه.</p><div class="callout"><p>🎯 هدف هذه المرحلة: اكتشاف الاحتياجات <strong>الحقيقية</strong> للمستخدم، وليس الاحتياجات التي يُعلن عنها.</p></div><h3>أدوات التعاطف</h3><h4>1. المقابلات (Interviews)</h4><p>اسأل أسئلة مفتوحة — "كيف؟" و"لماذا؟" بدلاً من "هل؟". استمع أكثر مما تتكلم.</p><h4>2. الملاحظة الميدانية</h4><p>راقب المستخدمين في بيئتهم الطبيعية دون تدخل. سجّل ما تراه حرفياً في عمود، والتفسير في عمود آخر.</p><h4>3. خريطة التعاطف</h4><p>أداة تساعدك على تنظيم ما تعلمته في أربعة محاور: يقول، يفكر، يفعل، يشعر.</p><div class="callout"><p>⚠️ <strong>تجنّب:</strong> الافتراضات المسبقة. اذهب إلى الميدان بعقل فارغ.</p></div>`,
-  3: `<h3>تطبيق خريطة التعاطف</h3><p>الآن طبّق ما تعلمته. سنملأ معاً خريطة تعاطف حقيقية لمشروع واقعي.</p><div class="callout"><p>📋 <strong>تمرين:</strong> افتح قالب خريطة التعاطف من قسم القوالب وابدأ بملئها بناءً على مقابلة أجريتها أو ملاحظة قمت بها.</p></div><h3>المحاور الأربعة</h3><ul><li><strong>يقول:</strong> اقتباسات حرفية من المستخدم</li><li><strong>يفكر:</strong> أفكاره الداخلية التي لا يُعبّر عنها</li><li><strong>يفعل:</strong> سلوكياته الملاحظة فعلياً</li><li><strong>يشعر:</strong> مشاعره وانفعالاته</li></ul><h3>من التعاطف إلى الشخصية</h3><p>بعد جمع المعلومات من عدة مستخدمين، نبني "شخصية" (Persona) تمثّل نمطاً من المستخدمين. هذه الشخصية ستكون مرجعنا في كل قرارات التصميم.</p>`,
-  4: `<h3>من التعاطف إلى تحديد المشكلة</h3><p>بعد جمع المعلومات في مرحلة التعاطف، نحتاج لتحويل ما تعلمناه إلى مشكلة قابلة للحل.</p><h3>بيان وجهة النظر (POV)</h3><p>الصيغة: <strong>[المستخدم] يحتاج إلى [حاجة] لأن [استنتاج مفاجئ]</strong></p><div class="callout"><p>✅ مثال جيد: "أحمد (٣٠ سنة، مهندس) يحتاج إلى طريقة لتذكّر مواعيده لأنه يركّز على العمل العميق ويفقد الإحساس بالوقت."</p></div><h3>أسئلة كيف يمكننا (HMW)</h3><p>HMW = How Might We. تحوّل الملاحظة إلى فرصة تصميمية.</p><ul><li>❌ ضيّق جداً: "كيف نبني تطبيق تذكير؟"</li><li>❌ واسع جداً: "كيف نجعل الناس أكثر إنتاجية؟"</li><li>✅ مثالي: "كيف يمكننا مساعدة أحمد على الانتباه للوقت دون مقاطعة تركيزه؟"</li></ul>`,
-  5: `<h3>توليد الأفكار</h3><p>هدف هذه المرحلة هو إنتاج <strong>أكبر كمية ممكنة</strong> من الأفكار — الكمية تُولّد الجودة.</p><div class="callout"><p>🚫 <strong>قاعدة ذهبية:</strong> لا نقد ولا حكم أثناء جلسة العصف الذهني.</p></div><h3>قواعد العصف الذهني</h3><ul><li>الكمية قبل الجودة</li><li>لا نقد أو تقييم</li><li>أفكار جريئة مرحّب بها</li><li>ابنِ على أفكار الآخرين</li></ul><h3>تقنية SCAMPER</h3><p>S: استبدل | C: ادمج | A: كيّف | M: عدّل | P: استخدم لأغراض أخرى | E: احذف | R: اعكس</p><div class="callout"><p>💡 <strong>تمرين:</strong> خذ منتجاً موجوداً وطبّق عليه SCAMPER — ستفاجأ بعدد الأفكار الجديدة!</p></div>`,
-  6: `<h3>النمذجة الأولية</h3><p>النموذج الأولي هو <strong>أسرع وأرخص</strong> طريقة لاختبار فكرتك قبل الاستثمار فيها.</p><div class="callout"><p>⚡ القاعدة: ابنِ بسرعة، اختبر مبكراً، فشل بتكلفة منخفضة.</p></div><h3>أنواع النماذج</h3><ul><li><strong>نموذج ورقي:</strong> رسم على الورق — مناسب للتطبيقات والواجهات</li><li><strong>نموذج مادي:</strong> كرتون وصمغ — مناسب للمنتجات المادية</li><li><strong>نموذج رقمي:</strong> Figma أو PowerPoint — مناسب للخدمات</li><li><strong>نموذج مطبوع:</strong> طابعة ثلاثية الأبعاد — للقطع الدقيقة</li></ul><h3>قاعدة الساعة الواحدة</h3><p>أعطِ نفسك ساعة واحدة فقط لبناء النموذج. القيود الزمنية تحفّز الإبداع وتمنعك من الإفراط في التفاصيل.</p>`,
-  7: `<h3>مرحلة الاختبار</h3><p>الاختبار ليس للتحقق من أن فكرتك صحيحة — بل للتعلم وتحسين الحل.</p><div class="callout"><p>🎯 هدفك: اكتشاف ما لا يعمل قبل الاستثمار الكبير.</p></div><h3>كيف تختبر؟</h3><ol><li>اختر ٣-٥ مستخدمين يمثّلون شريحتك المستهدفة</li><li>اعطهم مهمة محددة (لا توجيه مسبق)</li><li>راقب وسجّل دون تدخل</li><li>اسأل "لماذا؟" عند كل تصرف غير متوقع</li></ol><h3>بعد الاختبار</h3><p>نظّم ملاحظاتك، حدّد الأنماط، وقرّر: هل نُعدّل؟ نُعيد؟ أم نتقدّم؟</p>`,
-  8: `<h3>Fusion 360</h3><p>برنامج CAD/CAM/CAE متكامل من Autodesk — مجاني للطلاب والهواة.</p><div class="callout"><p>🆓 للحصول على النسخة المجانية: autodesk.com/products/fusion-360/personal</p></div><h3>مميزات Fusion 360</h3><ul><li>التصميم البارامتري (Parametric Design)</li><li>التجميع والحركة (Assembly & Motion)</li><li>مسارات التصنيع CAM</li><li>التحليل الهندسي FEA</li><li>العمل السحابي والتشاركي</li></ul>`,
-  9: `<h3>Sketching في Fusion 360</h3><p>المقطع ثنائي الأبعاد هو أساس كل تصميم ثلاثي. تعلّم رسمه بشكل صحيح وكل شيء آخر سيكون سهلاً.</p><div class="callout"><p>📐 ابدأ دائماً بتحديد Origin Point كمرجع ثابت.</p></div><h3>القيود الهندسية</h3><p>القيود (Constraints) تجعل تصميمك ذكياً — تغيّر بُعداً واحداً فيتكيّف الباقي تلقائياً.</p>`,
-  10: `<h3>الطباعة ثلاثية الأبعاد</h3><p>تقنية FDM تذيب خيط بلاستيكي وتبني الجسم طبقة فوق طبقة.</p><div class="callout"><p>🖨️ للمبتدئين: PLA هو الأفضل — سهل، غير سام، رخيص.</p></div><h3>الإعدادات الأساسية</h3><ul><li>Layer Height: 0.2mm</li><li>Infill: 20%</li><li>Print Speed: 50mm/s</li><li>Temperature: 200°C (PLA)</li></ul>`,
-  11: `<h3>برنامج Cura</h3><p>الـ Slicer يحوّل ملف STL إلى تعليمات G-code تفهمها الطابعة.</p><div class="callout"><p>⚙️ نصيحة: استخدم Tree Supports — أسهل في الإزالة من Normal Supports.</p></div>`,
-  12: `<h3>قطع الليزر</h3><p>شعاع مركّز لقطع أو نقش المواد بدقة عالية.</p><div class="callout"><p>🔆 خطوط حمراء = قطع | ملء أزرق = نقش</p></div><h3>المواد المناسبة</h3><p>خشب، أكريليك، جلد، ورق مقوى — تجنّب PVC لأنه يُطلق غازات سامة.</p>`,
-  13: `<h3>Arduino</h3><p>لوحة تحكم مفتوحة المصدر لتعلم الإلكترونيات والبرمجة.</p><div class="callout"><p>💡 أول مشروع: LED Blink — هو "Hello World" للإلكترونيات!</p></div><h3>الكود الأول</h3><pre style="background:#f0ede8;padding:12px;border-radius:8px;font-family:monospace;direction:ltr">void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
-}
-void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(1000);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(1000);
-}</pre>`,
-  14: `<h3>CNC Router</h3><p>يتحرك في ٣ محاور (X,Y,Z) لقطع وتشكيل المواد الصلبة بدقة عالية.</p><div class="callout"><p>⚙️ الفرق عن الليزر: CNC يقطع بعمق حقيقي ويعمل على الخشب السميك والألومنيوم.</p></div>`,
-};
-
-let LESSONS=[
-  {id:1,title:'مقدمة في التفكير التصميمي',type:'video',mod:'dt',icon:'🧠',dur:'١٢ دقيقة',xp:50,phase:0,video:'',
-   relatedTemplates:['empathy-map'],objectives:['فهم مفهوم التفكير التصميمي','تعلم المراحل الخمس','الفرق بين التفكير الخطي والتصميمي'],
-   get content(){return LESSON_CONTENT[1];}},
-  {id:2,title:'مرحلة التعاطف — فهم المستخدم',type:'video',mod:'dt',icon:'🔍',dur:'١٥ دقيقة',xp:50,phase:0,video:'',
-   relatedTemplates:['empathy-map','4ws'],objectives:['تعريف التعاطف في التصميم','أدوات جمع المعلومات','الفرق بين الملاحظة والتفسير'],
-   get content(){return LESSON_CONTENT[2];}},
-  {id:3,title:'خريطة التعاطف — تطبيق عملي',type:'exercise',mod:'dt',icon:'🗺️',dur:'٢٠ دقيقة',xp:75,phase:0,video:'',
-   relatedTemplates:['empathy-map','persona'],objectives:['ملء خريطة التعاطف','بناء شخصية المستخدم','استخراج الأفكار الجوهرية'],
-   get content(){return LESSON_CONTENT[3];}},
-  {id:4,title:'تحديد المشكلة — صياغة HMW',type:'video',mod:'dt',icon:'🎯',dur:'١٨ دقيقة',xp:75,phase:1,video:'',
-   relatedTemplates:['hmw','pov','5-whys'],objectives:['صياغة بيان POV','كتابة أسئلة HMW فعّالة','تحديد المشكلة الجوهرية'],
-   get content(){return LESSON_CONTENT[4];}},
-  {id:5,title:'توليد الأفكار والعصف الذهني',type:'video',mod:'dt',icon:'💡',dur:'٢٠ دقيقة',xp:75,phase:2,video:'',
-   relatedTemplates:['brainstorm','hmw'],objectives:['قواعد العصف الذهني','تقنية SCAMPER','اختيار أفضل الأفكار'],
-   get content(){return LESSON_CONTENT[5];}},
-  {id:6,title:'النمذجة السريعة',type:'lab',mod:'dt',icon:'🛠️',dur:'٢٥ دقيقة',xp:100,phase:3,video:'',
-   relatedTemplates:['prototype-plan'],objectives:['مبدأ النمذجة السريعة','أنواع النماذج الأولية','بناء نموذج بالورق والكرتون'],
-   get content(){return LESSON_CONTENT[6];}},
-  {id:7,title:'الاختبار مع المستخدمين',type:'exercise',mod:'dt',icon:'🧪',dur:'٢٢ دقيقة',xp:100,phase:4,video:'',
-   relatedTemplates:['journey-map'],objectives:['تصميم جلسة اختبار','جمع التغذية الراجعة','التكرار والتطوير'],
-   get content(){return LESSON_CONTENT[7];}},
-  {id:8,title:'مقدمة في Fusion 360',type:'video',mod:'cad',icon:'🖥️',dur:'٢٠ دقيقة',xp:100,phase:-1,video:'',
-   relatedTemplates:[],objectives:['واجهة Fusion 360','مفهوم Parametric Design','أدوات الرسم الأساسية'],
-   get content(){return LESSON_CONTENT[8];}},
-  {id:9,title:'رسم المقاطع ثنائية الأبعاد',type:'lab',mod:'cad',icon:'📐',dur:'٣٠ دقيقة',xp:150,phase:-1,video:'',
-   relatedTemplates:[],objectives:['رسم Sketch دقيق','القيود الهندسية','أداة Extrude'],
-   get content(){return LESSON_CONTENT[9];}},
-  {id:10,title:'مقدمة في الطباعة ثلاثية الأبعاد',type:'video',mod:'3dp',icon:'🖨️',dur:'١٤ دقيقة',xp:75,phase:-1,video:'',
-   relatedTemplates:[],objectives:['مبدأ FDM','أنواع مواد الطباعة','إعدادات المبتدئين'],
-   get content(){return LESSON_CONTENT[10];}},
-  {id:11,title:'إعداد ملف الطباعة (Slicing)',type:'exercise',mod:'3dp',icon:'⚙️',dur:'٢٥ دقيقة',xp:100,phase:-1,video:'',
-   relatedTemplates:[],objectives:['استخدام Cura','تصدير G-code','إعدادات الدعامات'],
-   get content(){return LESSON_CONTENT[11];}},
-  {id:12,title:'أساسيات قطع الليزر',type:'video',mod:'laser',icon:'🔆',dur:'١٢ دقيقة',xp:75,phase:-1,video:'',
-   relatedTemplates:[],objectives:['مبدأ عمل الليزر','القطع مقابل النقش','ملفات التصميم'],
-   get content(){return LESSON_CONTENT[12];}},
-  {id:13,title:'برمجة Arduino للمبتدئين',type:'lab',mod:'elec',icon:'💡',dur:'٤٠ دقيقة',xp:200,phase:-1,video:'',
-   relatedTemplates:[],objectives:['إعداد Arduino IDE','مشروع LED Blink','قراءة المستشعرات'],
-   get content(){return LESSON_CONTENT[13];}},
-  {id:14,title:'مقدمة في تصنيع CNC',type:'video',mod:'cnc',icon:'⚙️',dur:'١٦ دقيقة',xp:75,phase:-1,video:'',
-   relatedTemplates:[],objectives:['مبدأ CNC Router','المحاور الثلاثة','G-code أساسي'],
-   get content(){return LESSON_CONTENT[14];}},
-];
-
-
-let QUESTIONS_BANK=[
-  {q:'ما هو الهدف الرئيسي من مرحلة التعاطف؟',opts:['تصميم النموذج مباشرة','فهم احتياجات المستخدمين الحقيقية','توليد أكبر عدد من الأفكار','اختبار الحلول'],ans:1,ex:'التعاطف هو فهم المستخدمين بعمق من خلال الملاحظة والمقابلة.'},
-  {q:'ما الفرق بين الملاحظة والتفسير؟',opts:['لا فرق','الملاحظة موضوعية والتفسير ذاتي','التفسير يأتي قبل الملاحظة','الملاحظة أقل أهمية'],ans:1,ex:'الملاحظة تسجّل ما تراه حرفياً، التفسير هو فهمك لدلالة ما رأيته.'},
-  {q:'ما الخطأ في: "كيف يمكننا بناء تطبيق مذاكرة؟"',opts:['لا شيء، صياغة ممتازة','تتضمن حلاً مسبقاً','قصيرة جداً','لا تبدأ بـ كيف'],ans:1,ex:'أسئلة HMW يجب ألّا تحتوي على حل مسبق.'},
-  {q:'في توليد الأفكار، أي قاعدة يجب اتباعها؟',opts:['انتقاد الأفكار الضعيفة','الكمية قبل الجودة وعدم النقد','التركيز على فكرة واحدة','التصويت أثناء الجلسة'],ans:1,ex:'في العصف الذهني لا تنتقد — كل فكرة مرحّب بها.'},
-  {q:'ما هي مادة الطباعة المناسبة للمبتدئين؟',opts:['ABS','PETG','PLA','TPU'],ans:2,ex:'PLA هو الأسهل طباعةً وغير سام ومتوفر بألوان كثيرة.'},
-  {q:'ما دور برنامج Slicer؟',opts:['تصميم الجسم ثلاثي الأبعاد','تحويل STL إلى G-code','التحكم في الطابعة','إصلاح ملفات تالفة'],ans:1,ex:'الـ Slicer يقطّع النموذج إلى طبقات وينتج G-code.'},
-  {q:'ما الفرق بين قطع الليزر و CNC؟',opts:['الليزر أسرع دائماً','CNC يقطع بعمق ثلاثي الأبعاد','الليزر أدق في كل الحالات','لا فرق'],ans:1,ex:'CNC يقطع بعمق حقيقي، الليزر مثالي للمواد الرقيقة والنقش.'},
-  {q:'ما معنى Parametric Design؟',opts:['تصميم عشوائي','تصميم قابل للتعديل بتغيير المعطيات','تصميم للمعلمات فقط','تصميم بدون أبعاد'],ans:1,ex:'التصميم المعياري يربط الأبعاد بمتغيرات قابلة للتعديل.'},
-];
-const FABLABS=[
-  {name:'Fab Lab Amman',city:'عمّان، الأردن',x:510,y:150,tags:['3D Print','Laser','CNC'],email:'info@fablabamman.com'},
-  {name:'Cairo Fab Lab',city:'القاهرة، مصر',x:476,y:163,tags:['3D Print','Laser','Electronics'],email:'hello@cairofab.org'},
-  {name:'Fab Lab Beirut',city:'بيروت، لبنان',x:500,y:143,tags:['3D Print','CNC'],email:'contact@fabbeirut.com'},
-  {name:'KSpace Fab Lab',city:'الكويت',x:524,y:152,tags:['3D Print','Laser'],email:'kspace@fab.com'},
-  {name:'ENIT Fab Lab',city:'تونس',x:406,y:148,tags:['CNC','3D Print'],email:'fablab@enit.tn'},
-  {name:'Fab Lab Casablanca',city:'الدار البيضاء، المغرب',x:366,y:150,tags:['3D Print','Laser','CNC'],email:'info@fabcasa.ma'},
-  {name:'MIT Fab Lab',city:'كامبريدج، USA',x:150,y:100,tags:['3D Print','Laser','CNC','Electronics'],email:'fablab@mit.edu'},
-  {name:'Fab City Hub',city:'برشلونة، إسبانيا',x:400,y:90,tags:['3D Print','Laser'],email:'hub@fabcity.com'},
-  {name:'Fab Lab Berlin',city:'برلين، ألمانيا',x:422,y:72,tags:['3D Print','CNC','Electronics'],email:'info@fablab.de'},
-  {name:'Tokyo Fab Lab',city:'طوكيو، اليابان',x:714,y:110,tags:['3D Print','Laser','CNC'],email:'info@fablabshibuya.org'},
-  {name:'Singapore Fab Lab',city:'سنغافورة',x:660,y:215,tags:['3D Print','Electronics'],email:'fab@sg.com'},
-  {name:'Sydney FabHub',city:'سيدني، أستراليا',x:722,y:300,tags:['3D Print','Laser'],email:'info@fabsydney.au'},
-];
-const BADGES_DEF=[
-  {id:'starter',name:'المبتدئ',icon:'⭐',bg:'#f0fdf7',cond:s=>s.xp>=50},
-  {id:'empathy',name:'المتعاطف',icon:'🔍',bg:'#fff7f3',cond:s=>s.completedLessons.includes(1)&&s.completedLessons.includes(2)},
-  {id:'focused',name:'المركّز',icon:'🎯',bg:'#eef2ff',cond:s=>s.completedLessons.length>=3},
-  {id:'streak',name:'منتظم',icon:'🔥',bg:'#fef3ec',cond:s=>s.streak>=5},
-  {id:'maker',name:'الصانع',icon:'💡',bg:'#f5f0ff',cond:s=>s.completedLessons.some(id=>LESSONS.find(l=>l.id===id&&l.mod==='3dp'))},
-  {id:'engineer',name:'المهندس',icon:'⚙️',bg:'#f0f8ff',cond:s=>s.xp>=500},
-  {id:'designer',name:'المصمم',icon:'✏️',bg:'#fff0f6',cond:s=>s.completedLessons.some(id=>LESSONS.find(l=>l.id===id&&l.mod==='cad'))},
-];
-const DT_PHASES=[
-  {name:'التعاطف',desc:'فهم المستخدمين',lessons:[1,2,3]},
-  {name:'تحديد المشكلة',desc:'صياغة المشكلة الجوهرية',lessons:[4]},
-  {name:'توليد الأفكار',desc:'العصف الذهني',lessons:[5]},
-  {name:'النمذجة',desc:'بناء النماذج الأولية',lessons:[]},
-  {name:'الاختبار',desc:'تجربة الحلول',lessons:[]},
-];
-const QUICK_QS=['ما هو التفكير التصميمي؟','كيف أُجري مقابلة تعاطفية ناجحة؟','كيف أبدأ مع Fusion 360؟','ما أفضل إعدادات الطباعة للمبتدئين؟','ما الفرق بين CNC والليزر؟','كيف أكتب أسئلة HMW صحيحة؟'];
-const SYSTEM_PROMPT=`أنت مساعد تعليمي متخصص في منصة شكّل مستقبلك. تعلّم: التفكير التصميمي (مراحله وأدواته)، Fusion 360، الطباعة ثلاثية الأبعاد، قطع الليزر، CNC، والإلكترونيات وArduino. أجب فقط على أسئلة متعلقة بهذه المواضيع. اجعل إجاباتك عملية ومباشرة بالعربية، موجزة ومفيدة.`;
-const defaultState={xp:0,completedLessons:[],earnedBadges:[],streak:7,activities:[{text:'بدأت رحلة التعلم في MenaLab',color:'var(--teal)',time:'اليوم'}]};
-let S=JSON.parse(sessionStorage.getItem('menalab')||'null')||{...defaultState};
-function save(){try{sessionStorage.setItem('menalab',JSON.stringify(S));}catch(e){}}
-const VIEWS=['dashboard','lessons','player','quiz','map','chat','templates','community','mentors','events'];
-const TITLES={dashboard:'لوحة التحكم',lessons:'الدروس',player:'مشاهدة الدرس',quiz:'التقييم',map:'خريطة الفاب لابات',chat:'المساعد الذكي',templates:'قوالب التفكير التصميمي',community:'مجتمع المتعلمين',mentors:'المرشدون',events:'الفعاليات'};
-function showView(id){
-  console.log('[showView] called with:', id);
-  VIEWS.forEach(v=>{
-    var el=document.getElementById('view-'+v);
-    if(el) el.classList.remove('active');
-  });
-  var target=document.getElementById('view-'+id);
-  if(!target){ console.error('[showView] view-'+id+' NOT FOUND in DOM'); return; }
-  target.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const ni=document.getElementById('nav-'+id);if(ni)ni.classList.add('active');
-  var pt=document.getElementById('page-title');if(pt)pt.textContent=TITLES[id]||'';
-  try{
-    if(id==='dashboard')renderDashboard();
-    if(id==='lessons')renderLessons();
-    if(id==='quiz')initQuiz();
-    if(id==='map')renderMap();
-    if(id==='chat')renderQuickQs();
-    if(id==='templates'){console.log('[showView] calling renderTemplatesGrid');renderTemplatesGrid();}
-    if(id==='community'){console.log('[showView] calling renderCommunity');renderCommunity();}
-    if(id==='mentors'){console.log('[showView] calling renderMentors');renderMentors();}
-    if(id==='events'){console.log('[showView] calling renderEvents');renderEvents();}
-    updateXpUI();
-    console.log('[showView] done for:', id);
-  }catch(e){
-    console.error('[showView] ERROR in render for '+id+':', e.message, e.stack);
-  }
-}
-function toAr(n){return String(n).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
-function addXP(amt,reason){S.xp+=amt;save();updateXpUI();showToast('+'+amt+' XP — '+reason+'!');checkBadges();}
-function updateXpUI(){
-  const pct=Math.min((S.xp%1000)/1000*100,100);
-  document.getElementById('xp-fill').style.width=pct+'%';
-  document.getElementById('xp-lbl').textContent=(S.xp%1000)+' / 1000 XP';
-  const lvl=Math.floor(S.xp/1000)+1;
-  const names=['','مستكشف','متعلم','صانع','مبتكر','خبير'];
-  document.getElementById('level-badge').textContent='⚡ مستوى '+toAr(lvl)+' — '+(names[Math.min(lvl,5)]);
-  const el=document.getElementById('s-xp');if(el)el.textContent=toAr(S.xp);
-  const el2=document.getElementById('s-lessons');if(el2)el2.textContent=toAr(S.completedLessons.length);
-  const earned=BADGES_DEF.filter(b=>b.cond(S)).length;
-  const el3=document.getElementById('s-badges');if(el3)el3.textContent=toAr(earned);
-}
-function checkBadges(){BADGES_DEF.forEach(b=>{const was=(S.earnedBadges||[]).includes(b.id);if(b.cond(S)&&!was){S.earnedBadges=[...(S.earnedBadges||[]),b.id];showToast('🏅 شارة جديدة: '+b.name+'!');addActivity('حصلت على شارة '+b.name,'var(--accent2)');save();}});}
-function addActivity(text,color){S.activities=[{text,color,time:'الآن'},...S.activities.slice(0,6)];save();}
-let toastT;
-function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
-function renderDashboard(){
-  updateXpUI();
-  const pathEl=document.getElementById('dt-path-dash');
-  pathEl.innerHTML=DT_PHASES.map((p,i)=>{
-    const done=p.lessons.length>0&&p.lessons.every(id=>S.completedLessons.includes(id));
-    const act=!done&&p.lessons.length>0;
-    const lck=p.lessons.length===0&&i>2;
-    const cls=done?'done':act?'active-phase':lck?'locked':'';
-    const dcls=done?'done':act?'act':'lck';
-    const bcls=done?'pb-done':act?'pb-act':'pb-lck';
-    const blbl=done?'مكتمل':act?'جارٍ':'🔒 مقفل';
-    return `<div class="dt-phase ${cls}" onclick="showView('lessons')"><div class="phase-dot ${dcls}">${done?'✓':i+1}</div><div class="phase-info"><div class="phase-name">${i+1}. ${p.name}</div><div class="phase-desc">${p.desc}</div></div><span class="phase-badge ${bcls}">${blbl}</span></div>`;
-  }).join('');
-  const cb=document.getElementById('comp-banner-area');
-  const nl=LESSONS.find(l=>!S.completedLessons.includes(l.id));
-  cb.innerHTML=nl?`<div class="comp-banner"><div style="font-size:28px">▶</div><div><div style="font-weight:700;margin-bottom:3px">الدرس التالي: ${nl.title}</div><div style="font-size:12px;opacity:.8">أكمله الآن واكسب +${nl.xp} XP</div></div><button class="cb-btn" onclick="openLesson(${nl.id})">ابدأ الآن ←</button></div>`:'';
-  document.getElementById('badges-row').innerHTML=BADGES_DEF.map(b=>{const e=b.cond(S);return `<div class="badge-item"><div class="badge-icon ${e?'earned':'locked-b'}" style="${e?`background:${b.bg}`:''}">${b.icon}</div><div class="badge-name">${b.name}</div></div>`;}).join('');
-  document.getElementById('activity-list').innerHTML=S.activities.slice(0,5).map(a=>`<div class="act-item"><div class="act-dot" style="background:${a.color}"></div><div class="act-txt">${a.text}</div><div class="act-time">${a.time}</div></div>`).join('');
-}
-let activeMod='all';
-
-function setMod(el,mod){activeMod=mod;document.querySelectorAll('#mod-tabs .module-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderLessonsGrid();}
-function isDTLessonUnlocked(l){
-  if(l.mod !== 'dt') return true;  // non-DT lessons always open
-  var dtLessons = LESSONS.filter(function(x){ return x.mod==='dt'; })
-    .sort(function(a,b){ return a.id-b.id; });
-  var idx = dtLessons.findIndex(function(x){ return x.id===l.id; });
-  if(idx <= 0) return true;  // first DT lesson always open
-  var prev = dtLessons[idx-1];
-  var prevDone = S.completedLessons.includes(prev.id);
-  var prevScore = (S.quizScores||{})[prev.id] || 0;
-  return prevDone && prevScore >= 90;
-}
-
-let currentLessonId=null,isPlaying=false;
-function openLesson(id){
-  currentLessonId=id;
-  var l=LESSONS.find(function(x){return x.id===id;});
-  if(!l) return;
-
-  // Switch to player view first
-  showView('player');
-
-  // Show locked message if DT lesson not yet unlocked
-  if(!isDTLessonUnlocked(l)){
-    var videoBox2=document.getElementById('video-box');
-    var placeholder2=document.getElementById('vid-placeholder');
-    var controls2=document.getElementById('vid-controls');
-    var eIframe=document.getElementById('lesson-iframe');
-    if(eIframe && eIframe.parentNode) eIframe.parentNode.removeChild(eIframe);
-    if(placeholder2){
-      placeholder2.style.display='flex';
-      placeholder2.style.flexDirection='column';
-      placeholder2.style.alignItems='center';
-      placeholder2.style.justifyContent='center';
-      // Build locked UI with DOM
-      placeholder2.textContent='';
-      var lockIcon=document.createElement('div');
-      lockIcon.textContent='🔒';
-      lockIcon.style.cssText='font-size:52px;margin-bottom:14px';
-      var lockTitle=document.createElement('div');
-      lockTitle.textContent='هذا الدرس مغلق';
-      lockTitle.style.cssText='font-size:16px;color:white;font-weight:700;margin-bottom:8px';
-      var lockDesc=document.createElement('div');
-      lockDesc.textContent='أكمل الدرس السابق وحقّق نتيجة 90% أو أعلى في التقييم لفتح هذا الدرس';
-      lockDesc.style.cssText='font-size:13px;color:rgba(255,255,255,0.65);text-align:center;max-width:280px;line-height:1.6;margin-bottom:16px';
-      var lockBtn=document.createElement('button');
-      lockBtn.textContent='← العودة للدروس';
-      lockBtn.style.cssText='background:var(--accent);color:#212121;border:none;padding:10px 22px;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer';
-      lockBtn.onclick=function(){showView('lessons');};
-      placeholder2.appendChild(lockIcon);
-      placeholder2.appendChild(lockTitle);
-      placeholder2.appendChild(lockDesc);
-      placeholder2.appendChild(lockBtn);
-    }
-    if(controls2) controls2.style.display='none';
-    if(videoBox2) videoBox2.style.background='#1a1a2e';
-    var cBtn=document.getElementById('complete-btn');
-    if(cBtn){cBtn.disabled=true;cBtn.style.opacity='0.4';cBtn.textContent='🔒 الدرس مغلق';}
-    var xpB=document.getElementById('player-xp-badge');
-    if(xpB) xpB.textContent='+'+toAr(l.xp)+' XP عند الإكمال';
-    var bc2=document.getElementById('player-bc');
-    var mn2={dt:'التفكير التصميمي',cad:'Fusion 360','3dp':'الطباعة ثلاثية الأبعاد',laser:'قطع الليزر',elec:'الإلكترونيات',cnc:'تصنيع CNC'};
-    if(bc2) bc2.textContent=(mn2[l.mod]||l.mod)+' › '+l.title;
+function renderProjects(state) {
+  var container = document.getElementById('projects-container');
+  container.innerHTML = '';
+  var projects = state.projects || [];
+  if (!projects.length) {
+    container.innerHTML =
+      '<div class="empty-projects">' +
+        '<div style="font-size:40px;margin-bottom:12px">💡</div>' +
+        '<h3 style="margin-bottom:8px">لا توجد مشاريع بعد</h3>' +
+        '<p style="margin-bottom:20px">هل لديك فكرة أو مشكلة تريد حلها؟ ابدأ مشروعك الأول!</p>' +
+        '<button class="btn btn-primary btn-lg" onclick="openModal(\'new-project-modal\')">+ ابدأ مشروعاً جديداً</button>' +
+      '</div>';
     return;
   }
-
-  var mn={dt:'التفكير التصميمي',cad:'Fusion 360','3dp':'الطباعة ثلاثية الأبعاد',laser:'قطع الليزر',elec:'الإلكترونيات',cnc:'تصنيع CNC'};
-  var bc=document.getElementById('player-bc');
-  if(bc) bc.textContent=(mn[l.mod]||l.mod)+' › '+l.title;
-
-  // Video player
-  var videoBox=document.getElementById('video-box');
-  var placeholder=document.getElementById('vid-placeholder');
-  var controls=document.getElementById('vid-controls');
-  var existingIframe=document.getElementById('lesson-iframe');
-  if(existingIframe && existingIframe.parentNode) existingIframe.parentNode.removeChild(existingIframe);
-
-  if(l.video && l.video.trim()){
-    var iframe=document.createElement('iframe');
-    iframe.id='lesson-iframe';
-    iframe.src=l.video.trim();
-    iframe.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:8px';
-    iframe.setAttribute('allow','autoplay; fullscreen; picture-in-picture');
-    iframe.setAttribute('allowfullscreen','');
-    if(videoBox){
-      videoBox.style.position='relative';
-      videoBox.style.padding='0';
-      videoBox.style.overflow='hidden';
-      videoBox.style.background='#000';
-      videoBox.appendChild(iframe);
-    }
-    if(placeholder) placeholder.style.display='none';
-    if(controls) controls.style.display='none';
-  } else {
-    if(placeholder) placeholder.style.display='flex';
-    if(controls) controls.style.display='flex';
-    var pi=document.getElementById('pl-icon');
-    var pt=document.getElementById('pl-title');
-    var pd=document.getElementById('pl-dur');
-    if(pi) pi.textContent=l.icon;
-    if(pt) pt.textContent=l.title;
-    if(pd) pd.textContent='مدة: '+l.dur;
-  }
-
-  // Lesson info
-  var xpBadge=document.getElementById('player-xp-badge');
-  if(xpBadge) xpBadge.textContent='+'+toAr(l.xp)+' XP عند الإكمال';
-
-  var textArea=document.getElementById('lesson-text-area');
-  if(textArea) textArea.innerHTML=l.content||'';
-
-  var objList=document.getElementById('lesson-objectives');
-  if(objList) objList.innerHTML=(l.objectives||[]).map(function(o){return '<li>'+o+'</li>';}).join('');
-
-  var done=S.completedLessons.includes(id);
-  var completeBtn=document.getElementById('complete-btn');
-  if(completeBtn){
-    completeBtn.textContent=done?'✓ تم الإكمال':'✓ إكمال الدرس (+'+toAr(l.xp)+' XP)';
-    completeBtn.disabled=done;
-    completeBtn.style.opacity=done?'0.5':'1';
-  }
-
-  // Sidebar lesson list
-  var sll=document.getElementById('sidebar-ll');
-  if(sll){
-    var ml=LESSONS.filter(function(ll){return ll.mod===l.mod;});
-    sll.innerHTML='';
-    ml.forEach(function(ll,idx){
-      var d=S.completedLessons.includes(ll.id);
-      var item=document.createElement('div');
-      item.className='ll-item'+(ll.id===id?' ll-act':'')+(d?' ll-done':'');
-      item.onclick=function(){openLesson(ll.id);};
-      item.innerHTML='<div class="ll-num">'+(d?'✓':idx+1)+'</div><span style="flex:1">'+ll.title+'</span>';
-      sll.appendChild(item);
-    });
-  }
-
-  // Chat context
-  var cle=document.getElementById('current-lesson-chat');
-  if(cle) cle.textContent=l.title;
-
-  // Related templates
-  var tplSection=document.getElementById('lesson-templates-section');
-  var tplList=document.getElementById('lesson-templates-list');
-  if(tplSection && tplList && l.relatedTemplates && l.relatedTemplates.length>0){
-    tplSection.style.display='block';
-    tplList.innerHTML='';
-    l.relatedTemplates.forEach(function(tid){
-      var t=TEMPLATES.find(function(x){return x.id===tid;});
-      if(!t) return;
-      var saved=localStorage.getItem('ml_tpl_'+tid);
-      var hasSaved=saved&&Object.values(JSON.parse(saved)).some(function(v){return v&&v.trim();});
-      var btn=document.createElement('button');
-      btn.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;background:'+(hasSaved?'#f0fdf7':'#fff7f3')+';border:1px solid '+(hasSaved?'var(--teal)':'var(--accent)')+';border-radius:9px;cursor:pointer;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;color:'+(hasSaved?'var(--teal)':'var(--accent)')+';width:100%;text-align:right';
-      btn.innerHTML=t.icon+' '+t.title+(hasSaved?' <span style="margin-right:auto;font-size:10px;opacity:.7">✓ محفوظ</span>':'<span style="margin-right:auto;font-size:10px;opacity:.6">افتح ←</span>');
-      btn.onclick=function(){openTemplate(tid);};
-      tplList.appendChild(btn);
-    });
-  } else if(tplSection){
-    tplSection.style.display='none';
-  }
-
-  // DT score card
-  var scoreCard=document.getElementById('quiz-score-card');
-  var tplCard=document.getElementById('templates-btn-card');
-  if(l.mod==='dt'){
-    var sc=(S.quizScores||{})[l.id];
-    if(scoreCard){
-      if(sc!==undefined){
-        scoreCard.style.display='block';
-        var sd=document.getElementById('quiz-score-display');
-        var sm=document.getElementById('quiz-score-msg');
-        if(sd) sd.textContent=toAr(sc)+'%';
-        if(sm) sm.textContent=sc>=90?'✅ ممتاز':'📝 استمر في التعلم';
-      } else {
-        scoreCard.style.display='none';
-      }
-    }
-    if(tplCard) tplCard.style.display='block';
-  } else {
-    if(scoreCard) scoreCard.style.display='none';
-    if(tplCard) tplCard.style.display='none';
-  }
-}
-function completeLesson(){
-  if(!currentLessonId||S.completedLessons.includes(currentLessonId))return;
-  const l=LESSONS.find(x=>x.id===currentLessonId);
-  S.completedLessons=[...S.completedLessons,currentLessonId];
-  addActivity('أكملت درس: '+l.title,'var(--teal)');save();
-  addXP(l.xp,l.title);
-  document.getElementById('complete-btn').textContent='✓ تم الإكمال';
-  document.getElementById('complete-btn').disabled=true;
-  document.getElementById('complete-btn').style.opacity='0.5';
-}
-function togglePlay(){isPlaying=!isPlaying;document.getElementById('pp-btn').textContent=isPlaying?'⏸':'▶';}
-function seekVid(e){const pct=(e.offsetX/e.currentTarget.offsetWidth*100).toFixed(1);document.getElementById('vid-prog').style.width=pct+'%';}
-let qState={current:0,selected:null,checked:false,score:0,questions:[]};
-function initQuiz(){
-  qState={current:0,selected:null,checked:false,score:0,questions:[...QUESTIONS_BANK].sort(()=>Math.random()-.5).slice(0,5)};
-  document.getElementById('quiz-results').style.display='none';
-  document.getElementById('q-area').style.display='block';
-  document.getElementById('q-actions').style.display='flex';
-  updateQDots();renderQuestion();
-}
-function updateQDots(){
-  document.getElementById('qpb-dots').innerHTML=qState.questions.map((_,i)=>`<div class="qpb-dot ${i<qState.current?'qd-done':i===qState.current?'qd-act':''}"></div>`).join('');
-  document.getElementById('qpb-cnt').textContent=toAr(qState.current+1)+' / '+toAr(qState.questions.length);
-}
-function renderQuestion(){
-  const q=qState.questions[qState.current];
-  const letters=['أ','ب','ج','د'];
-  document.getElementById('q-area').innerHTML=`<div class="q-card"><div class="q-num">السؤال ${toAr(qState.current+1)}</div><div class="q-text">${q.q}</div><div class="opts">${q.opts.map((o,i)=>`<button class="opt" id="opt-${i}" onclick="selOpt(${i})"><div class="opt-l">${letters[i]}</div><div style="flex:1;text-align:right">${o}</div></button>`).join('')}</div><div class="fb-box" id="fb-box"></div></div>`;
-  document.getElementById('chk-btn').disabled=true;document.getElementById('chk-btn').style.display='inline-flex';document.getElementById('nxt-btn').style.display='none';
-  qState.selected=null;qState.checked=false;
-}
-function selOpt(i){if(qState.checked)return;qState.selected=i;document.querySelectorAll('.opt').forEach((b,j)=>b.classList.toggle('sel',j===i));document.getElementById('chk-btn').disabled=false;}
-function checkAns(){
-  if(qState.selected===null||qState.checked)return;qState.checked=true;
-  const q=qState.questions[qState.current];const ok=q.ans===qState.selected;
-  if(ok)qState.score++;
-  document.querySelectorAll('.opt').forEach((b,i)=>{if(i===q.ans)b.classList.add('ok');else if(i===qState.selected&&!ok)b.classList.add('bad');});
-  const fb=document.getElementById('fb-box');fb.className='fb-box fb-show '+(ok?'fb-ok':'fb-bad');fb.innerHTML=(ok?'✅ صحيح! ':'❌ خطأ. ')+q.ex;
-  document.getElementById('chk-btn').style.display='none';document.getElementById('nxt-btn').style.display='inline-flex';document.getElementById('nxt-btn').textContent=qState.current<qState.questions.length-1?'التالي ←':'عرض النتائج 🏆';
-}
-function nextQ(){if(qState.current<qState.questions.length-1){qState.current++;updateQDots();renderQuestion();}else showQuizResults();}
-function showQuizResults(){
-  document.getElementById('q-area').style.display='none';document.getElementById('q-actions').style.display='none';
-  const res=document.getElementById('quiz-results');res.style.display='block';
-  const sc=qState.score,tot=qState.questions.length;
-  const pct=Math.round(sc/tot*100);
-  const xpE=Math.round(sc/tot*200);
-  // Save score for gated progression
-  if(currentLessonId){
-    if(!S.quizScores) S.quizScores={};
-    const prev=S.quizScores[currentLessonId]||0;
-    S.quizScores[currentLessonId]=Math.max(prev,pct);
-    save();
-    // Show unlock message for DT lessons
-    var curL=LESSONS.find(function(l){return l.id===currentLessonId;});
-    if(curL && curL.mod==='dt'){
-      var msgEl=document.getElementById('res-msg');
-      if(pct>=90){
-        if(msgEl) msgEl.textContent='🎉 ممتاز! حصلت على '+toAr(pct)+'% — تم فتح الدرس التالي!';
-        showToast('🔓 تم فتح الدرس التالي!');
-        renderLessons();
-      } else {
-        if(msgEl) msgEl.textContent='حصلت على '+toAr(pct)+'% — تحتاج 90% لفتح الدرس التالي. حاول مجدداً!';
-      }
-    }
-  }
-  document.getElementById('res-score').textContent=toAr(sc);
-  document.getElementById('res-max').textContent='من '+toAr(tot);
-  document.getElementById('res-xp').textContent='⚡ +'+toAr(xpE)+' XP';
-  // Show pass/fail for DT gated lessons
-  const isDT=currentLessonId&&LESSONS.find(l=>l.id===currentLessonId)?.mod==='dt';
-  const passed=pct>=90;
-  if(isDT){
-    if(passed){
-      document.getElementById('res-title').textContent='اجتزت المرحلة! 🎉';
-      document.getElementById('res-msg').textContent='حصلت على '+toAr(pct)+'% — تم فتح الدرس التالي!';
-      showToast('🔓 تم فتح الدرس التالي!');
-    } else {
-      document.getElementById('res-title').textContent='لم تصل إلى 90% بعد';
-      document.getElementById('res-msg').textContent='حصلت على '+toAr(pct)+'% — تحتاج 90% لفتح الدرس التالي. حاول مجدداً!';
-    }
-    // Update the unlock button
-    const unlockBtn=document.getElementById('unlock-next-btn');
-    if(unlockBtn) unlockBtn.style.display=passed?'inline-flex':'none';
-    const retryBtn=document.getElementById('retry-quiz-btn');
-    if(retryBtn) retryBtn.textContent=passed?'🔄 إعادة':'🔄 حاول مجدداً ('+toAr(90-pct)+'% ناقصة)';
-  } else {
-    let msgs=['حاول مرة أخرى!','جيد! راجع الإجابات.','أداء رائع!','ممتاز تماماً!'];
-    const mi=sc/tot>=1?3:sc/tot>=.75?2:sc/tot>=.5?1:0;
-    document.getElementById('res-title').textContent=['راجع الدروس','جيد!','رائع 🎉','ممتاز 🏆'][mi];
-    document.getElementById('res-msg').textContent=msgs[mi];
-  }
-  if(xpE>0){addXP(xpE,'تقييم مكتمل');addActivity('أكملت التقييم: '+toAr(sc)+'/'+toAr(tot)+'  ('+toAr(pct)+'%)','var(--purple)');}
-  document.getElementById('qpb-dots').innerHTML=qState.questions.map(()=>'<div class="qpb-dot qd-done"></div>').join('');
-}
-function renderMap(){
-  document.getElementById('fab-dots-g').innerHTML=FABLABS.map((f,i)=>`<g style="cursor:pointer" onclick="showFabPopup(${i},${f.x},${f.y})"><circle cx="${f.x}" cy="${f.y}" r="12" fill="#e05c2a" opacity="0.15"/><circle cx="${f.x}" cy="${f.y}" r="7" fill="#e05c2a" stroke="white" stroke-width="1.5"/><circle cx="${f.x}" cy="${f.y}" r="3" fill="white"/></g>`).join('');
-  renderFabCards(FABLABS);
-}
-function renderFabCards(labs){
-  document.getElementById('fab-count-lbl').textContent='عرض '+toAr(labs.length)+' مختبراً من أصل '+toAr(FABLABS.length);
-  document.getElementById('fab-grid').innerHTML=labs.map(f=>`<div class="fab-card"><div class="fc-name">${f.name}</div><div class="fc-city">📍 ${f.city}</div><div class="fc-tags">${f.tags.map(t=>`<span class="fc-tag">${t}</span>`).join('')}</div></div>`).join('');
-}
-function filterFabs(q){const ql=q.trim().toLowerCase();renderFabCards(FABLABS.filter(f=>!ql||f.name.toLowerCase().includes(ql)||f.city.includes(ql)||f.tags.join(' ').toLowerCase().includes(ql)));}
-function filterFabsByTag(el,tag){document.querySelectorAll('.map-box~* .module-tab,#view-map .module-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderFabCards(tag?FABLABS.filter(f=>f.tags.includes(tag)):FABLABS);}
-function showFabPopup(i,x,y){
-  const f=FABLABS[i];const canvas=document.querySelector('.map-box');
-  const scX=canvas.offsetWidth/900,scY=canvas.offsetHeight/450;
-  let px=x*scX,py=y*scY+18;if(px+185>canvas.offsetWidth)px=px-185;
-  document.getElementById('fp-name').textContent=f.name;document.getElementById('fp-city').textContent='📍 '+f.city;
-  document.getElementById('fp-tags').innerHTML=f.tags.map(t=>`<span class="fp-tag">${t}</span>`).join('');document.getElementById('fp-contact').textContent='📧 '+f.email;
-  const popup=document.getElementById('fab-popup');popup.style.left=px+'px';popup.style.top=py+'px';popup.classList.add('show');setTimeout(()=>popup.classList.remove('show'),4000);
-}
-let chatHistory=[],msgCount=0;
-function renderQuickQs(){const el=document.getElementById('quick-qs');if(!el)return;el.innerHTML=QUICK_QS.map(q=>`<div class="quick-q" onclick="askQ('${q.replace(/'/g,"\\'")}')">${q}</div>`).join('');}
-
-function addChatMsg(text,type){
-  let msgs=document.getElementById('chat-msgs');const div=document.createElement('div');div.className='msg '+type;
-  const t=new Date();const time=`${t.getHours()}:${t.getMinutes().toString().padStart(2,'0')}`;
-  div.innerHTML=`<div class="m-av ${type}">${type==='ai'?'🤖':'أح'}</div><div><div class="m-bubble">${text.replace(/\n/g,'<br>')}</div><div class="m-time">${time}</div></div>`;
-  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
-}
-function showTyping(){let msgs=document.getElementById('chat-msgs');const d=document.createElement('div');d.className='msg ai';d.id='typing-el';d.innerHTML=`<div class="m-av ai">🤖</div><div class="m-bubble"><div class="typing-ind"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
-function removeTyping(){const e=document.getElementById('typing-el');if(e)e.remove();}
-function askQ(q){document.getElementById('chat-inp').value=q;sendMsg();}
-function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
-function autoSize(el){el.style.height='36px';el.style.height=Math.min(el.scrollHeight,90)+'px';}
-function clearChat(){chatHistory=[];localStorage.removeItem('ml_chat');document.getElementById('chat-msgs').innerHTML=`<div class="msg ai"><div class="m-av ai">🤖</div><div><div class="m-bubble">محادثة جديدة! كيف يمكنني مساعدتك؟</div><div class="m-time">الآن</div></div></div>`;}
-
-
-// ═══════════════════════════════════════════════════════
-// AI CREDITS SYSTEM
-// ═══════════════════════════════════════════════════════
-function getCredits(){ return S.aiCredits || 0; }
-
-function addCredits(amount, reason){
-  S.aiCredits = (S.aiCredits||0) + amount;
-  save(); updateCreditsUI();
-  showToast('🔋 +'+toAr(amount)+' رسالة AI — '+reason);
-  addActivity('حصلت على '+toAr(amount)+' رصيد AI من: '+reason,'var(--purple)');
-}
-
-function deductCredit(){
-  if((S.aiCredits||0) <= 0) return false;
-  S.aiCredits = Math.max(0,(S.aiCredits||0)-1);
-  save(); updateCreditsUI();
-  return true;
-}
-
-function updateCreditsUI(){
-  const credits = getCredits();
-  const max = S.maxCredits || 50;
-  const pct = max > 0 ? Math.min(credits/max*100,100) : 0;
-  const lbl = document.getElementById('credits-lbl');
-  const fill = document.getElementById('credits-fill');
-  if(lbl) lbl.textContent = toAr(credits)+' رسالة';
-  if(fill) fill.style.width = pct+'%';
-  if(fill){
-    if(pct > 50) fill.style.background='linear-gradient(90deg,#6b47d4,#2461b8)';
-    else if(pct > 20) fill.style.background='linear-gradient(90deg,var(--accent2),var(--accent))';
-    else fill.style.background='linear-gradient(90deg,#dc2626,#ef4444)';
-  }
-}
-
-// Chat send function
-
-async function sendMsg(){
-  const inp = document.getElementById('chat-inp');
-  const text = inp.value.trim();
-  if(!text) return;
-  // Credits check
-  if(getCredits() <= 0){
-    document.getElementById('no-credits-modal').style.display='flex';
-    return;
-  }
-  const local = getLocalAnswer(text);
-  if(!local) deductCredit();
-  inp.value=''; inp.style.height='36px';
-  addChatMsg(text,'user'); msgCount++;
-  saveChatHistory();
-  chatHistory.push({role:'user',content:text});
-  if(local){
-    setTimeout(function(){
-      addChatMsg(local.a,'ai');
-      chatHistory.push({role:'assistant',content:local.a});
-      saveChatHistory();
-    },400);
-    return;
-  }
-  document.getElementById('send-btn-el').disabled=true;
-  showTyping();
-  try{
-    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:SYSTEM_PROMPT,messages:chatHistory.slice(-12)})});
-    removeTyping();
-    const data=await res.json();
-    if(!res.ok){addChatMsg('خطأ: '+(data.error||res.status),'ai');document.getElementById('send-btn-el').disabled=false;return;}
-    const reply=data.content.map(function(b){return b.text||'';}).join('');
-    chatHistory.push({role:'assistant',content:reply});
-    addChatMsg(reply,'ai');
-    saveChatHistory();
-  }catch(e){removeTyping();addChatMsg('خطأ في الاتصال: '+e.message,'ai');}
-  document.getElementById('send-btn-el').disabled=false;
-}
-
-
-// ═══════════════════════════════════════════════════════
-// ENROLLMENT & COURSE SYSTEM
-// ═══════════════════════════════════════════════════════
-let enrollingCourseId = null;
-
-function getEnrolled(){ return S.enrolledCourses || []; }
-
-function isEnrolled(courseId){ return getEnrolled().includes(courseId); }
-
-function openEnrollModal(courseId){
-  const course=COURSES.find(function(c){return c.id===courseId;});
-  if(!course) return;
-  if(isEnrolled(courseId)){showToast('أنت مسجّل في هذه الدورة بالفعل ✓');showView('lessons');return;}
-  enrollingCourseId=courseId;
-  document.getElementById('enroll-icon').textContent=course.icon;
-  document.getElementById('enroll-title').textContent=course.title;
-  document.getElementById('enroll-desc').textContent=course.desc;
-  document.getElementById('enroll-price').textContent=course.free?'مجانية':'$'+course.price;
-  document.getElementById('enroll-credits').textContent=toAr(course.credits)+' رسالة AI';
-  document.getElementById('enroll-includes').textContent='✓ الوصول لجميع دروس الدورة ('+toAr(course.lessons)+' دروس)\n✓ '+toAr(course.credits)+' رسالة مع المساعد الذكي\n✓ وصول مدى الحياة للمحتوى';
-  document.getElementById('enroll-free-section').style.display=course.free?'block':'none';
-  document.getElementById('enroll-paid-section').style.display=course.free?'none':'block';
-  document.getElementById('enroll-success-section').style.display='none';
-  document.getElementById('enroll-modal').style.display='flex';
-}
-
-
-function showEnrollGate(course){
-  var grid=document.getElementById('lessons-grid');
-  var el=document.createElement('div');
-  el.style.cssText='grid-column:1/-1;background:white;border:1px solid var(--border);border-radius:var(--r2);padding:32px;text-align:center';
-  el.innerHTML=
-    '<div style="font-size:48px;margin-bottom:14px">'+course.icon+'</div>'+
-    '<div style="font-size:18px;font-weight:800;margin-bottom:8px">'+course.title+'</div>'+
-    '<div style="font-size:14px;color:var(--text2);margin-bottom:16px">'+course.desc+'</div>'+
-    '<div style="display:flex;gap:20px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">'+
-      '<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--accent)">'+(course.free?'مجاني':'$'+course.price)+'</div><div style="font-size:11px;color:var(--text2)">السعر</div></div>'+
-      '<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--purple)">'+toAr(course.credits)+'</div><div style="font-size:11px;color:var(--text2)">رسالة AI</div></div>'+
-      '<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:var(--teal)">'+toAr(course.lessons)+'</div><div style="font-size:11px;color:var(--text2)">دروس</div></div>'+
-    '</div>';
-  var btn=document.createElement('button');
-  btn.textContent=course.free?'✓ التسجيل مجاناً':'💳 سجّل الآن — $'+course.price;
-  btn.style.cssText='background:var(--accent);color:#212121;border:none;padding:13px 32px;border-radius:12px;font-family:Cairo,sans-serif;font-size:15px;font-weight:700;cursor:pointer';
-  btn.onclick=function(){openEnrollModal(course.id);};
-  el.appendChild(btn);
-  grid.innerHTML='';
-  grid.appendChild(el);
-}
-
-function renderLessonsGrid(){
-  var grid=document.getElementById('lessons-grid');
-  if(!grid) return;
-  var list=activeMod==='all'?LESSONS:LESSONS.filter(function(l){return l.mod===activeMod;});
-  var mbg={dt:'#fff7f3',cad:'#eef2ff','3dp':'#f0fdf7',laser:'#fffbeb',elec:'#f5f0ff',cnc:'#f0f8ff'};
-  var tcls={video:'tv',text:'tt',exercise:'te',lab:'tl'};
-  var tlbl={video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'};
-  grid.innerHTML='';
-  list.forEach(function(l){
-    var done=S.completedLessons.includes(l.id);
-    var unlocked=isDTLessonUnlocked(l);
-    var div=document.createElement('div');
-    div.className='lesson-card'+(unlocked?'':' lcard-locked');
-    if(unlocked){
-      (function(lid){ div.onclick=function(){openLesson(lid);}; })(l.id);
-    } else {
-      div.onclick=function(){
-        showToast('🔒 أكمل الدرس السابق بنتيجة 90% أو أعلى لفتح هذا الدرس');
-      };
-    }
-    var thumb=document.createElement('div');
-    thumb.className='lesson-thumb';
-    thumb.style.background=mbg[l.mod]||'#f5f5f0';
-    thumb.innerHTML='<span style="font-size:38px;z-index:1;position:relative">'+l.icon+'</span>';
-    if(done){
-      var dtag=document.createElement('div');
-      dtag.style.cssText='position:absolute;top:8px;right:8px;background:var(--teal);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px';
-      dtag.textContent='✓ مكتمل';
-      thumb.appendChild(dtag);
-    }
-    if(!unlocked){
-      var scoreNeeded=(S.quizScores||{})[l.id-1]||0;
-      var lockDiv=document.createElement('div');
-      lockDiv.className='lock-ov';
-      lockDiv.innerHTML='<div style="text-align:center"><div style="font-size:24px">🔒</div><div style="font-size:10px;color:var(--text2);margin-top:4px;font-weight:600">أكمل الدرس السابق<br>بنتيجة 90%+</div></div>';
-      thumb.appendChild(lockDiv);
-    }
-    var body=document.createElement('div');
-    body.className='lesson-body';
-    var scoreBadge='';
-    if(l.mod==='dt' && (S.quizScores||{})[l.id]!==undefined){
-      var sc=(S.quizScores||{})[l.id];
-      scoreBadge='<span style="color:'+(sc>=90?'var(--teal)':'var(--accent)')+';font-size:10px;font-weight:700">'+toAr(sc)+'%</span>';
-    }
-    body.innerHTML=
-      '<div class="ltype '+(tcls[l.type]||'tv')+'">'+tlbl[l.type]+'</div>'+
-      '<div class="lesson-title">'+l.title+'</div>'+
-      '<div class="lesson-meta"><span>⏱ '+l.dur+'</span><span style="color:var(--accent2)">⚡ +'+toAr(l.xp)+' XP</span>'+scoreBadge+'</div>';
-    div.appendChild(thumb);
-    div.appendChild(body);
-    grid.appendChild(div);
+  projects.forEach(function(proj) {
+    var curStageIdx = DT_STAGES.findIndex(function(s){return s.id===proj.currentStage;});
+    var stageData = proj.stageData || {};
+    var completedStages = DT_STAGES.filter(function(s){
+      var sd = stageData[s.id]||{};
+      return sd.contentViewed && sd.templatesDone && (sd.quizScore||0)>=90;
+    }).length;
+    var card = document.createElement('div');
+    card.className = 'project-card';
+    var dotsHTML = DT_STAGES.map(function(s,i) {
+      var sd = stageData[s.id]||{};
+      var done = sd.contentViewed && sd.templatesDone && (sd.quizScore||0)>=90;
+      var active = s.id === proj.currentStage;
+      var cls = done?'done':active?'active':'locked';
+      return '<div title="'+s.label+'" class="stage-dot '+cls+'" style="margin-left:4px"></div>';
+    }).join('');
+    var curStage = DT_STAGES[curStageIdx] || DT_STAGES[0];
+    card.innerHTML =
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:15px;font-weight:700;margin-bottom:4px">' + (proj.title||'مشروع بدون عنوان').substring(0,60) + (proj.title&&proj.title.length>60?'...':'') + '</div>' +
+          '<div style="font-size:12px;color:var(--text3)">المرحلة الحالية: <strong style="color:var(--text)">' + curStage.icon + ' ' + curStage.label + '</strong></div>' +
+        '</div>' +
+        '<span class="badge badge-gold">' + toAr(completedStages) + '/٦ مراحل</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:4px;margin-bottom:14px">' + dotsHTML + '</div>' +
+      '<div class="progress-track" style="margin-bottom:14px"><div class="progress-fill" style="width:'+Math.round(completedStages/6*100)+'%"></div></div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<a href="portal.html?project=' + proj.id + '" class="btn btn-primary btn-sm">متابعة المشروع ←</a>' +
+        '<button class="btn btn-outline btn-sm" onclick="deleteProject(\''+proj.id+'\')">🗑️</button>' +
+      '</div>';
+    container.appendChild(card);
   });
 }
 
-// Update module tabs to show enrolled/price status
-const __origRenderLessons = renderLessons;
-function renderLessons(){
-  var tabs=document.getElementById('mod-tabs');
-  if(!tabs) return;
-  tabs.innerHTML='';
-  MODULES.forEach(function(m){
-    var div=document.createElement('div');
-    div.className='module-tab'+(activeMod===m.id?' active':'');
-    div.textContent=m.label;
-    div.onclick=function(){setMod(div,m.id);};
-    tabs.appendChild(div);
+function renderEnrolledCourses(state) {
+  var container = document.getElementById('courses-container');
+  container.innerHTML = '';
+  var enrolled = state.enrolledCourses || ['dt'];
+  enrolled.forEach(function(cid) {
+    var course = COURSES.find(function(c){return c.id===cid;});
+    if (!course) return;
+    var completedLessons = (state.completedLessons||[]).filter(function(l){return l.startsWith(cid+'_');}).length;
+    var pct = Math.round(completedLessons/course.lessons*100);
+    var card = document.createElement('div');
+    card.className = 'course-progress-card';
+    card.innerHTML =
+      '<span style="font-size:28px">' + course.icon + '</span>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:4px">' + course.title + '</div>' +
+        '<div class="progress-track"><div class="progress-fill teal" style="width:'+pct+'%"></div></div>' +
+      '</div>' +
+      '<span style="font-size:12px;color:var(--text3);font-weight:600">' + toAr(pct) + '%</span>' +
+      '<a href="course-player.html?course=' + cid + '" class="btn btn-outline btn-sm">متابعة</a>';
+    container.appendChild(card);
   });
-  renderLessonsGrid();
+  if (!enrolled.length) {
+    container.innerHTML = '<a href="courses.html" class="btn btn-outline btn-full">+ سجّل في دورة</a>';
+  }
 }
 
-// ═══════════════════════════════════════════════════════
-// EVENTS SYSTEM
-// ═══════════════════════════════════════════════════════
-let EVENTS_DATA = [
-  {id:'e1',type:'webinar',title:'وبينار: مقدمة في التفكير التصميمي',date:'2025-07-15',time:'19:00',duration:'٩٠ دقيقة',host:'د. سارة الأحمد',free:true,seats:200,registered:134,lang:'عربي',platform:'Zoom',link:'https://eventbrite.com',desc:'جلسة تعريفية مجانية بمنهجية التفكير التصميمي. ستتعلم المراحل الخمس، وكيف تطبّقها على مشكلة حقيقية في ٩٠ دقيقة.',tags:['مبتدئين','تفكير تصميمي','مجاني']},
-  {id:'e2',type:'meetup',title:'لقاء مجتمع شكّل — جدة',date:'2025-07-22',time:'17:30',duration:'٣ ساعات',host:'فريق شكّل',free:true,seats:50,registered:38,lang:'عربي',platform:'Fab Lab جدة',link:'https://eventbrite.com',desc:'لقاء شهري لمجتمع الصانعين والمصممين في جدة. شارك مشروعك، تعرّف على المهتمين، واستكشف مختبر التصنيع الرقمي.',tags:['حضوري','تواصل','جدة']},
-  {id:'e3',type:'workshop',title:'ورشة: من الفكرة إلى النموذج المطبوع',date:'2025-08-01',time:'10:00',duration:'٦ ساعات',host:'م. خالد المنصور',free:false,price:150,seats:15,registered:11,lang:'عربي',platform:'Fab Lab الرياض',link:'https://eventbrite.com',desc:'ورشة عملية مكثّفة: تصمّم قطعة في Fusion 360 وتطبعها بالطابعة ثلاثية الأبعاد في نفس اليوم. الأدوات والمواد مشمولة.',tags:['حضوري','Fusion 360','طباعة ثلاثية','عملي']},
-  {id:'e4',type:'webinar',title:'كيف تبني منتجاً ناجحاً بالتفكير التصميمي',date:'2025-08-10',time:'20:00',duration:'٦٠ دقيقة',host:'أ. نورة السالم',free:true,seats:300,registered:198,lang:'عربي',platform:'Google Meet',link:'https://eventbrite.com',desc:'قصص نجاح حقيقية من مؤسسين استخدموا Design Thinking لإطلاق منتجاتهم. أسئلة مفتوحة في آخر الجلسة.',tags:['ريادة أعمال','منتج','مجاني']},
-  {id:'e5',type:'competition',title:'هاكاثون شكّل ٢٠٢٥',date:'2025-08-22',time:'09:00',duration:'٤٨ ساعة',host:'فريق شكّل',free:true,seats:80,registered:64,lang:'عربي وإنجليزي',platform:'هجين — الرياض + أونلاين',link:'https://eventbrite.com',desc:'هاكاثون ٤٨ ساعة لتطبيق التفكير التصميمي على تحدٍ حقيقي. جوائز نقدية لأفضل ٣ فرق: ٥٠٠٠ ريال للأول.',tags:['مسابقة','جوائز','فرق','٤٨ ساعة']},
-  {id:'e6',type:'workshop',title:'ورشة: أساسيات قطع الليزر',date:'2025-09-05',time:'14:00',duration:'٤ ساعات',host:'م. أحمد الزهراني',free:false,price:100,seats:12,registered:5,lang:'عربي',platform:'Fab Lab جدة',link:'https://eventbrite.com',desc:'تعلّم تصميم ملفات الليزر وتشغيل الآلة من الصفر. ستخرج بقطعة جاهزة صممتها بنفسك.',tags:['حضوري','ليزر','عملي']}
-];
-
-
-let eventFilter = '';
-
-function filterEvents(type){
-  eventFilter = type;
-  document.querySelectorAll('#event-filters .comm-filter').forEach(b=>b.classList.toggle('active',b.dataset.type===type));
-  renderEvents();
-}
-
-function renderEvents(){
-  console.log('[renderEvents] EVENTS_DATA count:', EVENTS_DATA.length);
-  const list = document.getElementById('events-list');
-  console.log('[renderEvents] events-list element:', list ? 'FOUND' : 'NULL');
-  const filtered = eventFilter ? EVENTS_DATA.filter(e=>e.type===eventFilter) : EVENTS_DATA;
-  const typeIcons={webinar:'🎙️',meetup:'🤝',workshop:'🛠️',competition:'🏆'};
-  const typeLabels={webinar:'وبينار',meetup:'لقاء مجتمعي',workshop:'ورشة عمل',competition:'مسابقة'};
-  const typeColors={webinar:'#e8f4ff',meetup:'#f0fdf7',workshop:'#fff7f3',competition:'#f5f0ff'};
-  const typeBorder={webinar:'var(--blue)',meetup:'var(--teal)',workshop:'var(--accent)',competition:'var(--purple)'};
-
-  list.innerHTML = filtered.map(e=>{
-    const d = new Date(e.date);
-    const day = d.toLocaleDateString('ar',{day:'numeric',month:'long'});
-    const seatsLeft = e.seats - e.registered;
-    const fullPct = Math.round(e.registered/e.seats*100);
-    return `<div style="background:white;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow2)'" onmouseout="this.style.boxShadow=''">
-      <div style="height:5px;background:${typeBorder[e.type]}"></div>
-      <div style="padding:18px 20px">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="background:${typeColors[e.type]};color:${typeBorder[e.type]};font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px">${typeIcons[e.type]} ${typeLabels[e.type]}</span>
-            <span style="background:${e.free?'#dcfce7':'#fef3ec'};color:${e.free?'#166534':'var(--accent)'};font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px">${e.free?'مجاني':'$'+e.price}</span>
-          </div>
-          <div style="text-align:center;background:var(--surface2);padding:6px 12px;border-radius:10px;flex-shrink:0">
-            <div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1">${d.getDate()}</div>
-            <div style="font-size:10px;color:var(--text2)">${d.toLocaleDateString('ar',{month:'short'})}</div>
-          </div>
-        </div>
-        <div style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text)">${e.title}</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px">${e.desc}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
-          <div style="font-size:11px;color:var(--text3)">⏰ ${e.time} · ${e.duration}</div>
-          <div style="font-size:11px;color:var(--text3)">📍 ${e.platform}</div>
-          <div style="font-size:11px;color:var(--text3)">👤 ${e.host}</div>
-          <div style="font-size:11px;color:var(--text3)">🌐 ${e.lang}</div>
-        </div>
-        <div style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px">
-            <span>${toAr(e.registered)} مسجّل</span>
-            <span>${toAr(seatsLeft)} مقعد متبقٍ</span>
-          </div>
-          <div style="height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">
-            <div style="height:100%;background:${fullPct>80?'var(--accent)':'var(--teal)'};border-radius:2px;width:${fullPct}%;transition:width .4s"></div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${e.tags.map(t=>`<span style="background:var(--surface2);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:8px">${t}</span>`).join('')}
-        </div>
-        <a href="${e.link}" target="_blank" style="display:block;margin-top:14px;padding:10px;background:${e.free?'var(--teal)':'var(--accent)'};color:white;border-radius:10px;text-align:center;text-decoration:none;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;transition:opacity .15s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-          ${seatsLeft<=0?'القائمة الانتظار 📋':e.free?'سجّل الآن — مجاني ←':'سجّل الآن — $'+e.price+' ←'}
-        </a>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-
-// ═══════════════════════════════════════════════════════
-// LOCAL AI CACHE — semantic keyword matching
-// ═══════════════════════════════════════════════════════
-const LOCAL_QA = [
-  {keys:['تعاطف','empathy','مستخدم','احتياج'],q:'ما هو التعاطف في التفكير التصميمي؟',a:'التعاطف هو فهم المستخدمين بعمق — ليس فقط ما يقولونه، بل ما يشعرون به ويفكرون فيه. نستخدم أدوات مثل المقابلات، الملاحظة، وخرائط التعاطف. 🔍'},
-  {keys:['hmw','كيف يمكننا','مشكلة','صياغة'],q:'كيف أكتب أسئلة HMW صحيحة؟',a:'سؤال HMW الجيد: واسع بما يكفي للإبداع، وضيق بما يكفي للتركيز. تجنب الحلول المسبقة! ✅ جيد: "كيف يمكننا جعل التعلم ممتعاً؟" ❌ سيئ: "كيف يمكننا بناء تطبيق مذاكرة؟"'},
-  {keys:['عصف','أفكار','brainstorm','scamper','إبداع'],q:'ما قواعد العصف الذهني؟',a:'٤ قواعد أساسية: ١) الكمية قبل الجودة ٢) لا نقد أثناء الجلسة ٣) الأفكار الجريئة مرحّب بها ٤) ابنِ على أفكار الآخرين. تقنية SCAMPER تساعدك: استبدل، ادمج، كيّف، عدّل، استخدم لأغراض أخرى، احذف، اعكس. 💡'},
-  {keys:['نموذج','prototype','اختبار','test'],q:'ما هدف مرحلة النمذجة؟',a:'النموذج الأولي هو أسرع وأرخص طريقة لاختبار فكرتك. القاعدة: ابنِ بسرعة، اختبر مبكراً، فشل بتكلفة منخفضة. النموذج الورقي كثيراً ما يكون أفضل من الرقمي في البداية! 🛠️'},
-  {keys:['fusion','360','cad','تصميم','ثلاثي'],q:'كيف أبدأ مع Fusion 360؟',a:'خطوات البداية: ١) حمّل Fusion 360 مجاناً (مجاني للطلاب) ٢) تعلّم واجهة البرنامج ٣) ابدأ برسم مقطع ثنائي الأبعاد (Sketch) ٤) حوّله لجسم بأداة Extrude. الدرس السادس في المنصة يشرح هذا كاملاً! 🖥️'},
-  {keys:['طباعة','3d','print','pla','abs','filament','slicing'],q:'ما أفضل إعدادات الطباعة ثلاثية الأبعاد للمبتدئين؟',a:'للمبتدئين مع PLA: Layer Height 0.2mm، Infill 20%، Print Speed 50mm/s، Temperature 200°C. استخدم Cura كبرنامج Slicing — هو الأسهل. ابدأ بنماذج صغيرة لاختبار الإعدادات! 🖨️'},
-  {keys:['ليزر','laser','قطع','نقش','co2'],q:'ما الفرق بين قطع الليزر والنقش؟',a:'القطع: يخترق المادة كاملاً (Power عالية، Speed بطيء). النقش: يحفر السطح فقط (Power منخفضة). في برامج التصميم: خطوط حمراء = قطع، ملء أزرق = نقش. 🔆'},
-  {keys:['cnc','تفريز','router','gcode','g-code'],q:'كيف يعمل CNC Router؟',a:'CNC يتحرك في ٣ محاور (X,Y,Z) بدقة عالية. يقرأ كود G-code لتحديد المسار. الفرق عن الليزر: CNC يقطع بعمق حقيقي ويعمل على الخشب والألومنيوم والبلاستيك الصلب. ⚙️'},
-  {keys:['arduino','برمجة','electronics','إلكترونيات','led','sensor'],q:'كيف أبدأ مع Arduino؟',a:'أول مشروع: اجعل LED يومض (Blink)! الكود: digitalWrite(LED_BUILTIN, HIGH); delay(1000); digitalWrite(LED_BUILTIN, LOW); delay(1000); هذا هو "Hello World" للإلكترونيات. 💡'},
-  {keys:['xp','نقاط','مستوى','شارة','badge'],q:'كيف أكسب نقاط XP؟',a:'تكسب XP بـ: إكمال الدروس، النجاح في التقييمات، ملء القوالب، والحضور المنتظم. كل ١٠٠٠ XP = مستوى جديد. المستويات: مستكشف → متعلم → صانع → مبتكر → خبير. ⚡'},
-  {keys:['قالب','template','persona','شخصية','5whys','empathy map'],q:'كيف أستخدم القوالب؟',a:'اضغط على "القوالب" في القائمة الجانبية. ستجد ١٠ قوالب تفاعلية: خارطة التعاطف، الشخصية، الخمسة لماذا، وغيرها. كل قالب يحفظ بياناتك تلقائياً ويمكنك طباعته. 📋'},
-  {keys:['مجتمع','community','سؤال','نقاش','زملاء'],q:'كيف أشارك في مجتمع المتعلمين؟',a:'اضغط على "المجتمع" في القائمة الجانبية. يمكنك طرح أسئلة، الرد على الآخرين، ورفع الأسئلة المفيدة. صنّف سؤالك حسب مرحلة التفكير التصميمي لتصله للمهتمين! 💬'},
-  {keys:['مرشد','mentor','جلسة','session','إرشاد'],q:'كيف أتواصل مع مرشد؟',a:'اضغط على "المرشدون" في القائمة الجانبية. يمكنك اختيار مرشد متخصص، إرسال سؤال مباشر، أو حجز جلسة إرشاد خاصة. سيرد المرشد خلال ٢٤-٤٨ ساعة. 🧑‍🏫'},
-  {keys:['فاب لاب','fablab','تصنيع','مختبر','مكان'],q:'كيف أجد فاب لاب قريب مني؟',a:'اضغط على "خريطة الفاب لابات" في القائمة الجانبية. ستجد ١٢+ مختبراً على الخريطة. يمكنك البحث بالمدينة أو تصفية حسب التجهيزات (طابعة ثلاثية، ليزر، CNC). 🗺️'},
-  {keys:['pov','point of view','وجهة نظر','insight'],q:'ما هو بيان POV؟',a:'POV = [المستخدم] يحتاج إلى [الحاجة] لأن [الاستنتاج المفاجئ]. مثال: "الطالب الريفي يحتاج إلى محتوى تعليمي لأنه يملك وقتاً بدون اتصال إنترنت". الاستنتاج هو الجزء الإبداعي! 📌'},
-  {keys:['persona','بيرسونا','شخصية مستخدم','user persona'],q:'ما هي الشخصية (Persona) ولماذا نبنيها؟',a:'الـ Persona هي تمثيل خيالي لمستخدم نموذجي. تساعدك على الاتفاق مع فريقك على "من نصمم له". تشمل: الاسم، العمر، الأهداف، الإحباطات، الدوافع. استخدم قالب الشخصية في المنصة! 👤'},
-  {keys:['journey map','خريطة رحلة','customer journey','تجربة مستخدم'],q:'ما هي خريطة رحلة المستخدم؟',a:'خريطة الرحلة تتتبع تجربة المستخدم من أول لحظة تفاعل حتى آخرها. تكشف نقاط الألم وفرص التحسين في كل مرحلة. مثالية لفهم السياق الكامل قبل التصميم. 🗺️'},
-  {keys:['ninety','90%','درجة','اجتياز','فتح'],q:'كيف أفتح الدرس التالي في التفكير التصميمي؟',a:'لكل درس في مسار التفكير التصميمي تحتاج: ١) إكمال مشاهدة الدرس ٢) اجتياز التقييم بنسبة ٩٠٪ أو أعلى. بعدها يفتح الدرس التالي تلقائياً. يمكنك إعادة التقييم كم مرة تريد! 🔓'},
-];
-
-// Phase-specific hints shown during lessons
-const LESSON_HINTS = {
-  1: ['💡 تلميح: التعاطف الحقيقي يبدأ بالصمت والاستماع — لا تنتظر اللحظات التي تقول فيها "أنا أعرف!"', '🔍 جرّب: قبل المقابلة اكتب ٣ افتراضات لديك، ثم ابحث عما يدحضها وليس ما يؤكدها'],
-  2: ['📝 تلميح: في الملاحظة الميدانية، سجّل ما تراه حرفياً في عمود، والتفسير في عمود آخر منفصل', '👁️ جرّب: راقب شخصاً يستخدم حلاً موجوداً لمشكلتك ٣٠ دقيقة دون أن تتحدث'],
-  3: ['🎯 تلميح: سؤال HMW الجيد يدفعك للتفكير بعشرات الحلول — إذا كان لديك حل واحد واضح، السؤال ضيق جداً', '✏️ جرّب: اكتب ١٠ أسئلة HMW من نفس الملاحظة ثم اختر الأفضل'],
-  4: ['💡 تلميح: ضع قاعدة "لا نقد" قبل بدء العصف — حتى الأفكار "الغبية" قد تقود لأفكار عبقرية', '🚀 جرّب: ابدأ بأكثر فكرة جنونية تخطر ببالك — هذا يحرر الإبداع'],
-  5: ['🛠️ تلميح: ابنِ بأرخص المواد أولاً — الورق والكرتون كافيان لاختبار معظم الأفكار', '⚡ جرّب: أعطِ نفسك ساعة واحدة فقط لبناء النموذج — القيود تحفز الإبداع'],
-};
-
-function getLocalAnswer(question) {
-  const q = question.toLowerCase();
-  const words = q.split(/\s+/);
-  let bestMatch = null;
-  let bestScore = 0;
-  LOCAL_QA.forEach(item => {
-    let score = 0;
-    item.keys.forEach(key => {
-      if(q.includes(key.toLowerCase())) score += 2;
-      words.forEach(w => { if(w.length>2 && key.toLowerCase().includes(w)) score += 1; });
-    });
-    if(score > bestScore) { bestScore = score; bestMatch = item; }
-  });
-  return bestScore >= 2 ? bestMatch : null;
-}
-
-function showLessonHint(lessonId) {
-  const hints = LESSON_HINTS[lessonId];
-  if(!hints) return;
-  const hint = hints[Math.floor(Math.random()*hints.length)];
-  let msgs = document.getElementById('chat-msgs');
-  if(!msgs) return;
-  const div = document.createElement('div');
-  div.className = 'msg ai';
-  div.innerHTML = `<div class="m-av ai">🤖</div><div><div class="m-bubble" style="background:#f5f0ff;border:1px solid rgba(107,71,212,0.15)">${hint}</div><div class="m-time" style="font-size:10px;color:var(--text3)">تلميح تلقائي</div></div>`;
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-// ═══════════════════════════════════════════════════════
-// COMMUNITY
-// ═══════════════════════════════════════════════════════
-function loadPosts(){ return JSON.parse(localStorage.getItem('ml_posts')||'[]'); }
-function savePosts(p){ localStorage.setItem('ml_posts',JSON.stringify(p)); }
-
-let postFilterTag = '';
-function filterPosts(tag){
-  postFilterTag = tag;
-  document.querySelectorAll('.comm-filter').forEach(b=>b.classList.toggle('active',b.dataset.tag===tag));
-  renderCommunity();
-}
-
-
-function seedCommunityIfEmpty(){
-  var existing = JSON.parse(localStorage.getItem('ml_posts')||'[]');
-  if(existing.length > 0 && existing.some(function(p){return !p.id.startsWith('seed');})) return;
-  // Re-seed if only has seed posts or is empty
-  var starterPosts = [
-    {id:'seed1',title:'ما الفرق بين التعاطف والتعاطف الفكري في التصميم؟',body:'أحاول فهم الفرق بين empathy وsympathy في سياق التفكير التصميمي. هل يمكن أحد يشرح الفرق بمثال عملي؟',tag:'التعاطف',author:'سارة المنصور',authorId:'seed',date:new Date(Date.now()-86400000*3).toISOString(),votes:12,solved:true,replies:[{author:'فريق شكّل',text:'التعاطف (Empathy) = تضع نفسك مكان المستخدم وتشعر بما يشعر. التعاطف الفكري (Sympathy) = تفهم موقفه من بُعد دون أن تعيشه. في التصميم نحتاج للتعاطف الحقيقي — اذهب إلى الميدان وعاش التجربة معهم.'}]},
-    {id:'seed2',title:'كيف أكتب سؤال HMW جيد؟',body:'كلما حاولت أكتب سؤال HMW إما يكون ضيق جداً أو واسع جداً. فيه طريقة أتدرب عليها؟',tag:'تحديد المشكلة',author:'خالد العمري',authorId:'seed',date:new Date(Date.now()-86400000*2).toISOString(),votes:8,solved:true,replies:[{author:'فريق شكّل',text:'الاختبار البسيط: إذا كان الجواب حلاً واحداً واضحاً = ضيق جداً. إذا كان الجواب "كل شيء" = واسع جداً. السؤال الجيد يُنتج ١٠-٢٠ فكرة مختلفة ممكنة. جرب: اكتب ٥ أسئلة HMW من نفس الملاحظة وقيّمها.'}]},
-    {id:'seed3',title:'هل يمكنني تطبيق التفكير التصميمي منفرداً دون فريق؟',body:'أنا طالب وليس عندي فريق. هل التفكير التصميمي يشترط فريق أم يمكن تطبيقه لوحدي؟',tag:'عام',author:'نورة السالم',authorId:'seed',date:new Date(Date.now()-86400000*1).toISOString(),votes:15,solved:false,replies:[]},
-    {id:'seed4',title:'ما أفضل برنامج Slicer للمبتدئين في الطباعة ثلاثية الأبعاد؟',body:'سمعت عن Cura وPrusaSlicer وChitubox. أيهم أنصح به كمبتدئ؟',tag:'عام',author:'أحمد الزهراني',authorId:'seed',date:new Date(Date.now()-86400000*5).toISOString(),votes:6,solved:true,replies:[{author:'فريق شكّل',text:'للمبتدئين: Cura هو الأفضل — واجهة بسيطة، إعدادات تلقائية ممتازة، ومجتمع ضخم. PrusaSlicer أقوى لكن أعقد. Chitubox للطابعات الراتنجية (Resin) فقط.'}]},
-    {id:'seed5',title:'شاركوا مشاريعكم — من طبّق التفكير التصميمي على مشكلة حقيقية؟',body:'نريد نسمع تجاربكم! من منكم طبّق منهجية Design Thinking على مشكلة في حياته أو عمله؟ شاركنا المشكلة والنتيجة.',tag:'عام',author:'فريق شكّل',authorId:'admin',date:new Date(Date.now()-86400000*7).toISOString(),votes:20,solved:false,replies:[]},
-    {id:'seed6',title:'نصائح لجلسة مقابلة ناجحة مع المستخدمين؟',body:'سأجري مقابلات مع مستخدمين لأول مرة الأسبوع القادم. ما أهم النصائح؟',tag:'التعاطف',author:'ريم الحربي',authorId:'seed',date:new Date(Date.now()-3600000*2).toISOString(),votes:9,solved:false,replies:[{author:'فريق شكّل',text:'١) ابدأ بأسئلة مفتوحة: "حدثني عن..." ٢) اصمت واستمع — مقاومة الرغبة في الكلام ٣) اسأل "لماذا؟" ٣ مرات على الأقل لكل إجابة ٤) لا تسأل عن المستقبل ("هل ستستخدم...؟") بل عن الماضي ("كيف تعاملت مع...؟") ٥) سجّل بالفيديو أو الصوت إذا أذنوا لك.'}]}
+function renderBadges(state) {
+  var shelf = document.getElementById('badges-shelf');
+  shelf.innerHTML = '';
+  var allBadges = [
+    {id:'empathy_done', icon:'🔍', name:'خبير التعاطف'},
+    {id:'define_done',  icon:'🎯', name:'محدّد المشكلة'},
+    {id:'ideate_done',  icon:'💡', name:'مولّد الأفكار'},
+    {id:'proto_done',   icon:'🛠️', name:'بانٍ'},
+    {id:'test_done',    icon:'🧪', name:'مختبِر'},
+    {id:'full_cycle',   icon:'🔄', name:'مكرِّر'},
+    {id:'dt_course',    icon:'🧠', name:'مفكّر تصميمي'}
   ];
-  localStorage.setItem('ml_posts', JSON.stringify(starterPosts));
-}
-
-function renderCommunity(){ seedCommunityIfEmpty();
-  console.log('[renderCommunity] ml_posts:', localStorage.getItem('ml_posts') ? JSON.parse(localStorage.getItem('ml_posts')).length+' posts' : 'null');
-  const userPosts = loadPosts().filter(function(p){return !p.id.startsWith('seed');});
-  const seedPosts = JSON.parse(localStorage.getItem('ml_posts')||'[]').filter(function(p){return p.id.startsWith('seed');});
-  const allPosts = userPosts.concat(seedPosts.length ? seedPosts : []);
-  const posts = allPosts;
-  const filtered = postFilterTag ? posts.filter(function(p){return p.tag===postFilterTag;}) : posts;
-  const list = document.getElementById('posts-list');
-  if(!filtered.length){
-    list.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text3)"><div style="font-size:36px;margin-bottom:12px">💬</div><div style="font-size:14px">لا توجد منشورات بعد — كن أول من يطرح سؤالاً!</div></div>`;
-    return;
-  }
-  list.innerHTML = filtered.sort((a,b)=>b.votes-a.votes).map(p=>`
-    <div class="post-card">
-      <div style="display:flex;align-items:flex-start;gap:12px">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;min-width:36px">
-          <button onclick="votePost('${p.id}',1)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);transition:color .15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">▲</button>
-          <div style="font-size:13px;font-weight:700;color:${p.votes>0?'var(--accent)':'var(--text3)'}">${p.votes}</div>
-        </div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-            ${p.solved?'<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">✓ محلول</span>':''}
-            <span style="background:var(--surface2);color:var(--text2);font-size:10px;padding:2px 8px;border-radius:10px">${p.tag}</span>
-            <span style="font-size:11px;color:var(--text3)">${p.author} · ${new Date(p.date).toLocaleDateString('ar')}</span>
-          </div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--text)">${p.title}</div>
-          ${p.body?`<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">${p.body}</div>`:''}
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onclick="toggleReply('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text2);padding:4px 0">💬 ${(p.replies||[]).length} ردود</button>
-            ${(window.__mlUser&&p.authorId===window.__mlUser.email)?`<button onclick="markSolved('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--teal)">✓ وضع كـمحلول</button><button onclick="deletePost('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--red,#dc2626)">🗑️ حذف</button>`:''}
-          </div>
-          ${(p.replies||[]).length?`<div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:8px;display:flex;flex-direction:column;gap:8px">${(p.replies||[]).map(r=>`<div style="font-size:12px"><span style="font-weight:600;color:var(--text)">${r.author}:</span> <span style="color:var(--text2)">${r.text}</span></div>`).join('')}</div>`:''}
-          <div class="reply-form" id="reply-${p.id}">
-            <div style="display:flex;gap:8px;margin-top:8px">
-              <input type="text" id="reply-inp-${p.id}" placeholder="اكتب ردك..." style="flex:1;padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;direction:rtl;outline:none">
-              <button onclick="submitReply('${p.id}')" style="background:var(--accent);color:#212121;border:none;padding:7px 14px;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer">إرسال</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>`).join('');
-}
-
-function openPostModal(){ document.getElementById('post-modal').style.display='flex'; }
-
-function submitPost(){
-  const title = document.getElementById('post-title').value.trim();
-  if(!title){ showToast('يرجى كتابة موضوع السؤال'); return; }
-  const user = window.__mlUser || {name:'متعلم',email:''};
-  const posts = loadPosts();
-  posts.push({
-    id: Date.now().toString(),
-    title, body: document.getElementById('post-body').value.trim(),
-    tag: document.getElementById('post-tag').value,
-    author: user.name, authorId: user.email,
-    date: new Date().toISOString(), votes: 0, solved: false, replies: []
+  var earned = state.earnedBadges || [];
+  allBadges.forEach(function(b) {
+    var have = earned.includes(b.id);
+    var item = document.createElement('div');
+    item.className = 'badge-item';
+    item.style.opacity = have ? '1' : '0.3';
+    item.title = have ? 'مكتسبة!' : 'غير مكتسبة بعد';
+    item.innerHTML = '<div class="badge-icon">' + b.icon + '</div><div class="badge-name">' + b.name + '</div>';
+    shelf.appendChild(item);
   });
-  savePosts(posts);
-  document.getElementById('post-modal').style.display='none';
-  document.getElementById('post-title').value='';
-  document.getElementById('post-body').value='';
-  renderCommunity();
-  showToast('تم نشر سؤالك ✓');
 }
 
-function votePost(id, dir){
-  const posts = loadPosts();
-  const p = posts.find(x=>x.id===id);
-  if(p){ p.votes = (p.votes||0)+dir; savePosts(posts); renderCommunity(); }
+function createProject() {
+  var text = document.getElementById('np-idea').value.trim();
+  if (!text || text.length < 10) { showToast('يرجى وصف فكرتك (١٠ أحرف على الأقل)'); return; }
+  var project = {
+    id: 'p_' + Date.now(),
+    title: text.substring(0,80),
+    problem: text,
+    who: document.getElementById('np-who').value.trim(),
+    domain: document.getElementById('np-domain').value,
+    currentStage: 'empathy',
+    stageData: {},
+    createdAt: Date.now()
+  };
+  var state = getUserState();
+  state.projects = state.projects || [];
+  state.projects.push(project);
+  saveUserState(state);
+  closeModal('new-project-modal');
+  document.getElementById('np-idea').value = '';
+  addXP(50);
+  showToast('✅ تم إنشاء المشروع!');
+  setTimeout(function(){ window.location.href = 'portal.html?project=' + project.id; }, 800);
 }
 
-function toggleReply(id){
-  const el = document.getElementById('reply-'+id);
-  if(el) el.style.display = el.style.display==='block'?'none':'block';
-}
-
-function submitReply(id){
-  const inp = document.getElementById('reply-inp-'+id);
-  if(!inp||!inp.value.trim()) return;
-  const user = window.__mlUser || {name:'متعلم'};
-  const posts = loadPosts();
-  const p = posts.find(x=>x.id===id);
-  if(p){ if(!p.replies) p.replies=[]; p.replies.push({author:user.name,text:inp.value.trim()}); savePosts(posts); renderCommunity(); }
-}
-
-function markSolved(id){
-  const posts = loadPosts();
-  const p = posts.find(x=>x.id===id);
-  if(p){ p.solved=!p.solved; savePosts(posts); renderCommunity(); }
-}
-
-function deletePost(id){
-  if(!confirm('حذف هذا المنشور؟')) return;
-  savePosts(loadPosts().filter(p=>p.id!==id));
-  renderCommunity();
+function deleteProject(id) {
+  if (!confirm('حذف هذا المشروع نهائياً؟')) return;
+  var state = getUserState();
+  state.projects = (state.projects||[]).filter(function(p){return p.id!==id;});
+  saveUserState(state);
+  renderDashboard();
   showToast('تم الحذف');
 }
 
-// ═══════════════════════════════════════════════════════
-// MENTORS
-// ═══════════════════════════════════════════════════════
-const MENTORS_DEFAULT = [
-  {id:'m1',name:'د. سارة الأحمد',title:'خبيرة التفكير التصميمي',bio:'١٠ سنوات خبرة في تطبيق Design Thinking في شركات عالمية. عملت مع IDEO وSAP. حاصلة على شهادة d.school من ستانفورد. تساعد الفرق على تحويل مشاكلهم إلى فرص تصميمية.',specialties:['التعاطف','تحديد المشكلة','HMW','ورش العمل'],avatar:'سا',color:'var(--accent)',available:true,sessions:47,rating:4.9,responseTime:'خلال ٢٤ ساعة'},
-  {id:'m2',name:'م. خالد المنصور',title:'مهندس تصنيع رقمي',bio:'مهندس ميكانيكي متخصص في Fusion 360 والتصنيع الرقمي. يدير Fab Lab في عمّان منذ ٦ سنوات. درّب أكثر من ٥٠٠ شخص على الطباعة ثلاثية الأبعاد والـ CNC.',specialties:['Fusion 360','طباعة ثلاثية الأبعاد','CNC','تصميم القطع'],avatar:'خا',color:'var(--blue,#1565C0)',available:true,sessions:89,rating:4.8,responseTime:'خلال ٣٦ ساعة'},
-  {id:'m3',name:'أ. نورة السالم',title:'مصممة منتجات ورائدة أعمال',bio:'مصممة منتجات بخبرة ٨ سنوات في شركات ناشئة وكبرى. أسّست شركتها الخاصة باستخدام Design Thinking. متخصصة في UX وتجربة المستخدم وإطلاق المنتجات.',specialties:['النمذجة','اختبار المستخدم','UX Design','Lean Startup'],avatar:'نو',color:'var(--teal)',available:true,sessions:63,rating:5.0,responseTime:'خلال ٤٨ ساعة'},
-  {id:'m4',name:'م. أحمد الزهراني',title:'مهندس إلكترونيات وـ IoT',bio:'مهندس كهربائي ومبرمج متخصص في Arduino وRaspberry Pi وأنظمة IoT. يُصمّم مشاريع ذكية تجمع بين التصنيع الرقمي والبرمجة. مدرّب معتمد في عدة Fab Labs.',specialties:['Arduino','Electronics','IoT','Raspberry Pi','قطع الليزر'],avatar:'أح',color:'var(--purple,#6A1B9A)',available:false,sessions:34,rating:4.7,responseTime:'خلال ٧٢ ساعة'}
-];
-
-
-let currentMentorId = null;
-
-function renderMentors(){
-  var mentors=JSON.parse(localStorage.getItem('ml_mentors')||'null')||MENTORS_DEFAULT;
-  console.log('[renderMentors] mentors count:', mentors.length);
-  var grid=document.getElementById('mentors-grid');
-  console.log('[renderMentors] grid element:', grid ? 'FOUND' : 'NULL');
-  if(!grid) return;
-  grid.innerHTML='';
-  mentors.forEach(function(m){
-    var card=document.createElement('div');
-    card.style.cssText='background:white;border:1px solid var(--border);border-radius:var(--r2);padding:20px;position:relative;transition:box-shadow .2s';
-    card.onmouseover=function(){this.style.boxShadow='var(--shadow2)';};
-    card.onmouseout=function(){this.style.boxShadow='';};
-    var stars='⭐'.repeat(Math.floor(m.rating||5));
-    card.innerHTML=
-      (!m.available?'<div style="position:absolute;top:12px;left:12px;background:var(--surface3);color:var(--text3);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px">غير متاح</div>':'')+
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
-        '<div style="width:52px;height:52px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0">'+m.avatar+'</div>'+
-        '<div style="flex:1"><div style="font-size:15px;font-weight:700">'+m.name+'</div>'+
-        '<div style="font-size:12px;color:var(--text2)">'+m.title+'</div>'+
-        '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+stars+' '+m.rating+' · '+m.sessions+' جلسة</div></div>'+
-      '</div>'+
-      '<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">'+m.bio+'</div>'+
-      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">'+
-        m.specialties.map(function(s){return '<span style="background:var(--surface2);color:var(--text2);font-size:11px;padding:2px 9px;border-radius:10px">'+s+'</span>';}).join('')+
-      '</div>'+
-      '<div style="font-size:11px;color:var(--text3);margin-bottom:14px">⏱ وقت الرد: '+m.responseTime+'</div>';
-    var btnRow=document.createElement('div');
-    btnRow.style.cssText='display:flex;gap:8px';
-    var btnQ=document.createElement('button');
-    btnQ.textContent='❓ سؤال';
-    btnQ.style.cssText='flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--accent);background:#fff7f3;color:var(--accent);font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:'+(m.available?'pointer':'not-allowed')+';opacity:'+(m.available?'1':'0.5');
-    btnQ.disabled=!m.available;
-    (function(mid){btnQ.onclick=function(){openMentorModal(mid,'question');};})(m.id);
-    var btnS=document.createElement('button');
-    btnS.textContent='📅 جلسة';
-    btnS.style.cssText='flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--teal);background:#f0fdf7;color:var(--teal);font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:'+(m.available?'pointer':'not-allowed')+';opacity:'+(m.available?'1':'0.5');
-    btnS.disabled=!m.available;
-    (function(mid){btnS.onclick=function(){openMentorModal(mid,'session');};})(m.id);
-    btnRow.appendChild(btnQ);
-    btnRow.appendChild(btnS);
-    card.appendChild(btnRow);
-    grid.appendChild(card);
-  });
-}
-
-function openMentorModal(id, tab){
-  const mentors = JSON.parse(localStorage.getItem('ml_mentors')||'null') || MENTORS_DEFAULT;
-  const m = mentors.find(x=>x.id===id);
-  if(!m) return;
-  currentMentorId = id;
-  document.getElementById('mentor-modal-name').textContent = m.name + ' — ' + m.title;
-  document.getElementById('mentor-modal').style.display='flex';
-  switchMentorTab(tab);
-}
-
-function switchMentorTab(tab){
-  document.getElementById('mentor-question-tab').style.display = tab==='question'?'block':'none';
-  document.getElementById('mentor-session-tab').style.display = tab==='session'?'block':'none';
-  document.getElementById('tab-question').style.background = tab==='question'?'#fff7f3':'white';
-  document.getElementById('tab-question').style.borderColor = tab==='question'?'var(--accent)':'var(--border)';
-  document.getElementById('tab-question').style.color = tab==='question'?'var(--accent)':'var(--text2)';
-  document.getElementById('tab-session').style.background = tab==='session'?'#f0fdf7':'white';
-  document.getElementById('tab-session').style.borderColor = tab==='session'?'var(--teal)':'var(--border)';
-  document.getElementById('tab-session').style.color = tab==='session'?'var(--teal)':'var(--text2)';
-}
-
-function sendMentorQuestion(){
-  const q = document.getElementById('mentor-question').value.trim();
-  if(!q){ showToast('يرجى كتابة سؤالك'); return; }
-  const user = window.__mlUser || {name:'متعلم',email:''};
-  const requests = JSON.parse(localStorage.getItem('ml_mentor_requests')||'[]');
-  requests.push({
-    id: Date.now().toString(), mentorId: currentMentorId, type:'question',
-    question: q, student: user.name, studentEmail: user.email,
-    date: new Date().toISOString(), status:'pending', reply:null
-  });
-  localStorage.setItem('ml_mentor_requests', JSON.stringify(requests));
-  document.getElementById('mentor-question').value='';
-  document.getElementById('mentor-modal').style.display='none';
-  showToast('تم إرسال سؤالك للمرشد ✓ سيرد خلال ٢٤-٤٨ ساعة');
-}
-
-function sendSessionRequest(){
-  const topic = document.getElementById('session-topic').value.trim();
-  if(!topic){ showToast('يرجى كتابة موضوع الجلسة'); return; }
-  const user = window.__mlUser || {name:'متعلم',email:''};
-  const requests = JSON.parse(localStorage.getItem('ml_mentor_requests')||'[]');
-  requests.push({
-    id: Date.now().toString(), mentorId: currentMentorId, type:'session',
-    topic, time: document.getElementById('session-time').value,
-    notes: document.getElementById('session-notes').value,
-    student: user.name, studentEmail: user.email,
-    date: new Date().toISOString(), status:'pending'
-  });
-  localStorage.setItem('ml_mentor_requests', JSON.stringify(requests));
-  document.getElementById('session-topic').value='';
-  document.getElementById('session-time').value='';
-  document.getElementById('session-notes').value='';
-  document.getElementById('mentor-modal').style.display='none';
-  showToast('تم إرسال طلب الجلسة ✓ سيؤكد المرشد خلال ٢٤ ساعة');
-}
-
-
-// ═══════════════════════════════════════════════════════
-// TEMPLATES SYSTEM
-// ═══════════════════════════════════════════════════════
-const TEMPLATES = [
-  {
-    id:'empathy-map', icon:'🗺️', title:'خريطة التعاطف', phase:'مرحلة التعاطف',
-    color:'#fff7f3', borderColor:'var(--accent)',
-    desc:'افهم مستخدمك من أربعة محاور: يقول، يفكر، يفعل، يشعر',
-    fields:[
-      {id:'user-name', label:'اسم المستخدم / الشخصية', type:'input', placeholder:'مثال: سارة، ٢٨ سنة، معلمة'},
-      {id:'says', label:'🗣️ يقول — اقتباسات حرفية', type:'textarea', placeholder:'ما الذي يقوله فعلاً؟ اكتب اقتباسات مباشرة...'},
-      {id:'thinks', label:'🤔 يفكر — أفكاره الداخلية', type:'textarea', placeholder:'ماذا يدور في ذهنه؟ ما أفكاره التي لا يقولها؟'},
-      {id:'does', label:'🎭 يفعل — سلوكياته الملاحظة', type:'textarea', placeholder:'ما الذي يفعله فعلاً؟ ماذا لاحظت؟'},
-      {id:'feels', label:'💭 يشعر — مشاعره وانفعالاته', type:'textarea', placeholder:'ما مشاعره؟ ما الذي يقلقه أو يسعده؟'},
-      {id:'pains', label:'😣 الآلام — مشاكله وإحباطاته', type:'textarea', placeholder:'ما الذي يؤلمه؟ ما عقباته؟'},
-      {id:'gains', label:'🌟 المكاسب — ما يريد تحقيقه', type:'textarea', placeholder:'ما الذي يريد تحقيقه؟ ما أهدافه؟'},
-    ]
-  },
-  {
-    id:'persona', icon:'👤', title:'بطاقة الشخصية (Persona)', phase:'مرحلة التعاطف',
-    color:'#f5f0ff', borderColor:'var(--purple)',
-    desc:'أنشئ شخصية مستخدم نموذجية تمثل شريحتك المستهدفة',
-    fields:[
-      {id:'name', label:'الاسم والعمر والمهنة', type:'input', placeholder:'مثال: محمد، ٣٢ سنة، مهندس برمجيات'},
-      {id:'bio', label:'نبذة مختصرة', type:'textarea', placeholder:'من هو هذا الشخص؟ حياته اليومية...'},
-      {id:'goals', label:'🎯 أهدافه', type:'textarea', placeholder:'ما الذي يريد تحقيقه؟'},
-      {id:'frustrations', label:'😤 إحباطاته', type:'textarea', placeholder:'ما الذي يزعجه أو يعيقه؟'},
-      {id:'motivations', label:'💪 دوافعه', type:'textarea', placeholder:'ما الذي يحركه ويحفزه؟'},
-      {id:'tech', label:'📱 علاقته بالتكنولوجيا', type:'input', placeholder:'مثال: يستخدم الهاتف ٦ ساعات يومياً، يفضل التطبيقات البسيطة'},
-      {id:'quote', label:'💬 اقتباسه المميز', type:'input', placeholder:'جملة تلخص تفكيره...'},
-    ]
-  },
-  {
-    id:'five-whys', icon:'❓', title:'تقنية الخمسة لماذا', phase:'مرحلة التعاطف / تحديد المشكلة',
-    color:'#f0fdf7', borderColor:'var(--teal)',
-    desc:'اكتشف السبب الجذري للمشكلة بالسؤال لماذا خمس مرات',
-    fields:[
-      {id:'problem', label:'المشكلة الأولية', type:'input', placeholder:'ما المشكلة التي تريد فهمها؟'},
-      {id:'why1', label:'لماذا ١ — لماذا تحدث هذه المشكلة؟', type:'textarea', placeholder:'الإجابة الأولى...'},
-      {id:'why2', label:'لماذا ٢ — لماذا حدث ما ذكرته أعلاه؟', type:'textarea', placeholder:'الإجابة الثانية...'},
-      {id:'why3', label:'لماذا ٣ — لماذا حدث ذلك؟', type:'textarea', placeholder:'الإجابة الثالثة...'},
-      {id:'why4', label:'لماذا ٤ — ولماذا؟', type:'textarea', placeholder:'الإجابة الرابعة...'},
-      {id:'why5', label:'لماذا ٥ — والسبب الجذري هو؟', type:'textarea', placeholder:'السبب الحقيقي...'},
-      {id:'root-cause', label:'✅ السبب الجذري النهائي', type:'textarea', placeholder:'ما الذي اكتشفته؟ ما السبب الحقيقي؟'},
-    ]
-  },
-  {
-    id:'4ws', icon:'🔍', title:'قالب الـ 4Ws', phase:'مرحلة التعاطف',
-    color:'#eef2ff', borderColor:'var(--blue)',
-    desc:'حلّل المشكلة من أربعة أبعاد: من، ماذا، أين، متى',
-    fields:[
-      {id:'topic', label:'موضوع البحث', type:'input', placeholder:'ما الذي تبحث عنه؟'},
-      {id:'who', label:'👤 من (Who) — من المتأثرون؟', type:'textarea', placeholder:'من هم المستخدمون؟ من المتأثرون بالمشكلة؟'},
-      {id:'what', label:'❓ ماذا (What) — ماذا يحدث؟', type:'textarea', placeholder:'ما السلوك الذي تلاحظه؟ ما الذي يحدث بالفعل؟'},
-      {id:'where', label:'📍 أين (Where) — أين يحدث؟', type:'textarea', placeholder:'في أي سياق أو مكان تحدث المشكلة؟'},
-      {id:'when', label:'⏰ متى (When) — متى يحدث؟', type:'textarea', placeholder:'في أي وقت أو لحظة تظهر المشكلة؟'},
-      {id:'insights', label:'💡 أبرز الاستنتاجات', type:'textarea', placeholder:'ما الذي تعلمته من هذا التحليل؟'},
-    ]
-  },
-  {
-    id:'competitor', icon:'⚔️', title:'تحليل المنافسين', phase:'مرحلة التعاطف / تحديد المشكلة',
-    color:'#fff7e6', borderColor:'var(--accent2)',
-    desc:'قارن بين حلولك والحلول الموجودة في السوق',
-    fields:[
-      {id:'your-solution', label:'حلّك أو فكرتك', type:'input', placeholder:'اسم مشروعك أو فكرتك...'},
-      {id:'comp1-name', label:'المنافس الأول — الاسم', type:'input', placeholder:'اسم المنافس...'},
-      {id:'comp1-strengths', label:'المنافس الأول — نقاط القوة', type:'textarea', placeholder:'ما الذي يفعله جيداً؟'},
-      {id:'comp1-weaknesses', label:'المنافس الأول — نقاط الضعف', type:'textarea', placeholder:'ما الذي يفتقر إليه؟'},
-      {id:'comp2-name', label:'المنافس الثاني — الاسم', type:'input', placeholder:'اسم المنافس...'},
-      {id:'comp2-strengths', label:'المنافس الثاني — نقاط القوة', type:'textarea', placeholder:'ما الذي يفعله جيداً؟'},
-      {id:'comp2-weaknesses', label:'المنافس الثاني — نقاط الضعف', type:'textarea', placeholder:'ما الذي يفتقر إليه؟'},
-      {id:'gap', label:'🎯 الفجوة في السوق — فرصتك', type:'textarea', placeholder:'ما الذي لا يوفره أحد؟ أين فرصتك؟'},
-    ]
-  },
-  {
-    id:'hmw', icon:'🎯', title:'أسئلة كيف يمكننا (HMW)', phase:'مرحلة تحديد المشكلة',
-    color:'#fff7f3', borderColor:'var(--accent)',
-    desc:'حوّل ملاحظاتك إلى أسئلة تصميمية ملهمة',
-    fields:[
-      {id:'observation', label:'الملاحظة أو المشكلة الأصلية', type:'textarea', placeholder:'ما الذي لاحظته أو اكتشفته في مرحلة التعاطف؟'},
-      {id:'hmw1', label:'سؤال HMW الأول', type:'input', placeholder:'كيف يمكننا...'},
-      {id:'hmw2', label:'سؤال HMW الثاني', type:'input', placeholder:'كيف يمكننا...'},
-      {id:'hmw3', label:'سؤال HMW الثالث', type:'input', placeholder:'كيف يمكننا...'},
-      {id:'hmw4', label:'سؤال HMW الرابع', type:'input', placeholder:'كيف يمكننا...'},
-      {id:'hmw5', label:'سؤال HMW الخامس', type:'input', placeholder:'كيف يمكننا...'},
-      {id:'best-hmw', label:'✅ أفضل سؤال HMW (للمضي قُدُماً)', type:'input', placeholder:'اختر السؤال الأكثر إلهاماً وتركيزاً...'},
-    ]
-  },
-  {
-    id:'pov', icon:'📌', title:'بيان وجهة النظر (POV)', phase:'مرحلة تحديد المشكلة',
-    color:'#f0fdf7', borderColor:'var(--teal)',
-    desc:'صغ المشكلة من منظور المستخدم بشكل واضح ومحدد',
-    fields:[
-      {id:'user', label:'المستخدم — من هو؟', type:'input', placeholder:'مثال: الطالب الجامعي في المناطق الريفية'},
-      {id:'need', label:'الحاجة — ماذا يحتاج؟', type:'textarea', placeholder:'مثال: يحتاج إلى الوصول لمحتوى تعليمي عالي الجودة'},
-      {id:'insight', label:'الاستنتاج — لماذا؟ (المفاجأة)', type:'textarea', placeholder:'مثال: لأنه لا يملك اتصالاً ثابتاً بالإنترنت، لكنه يملك وقتاً خلال التنقل'},
-      {id:'pov-statement', label:'✅ بيان POV الكامل', type:'textarea', placeholder:'[المستخدم] يحتاج إلى [الحاجة] لأن [الاستنتاج]...'},
-    ]
-  },
-  {
-    id:'journey-map', icon:'🗺️', title:'خريطة رحلة المستخدم', phase:'مرحلة التعاطف / النمذجة',
-    color:'#eef2ff', borderColor:'var(--blue)',
-    desc:'تتبّع تجربة المستخدم من البداية حتى النهاية',
-    fields:[
-      {id:'scenario', label:'السيناريو — ما الهدف؟', type:'input', placeholder:'مثال: المستخدم يريد حجز موعد طبي أونلاين'},
-      {id:'stage1', label:'المرحلة ١ — الوعي', type:'textarea', placeholder:'كيف يكتشف المستخدم الحل؟ ما أفكاره ومشاعره؟'},
-      {id:'stage2', label:'المرحلة ٢ — التفكير والبحث', type:'textarea', placeholder:'كيف يبحث ويقارن؟ ما نقاط الألم؟'},
-      {id:'stage3', label:'المرحلة ٣ — القرار والاستخدام', type:'textarea', placeholder:'ماذا يفعل لتحقيق هدفه؟ ما العقبات؟'},
-      {id:'stage4', label:'المرحلة ٤ — ما بعد التجربة', type:'textarea', placeholder:'كيف يشعر بعد الانتهاء؟ هل سيعود؟'},
-      {id:'pain-points', label:'😣 أبرز نقاط الألم في الرحلة', type:'textarea', placeholder:'أين يتعثر المستخدم؟ ما أكبر مشاكله؟'},
-      {id:'opportunities', label:'🌟 فرص التحسين', type:'textarea', placeholder:'أين يمكن تحسين التجربة؟'},
-    ]
-  },
-  {
-    id:'brainstorm', icon:'💡', title:'لوحة العصف الذهني', phase:'مرحلة توليد الأفكار',
-    color:'#fffbeb', borderColor:'var(--accent2)',
-    desc:'سجّل أكبر عدد ممكن من الأفكار دون نقد أو تقييم',
-    fields:[
-      {id:'challenge', label:'التحدي أو سؤال HMW', type:'input', placeholder:'كيف يمكننا...'},
-      {id:'wild-ideas', label:'🚀 الأفكار الجريئة (لا قيود)', type:'textarea', placeholder:'اكتب كل فكرة تخطر ببالك، مهما كانت جنونية...'},
-      {id:'practical-ideas', label:'⚙️ الأفكار العملية', type:'textarea', placeholder:'الأفكار التي يمكن تنفيذها فعلاً...'},
-      {id:'combinations', label:'🔗 مزج الأفكار (Combine)', type:'textarea', placeholder:'ماذا لو جمعت فكرتين معاً؟'},
-      {id:'top3', label:'🏆 أفضل ٣ أفكار للمضي قُدُماً', type:'textarea', placeholder:'١.\n٢.\n٣.'},
-      {id:'next-step', label:'⏭️ الخطوة التالية', type:'input', placeholder:'ما أول شيء ستفعله لتطوير الفكرة المختارة؟'},
-    ]
-  },
-  {
-    id:'prototype-plan', icon:'🛠️', title:'خطة النموذج الأولي', phase:'مرحلة النمذجة',
-    color:'#f5f0ff', borderColor:'var(--purple)',
-    desc:'خطّط لبناء نموذجك الأولي بشكل منهجي',
-    fields:[
-      {id:'idea', label:'الفكرة المختارة للنمذجة', type:'input', placeholder:'ما الحل الذي ستبنيه نموذجاً له؟'},
-      {id:'type', label:'نوع النموذج', type:'input', placeholder:'مثال: نموذج ورقي، نموذج رقمي، نموذج مطبوع ثلاثي الأبعاد...'},
-      {id:'what-to-test', label:'🎯 ما الذي تريد اختباره؟', type:'textarea', placeholder:'ما الافتراض الرئيسي الذي تريد التحقق منه؟'},
-      {id:'materials', label:'🔧 المواد والأدوات المطلوبة', type:'textarea', placeholder:'ما الذي تحتاجه لبناء النموذج؟'},
-      {id:'steps', label:'📋 خطوات البناء', type:'textarea', placeholder:'١.\n٢.\n٣.\n...'},
-      {id:'timeline', label:'⏰ الوقت المقدّر', type:'input', placeholder:'مثال: ٣ ساعات، يوم واحد...'},
-      {id:'success-criteria', label:'✅ معايير النجاح', type:'textarea', placeholder:'كيف ستعرف أن النموذج نجح في اختبار افتراضك؟'},
-    ]
-  },
-];
-
-let currentTemplateId = null;
-
-
-function seedTemplateExamplesIfEmpty(){
-  // Only seed if user hasn't filled them yet
-  var examples = {
-    'empathy-map': {'user-name':'سارة، ٢٨ سنة، معلمة ابتدائي','says':'أنا دائماً متأخرة في تصحيح الواجبات — ليس لأني كسولة بل لأن وقتي ضيّق جداً','thinks':'هل سيلاحظ المدير أنني لم أنتهِ؟ أريد أن أكون معلمة أفضل','does':'تصحّح الواجبات في المنزل بعد منتصف الليل، تستخدم نفس نماذج التقييم منذ سنوات','feels':'إرهاق وإحباط من الأعباء الإدارية المتزايدة','pains':'عدم وجود وقت كافٍ، غياب أدوات رقمية مناسبة، كثرة الأوراق','gains':'توفير الوقت، رؤية تقدم طلابها، التواصل مع أولياء الأمور بسهولة'},
-    'persona': {'name':'سارة الأحمدي، ٢٨ سنة، معلمة','bio':'معلمة متفانية في مدرسة ابتدائية حكومية. تعلّم ٣٠ طالباً. تقطع ٤٠ دقيقة يومياً للوصول للمدرسة.','goals':'تحسين أداء طلابها وتوفير وقتها الشخصي','frustrations':'الأعباء الورقية الكثيرة، غياب التقنية في الفصل، ضعف التواصل مع الأهالي','motivations':'رؤية الطلاب ينجحون، شعورها بالإنجاز عند تطور أداء الطفل الضعيف','tech':'مستخدمة خفيفة — WhatsApp و YouTube فقط، تفضّل البساطة','quote':'أريد أن أكون معلمة لا موظفة تملأ نماذج'},
-    '5-whys': {'problem':'الطلاب لا يؤدون واجباتهم المنزلية','why1':'لأنهم ينسون أو لا يفهمون المطلوب','why2':'لأن التعليمات تُعطى شفهياً فقط في نهاية الحصة عندما يكون الطلاب مشتتين','why3':'لأن المعلمة لا تملك أداة رقمية لإرسال الواجبات بشكل واضح','why4':'لأن المدرسة لم تعتمد نظاماً رقمياً موحداً للتواصل','why5':'لأن الإدارة لم تدرس احتياجات المعلمين في التواصل الرقمي','root-cause':'غياب منصة تواصل رقمية واضحة وسهلة بين المعلم والطالب والأهل'},
-    'hmw': {'observation':'المعلمون يقضون ٣ ساعات أسبوعياً في تصحيح الواجبات الورقية بينما يمكن أتمتة جزء كبير منها','hmw1':'كيف يمكننا مساعدة المعلمين على توفير وقت التصحيح؟','hmw2':'كيف يمكننا جعل الواجبات أكثر تفاعلية وأقل عبئاً؟','hmw3':'كيف يمكننا ربط الأهالي بتقدم أبنائهم دون جهد إضافي من المعلم؟','hmw4':'كيف يمكننا تحويل التغذية الراجعة من نصية إلى صوتية أو مرئية؟','hmw5':'كيف يمكننا مساعدة الطلاب على تقييم عملهم قبل التسليم؟','best-hmw':'كيف يمكننا مساعدة المعلمين على تقليل وقت التقييم بنسبة ٥٠٪ دون التأثير على جودة التغذية الراجعة؟'},
-  };
-  Object.keys(examples).forEach(function(tid){
-    var existing = localStorage.getItem('ml_tpl_'+tid);
-    if(!existing){
-      localStorage.setItem('ml_tpl_'+tid, JSON.stringify(examples[tid]));
-    }
-  });
-}
-
-function renderTemplatesGrid(){ seedTemplateExamplesIfEmpty();
-  const grid = document.getElementById('templates-grid');
-  const phaseColors = {'مرحلة التعاطف':'#fff7f3','مرحلة تحديد المشكلة':'#f0fdf7','مرحلة توليد الأفكار':'#fffbeb','مرحلة النمذجة':'#f5f0ff'};
-  grid.innerHTML = TEMPLATES.map(t => {
-    const saved = localStorage.getItem('ml_tpl_'+t.id);
-    const hasSaved = saved && Object.values(JSON.parse(saved)).some(v=>v.trim());
-    return `<div onclick="openTemplate('${t.id}')" style="background:${t.color};border:1.5px solid ${t.borderColor};border-radius:16px;padding:20px;cursor:pointer;transition:all .2s;position:relative" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-      ${hasSaved?'<div style="position:absolute;top:10px;left:10px;background:var(--teal);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px">محفوظ ✓</div>':''}
-      <div style="font-size:32px;margin-bottom:10px">${t.icon}</div>
-      <div style="font-size:14px;font-weight:800;margin-bottom:5px">${t.title}</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;background:rgba(0,0,0,0.05);padding:2px 8px;border-radius:10px;display:inline-block">${t.phase}</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.5">${t.desc}</div>
-    </div>`;
-  }).join('');
-}
-
-function openTemplate(id){
-  const t = TEMPLATES.find(x=>x.id===id);
-  if(!t) return;
-  currentTemplateId = id;
-  document.getElementById('tpl-modal-icon').textContent = t.icon;
-  document.getElementById('tpl-modal-title').textContent = t.title;
-  document.getElementById('tpl-modal-phase').textContent = t.phase;
-  // Load saved data
-  const saved = JSON.parse(localStorage.getItem('ml_tpl_'+id)||'{}');
-  // Build form
-  const body = document.getElementById('tpl-modal-body');
-  body.innerHTML = t.fields.map(f => `
-    <div style="margin-bottom:18px">
-      <label style="display:block;font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">${f.label}</label>
-      ${f.type==='textarea'
-        ? `<textarea id="tpl-f-${f.id}" placeholder="${f.placeholder}" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;color:var(--text);outline:none;resize:vertical;min-height:90px;direction:rtl;transition:border .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">${saved[f.id]||''}</textarea>`
-        : `<input id="tpl-f-${f.id}" type="text" placeholder="${f.placeholder}" value="${saved[f.id]||''}" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;color:var(--text);outline:none;direction:rtl;transition:border .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">`
-      }
-    </div>`).join('');
-  document.getElementById('template-modal').style.display = 'flex';
-}
-
-function saveTemplate(){
-  const t = TEMPLATES.find(x=>x.id===currentTemplateId);
-  if(!t) return;
-  const data = {};
-  t.fields.forEach(f => {
-    const el = document.getElementById('tpl-f-'+f.id);
-    if(el) data[f.id] = el.value;
-  });
-  localStorage.setItem('ml_tpl_'+currentTemplateId, JSON.stringify(data));
-  renderTemplatesGrid(); // refresh saved badges
-}
-
-function closeTemplateModal(){
-  saveTemplate(); // auto-save on close
-  document.getElementById('template-modal').style.display = 'none';
-  currentTemplateId = null;
-}
-
-function printTemplate(){
-  saveTemplate();
-  const t = TEMPLATES.find(x=>x.id===currentTemplateId);
-  if(!t) return;
-  const data = JSON.parse(localStorage.getItem('ml_tpl_'+currentTemplateId)||'{}');
-  const win = window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>شكّل مستقبلك — MenaLab</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Cairo,sans-serif;direction:rtl;padding:30px;color:#1a1a2e;background:white}
-  h1{font-size:22px;font-weight:900;margin-bottom:4px}.phase{font-size:12px;color:#9896a8;margin-bottom:24px;padding:3px 10px;background:#f8f7f4;border-radius:20px;display:inline-block}
-  .field{margin-bottom:20px}.label{font-size:13px;font-weight:700;margin-bottom:6px;color:#1a1a2e}.value{padding:10px 14px;border:1px solid #e0ddd8;border-radius:8px;font-size:13px;color:#5a5870;min-height:50px;line-height:1.6;white-space:pre-wrap}
-  .header{display:flex;align-items:center;gap:12px;margin-bottom:6px}.icon{font-size:28px}
-  @media print{body{padding:15px}}</style></head><body>
-  <div class="header"><div class="icon">${t.icon}</div><div><h1>${t.title}</h1></div></div>
-  <div class="phase">${t.phase}</div>
-  ${t.fields.map(f=>`<div class="field"><div class="label">${f.label}</div><div class="value">${(data[f.id]||'—').replace(/\n/g,'<br>')}</div></div>`).join('')}
-  </body></html>`);
-  win.document.close();
-  setTimeout(()=>win.print(), 500);
-}
-
-// Close template modal on overlay click
-document.addEventListener('click', function(e){
-  const modal = document.getElementById('template-modal');
-  if(e.target === modal) closeTemplateModal();
-});
-
-
-
-function showLockedMsg(){
-  showToast('🔒 أكمل الدرس السابق بدرجة 90% أو أعلى لفتح هذا الدرس');
-}
-function goToNextLesson(){
-  if(!currentLessonId) return showView('lessons');
-  const dtLessons=LESSONS.filter(x=>x.mod==='dt').sort((a,b)=>a.id-b.id);
-  const idx=dtLessons.findIndex(x=>x.id===currentLessonId);
-  if(idx>=0 && idx<dtLessons.length-1){
-    openLesson(dtLessons[idx+1].id);
+function askAI() {
+  var q = document.getElementById('ai-q').value.trim();
+  if (!q) return;
+  var local = getLocalAnswer(q);
+  var hintEl = document.getElementById('ai-hint');
+  if (local) {
+    hintEl.textContent = local.a;
   } else {
-    showView('lessons');
+    hintEl.textContent = 'سؤال جيد! هذا السؤال يحتاج رصيداً من AI. اضغط على "المساعد الذكي" في صفحة مشروعك للحصول على إجابة مفصّلة.';
   }
-}
-function logout(){
-  localStorage.removeItem('ml_user');
-  window.location.href = '/';
+  document.getElementById('ai-q').value = '';
 }
 
-// ── Persistent chat history ──────────────────────────────
-function saveChatHistory(){
-  try{ localStorage.setItem('ml_chat', JSON.stringify(chatHistory.slice(-40))); }catch(e){}
+function doLogout() {
+  localStorage.removeItem('sh_user');
+  window.location.href = 'index.html';
 }
-function loadChatHistory(){
-  try{
-    const saved = JSON.parse(localStorage.getItem('ml_chat')||'[]');
-    if(!saved.length) return;
-    chatHistory = saved;
-    let msgs = document.getElementById('chat-msgs');
-    saved.forEach(function(m){
-      const div = document.createElement('div');
-      div.className = 'msg ' + m.role.replace('assistant','ai');
-      const t = new Date();
-      div.innerHTML = '<div class="m-av '+(m.role==='user'?'user':'ai')+'">'+(m.role==='user'?'أح':'🤖')+'</div><div><div class="m-bubble">'+m.content.replace(/\n/g,'<br>')+'</div></div>';
-      msgs.appendChild(div);
-    });
-    msgs.scrollTop = msgs.scrollHeight;
-  }catch(e){}
-}
-
-// Show user name
-if(window.__mlUser){
-  const nameEl=document.querySelector('.user-info .name');
-  if(nameEl) nameEl.textContent=window.__mlUser.name||'مستخدم';
-  const av=document.querySelector('.avatar');
-  const n=window.__mlUser.name||'م';
-  if(av) av.textContent=n.split(' ').slice(0,2).map(function(w){return w[0];}).join('');
-}
-// Load chat history after DOM is ready
-loadChatHistory();
-
-
-function completeEnrollment(){
-  const course = COURSES.find(c=>c.id===enrollingCourseId);
-  if(!course) return;
-  if(!S.enrolledCourses) S.enrolledCourses=[];
-  if(!S.enrolledCourses.includes(course.id)){
-    S.enrolledCourses.push(course.id);
-    S.aiCredits=(S.aiCredits||0)+course.credits;
-    S.maxCredits=(S.maxCredits||0)+course.credits;
-    save(); updateCreditsUI();
-    addActivity('سجّلت في دورة: '+course.title,'var(--blue)');
-  }
-  document.getElementById('enroll-free-section').style.display='none';
-  document.getElementById('enroll-paid-section').style.display='none';
-  document.getElementById('enroll-success-section').style.display='block';
-  document.getElementById('enroll-success-msg').textContent='تم تفعيل دورة "'+course.title+'" وإضافة '+toAr(course.credits)+' رسالة AI لرصيدك.';
-  renderLessons(); updateXpUI();
-}
-
-function simulatePayment(){
-  const btn = document.querySelector('#enroll-paid-section button');
-  if(btn){ btn.textContent='⏳ جارٍ المعالجة...'; btn.disabled=true; }
-  setTimeout(function(){
-    if(btn){ btn.textContent='💳 إتمام الدفع والتسجيل'; btn.disabled=false; }
-    completeEnrollment();
-  },1800);
-}
-
-// ── INIT — runs after ALL functions are defined ──────────
-(function(){
-  // Auto-enroll in DT course (free)
-  if(!S.enrolledCourses) S.enrolledCourses=[];
-  if(!S.enrolledCourses.includes('dt')){
-    S.enrolledCourses.push('dt');
-    S.aiCredits=(S.aiCredits||0)+50;
-    S.maxCredits=(S.maxCredits||0)+50;
-    save();
-  }
-  // Clear any broken empty localStorage entries
-  try{ var pp=JSON.parse(localStorage.getItem('ml_posts')||'null'); if(pp&&pp.length===0) localStorage.removeItem('ml_posts'); }catch(e){}
-  // Render everything
-  renderDashboard();
-  renderLessons();
-  renderMap();
-  renderQuickQs();
-  renderTemplatesGrid();
-  updateCreditsUI();
-  updateXpUI();
-  // Load live content last
-  loadLiveContent();
-})();
 </script>
 </body>
 </html>
