@@ -1,12 +1,14 @@
 {
   "rewrites": [
-    {
-      "source": "/dashboard",
-      "destination": "/dashboard.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/admin.html"
-    }
+    {"source": "/", "destination": "/index.html"},
+    {"source": "/dashboard", "destination": "/dashboard.html"},
+    {"source": "/portal", "destination": "/portal.html"},
+    {"source": "/courses", "destination": "/courses.html"},
+    {"source": "/course-player", "destination": "/course-player.html"},
+    {"source": "/community", "destination": "/community.html"},
+    {"source": "/mentors", "destination": "/mentors.html"},
+    {"source": "/events", "destination": "/events.html"},
+    {"source": "/admin", "destination": "/admin.html"},
+    {"source": "/mentor-portal", "destination": "/mentor-portal.html"}
   ]
 }
