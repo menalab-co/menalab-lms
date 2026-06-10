@@ -185,3 +185,33 @@ a{color:var(--blue);text-decoration:none}
 }
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── Greeting bar ── */
+#greeting-bar{background:var(--ink);padding:7px 24px;display:flex;align-items:center;justify-content:space-between;font-size:13px;border-bottom:1px solid rgba(255,255,255,.07)}
+
+/* ── Chatbot widget ── */
+#chatbot-widget{position:fixed;bottom:20px;left:20px;z-index:900}
+#chat-bubble-btn{width:52px;height:52px;border-radius:50%;background:var(--ink);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow2);transition:transform .2s;position:relative}
+#chat-bubble-btn:hover{transform:scale(1.07)}
+#chat-bubble-icon{font-size:22px}
+#chat-unread{position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+#chat-panel{display:none;flex-direction:column;position:absolute;bottom:62px;left:0;width:320px;height:420px;background:var(--white);border-radius:var(--r3);box-shadow:var(--shadow2);border:1px solid var(--border);overflow:hidden}
+#chat-panel-header{background:var(--ink);padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+#chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+#chat-input-row{display:flex;gap:8px;padding:10px;border-top:1px solid var(--border)}
+#chat-input-row input{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-family:inherit;font-size:12px;outline:none;direction:rtl}
+#chat-input-row input:focus{border-color:var(--gold)}
+#chat-input-row button{padding:8px 12px;background:var(--ink);color:var(--gold);border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:700}
+
+/* ── Purchase modal ── */
+#purchase-modal .modal-box{max-width:480px}
+
+/* ── Calendar ── */
+.calendar-container{background:var(--warm3);border-radius:var(--r2);padding:14px;margin-bottom:14px}
+.time-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.time-slot{padding:6px 4px;text-align:center;border:1px solid var(--border);border-radius:var(--r);font-size:11px;cursor:pointer;transition:all .15s}
+.time-slot:hover,.time-slot.selected{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:600}
+
+/* Filter btn */
+.filter-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text2);transition:all .15s;font-family:inherit}
+.filter-btn.active{background:var(--ink);color:var(--gold);border-color:var(--ink)}
