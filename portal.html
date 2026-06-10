@@ -38,6 +38,8 @@
 </style>
 </head>
 <body>
+<div id="greeting-bar" style="display:none"></div>
+<div id="purchase-modal" class="modal-overlay"><div class="modal-box"><button class="modal-close" onclick="closeModal('purchase-modal')">✕</button><div id="purchase-modal-body"></div></div></div>
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
 <!-- TEMPLATE FILL MODAL -->
@@ -328,7 +330,11 @@ function isStageUnlocked(stageId, project) {
   if (idx <= 0) return true;
   var prevId = stages[idx-1];
   var prev = (project.stageData||{})[prevId]||{};
-  return prev.contentViewed && prev.templatesDone && (prev.quizScore||0) >= 90;
+  var templates = STAGE_TEMPLATES[prevId]||[];
+  var allSubmitted = templates.length === 0 || templates.every(function(t){
+    return (prev.submittedTemplates||[]).includes(t.id);
+  });
+  return prev.contentViewed && allSubmitted && (prev.quizScore||0) >= 90;
 }
 
 function isStageComplete(stageId, project) {
@@ -585,6 +591,7 @@ function openTemplateModal(stageId, templateId) {
   if (!template) return;
   var sd = (currentProject.stageData||{})[stageId]||{};
   var submitted = (sd.submittedTemplates||[]).includes(templateId);
+  var editMode = false; // allow re-editing submitted templates
   var savedData = {};
   try { savedData = JSON.parse(localStorage.getItem('sh_tpl_'+currentProject.id+'_'+templateId)||'{}'); } catch(e){}
   var fieldsHTML = template.fields.map(function(f) {
@@ -592,15 +599,15 @@ function openTemplateModal(stageId, templateId) {
     return '<div class="form-group">' +
       '<label class="form-label">' + f.label + '</label>' +
       (f.type==='textarea' ?
-        '<textarea class="inp textarea" id="tf_'+f.id+'" placeholder="'+f.placeholder+'" '+(submitted?'readonly':'')+'>'+val+'</textarea>' :
-        '<input class="inp" type="text" id="tf_'+f.id+'" placeholder="'+f.placeholder+'" value="'+val+'" '+(submitted?'readonly':'')+'>') +
+        '<textarea class="inp textarea" id="tf_'+f.id+'" placeholder="'+f.placeholder+'">'+val+'</textarea>' :
+        '<input class="inp" type="text" id="tf_'+f.id+'" placeholder="'+f.placeholder+'" value="'+val+'">') +
     '</div>';
   }).join('');
   document.getElementById('template-modal-content').innerHTML =
     '<div style="font-size:28px;margin-bottom:8px">' + template.icon + '</div>' +
     '<h3 style="margin-bottom:4px">' + template.name + '</h3>' +
     '<p style="font-size:13px;margin-bottom:20px">' + template.desc + '</p>' +
-    (submitted ? '<div class="callout teal" style="margin-bottom:16px">✅ هذا القالب مُقدَّم بالفعل</div>' : '') +
+    (submitted ? '<div class="callout teal" style="margin-bottom:8px">✅ هذا القالب مُقدَّم — يمكنك تعديله وإعادة تقديمه</div>' : '') +
     '<div class="template-modal-body">' + fieldsHTML + '</div>' +
     (!submitted ?
       '<div style="display:flex;gap:10px;margin-top:20px">' +
