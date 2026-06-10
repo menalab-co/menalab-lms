@@ -32,6 +32,8 @@
 </head>
 <body>
 
+<div id="greeting-bar" style="display:none"></div>
+<div id="purchase-modal" class="modal-overlay"><div class="modal-box"><button class="modal-close" onclick="closeModal('purchase-modal')">✕</button><div id="purchase-modal-body"></div></div></div>
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
 <!-- NEW PROJECT MODAL -->
@@ -96,6 +98,7 @@
     <div style="margin-top:10px;font-size:10px;color:rgba(255,255,255,.3);display:flex;justify-content:space-between">
       <span>رصيد AI</span><span id="credits-label" style="color:var(--gold)">50</span>
     </div>
+    <button onclick="openPurchaseModal('credits')" style="margin-top:8px;width:100%;padding:7px;background:rgba(235,200,76,.1);border:none;border-radius:var(--r);color:var(--gold);font-family:inherit;font-size:12px;cursor:pointer;text-align:right">🔋 شراء رصيد AI</button>
     <button onclick="doLogout()" style="margin-top:12px;width:100%;padding:7px;background:rgba(255,0,0,.08);border:none;border-radius:var(--r);color:rgba(255,100,100,.7);font-family:inherit;font-size:12px;cursor:pointer;text-align:right">🚪 خروج</button>
   </div>
 </aside>
