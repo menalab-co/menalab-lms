@@ -748,6 +748,112 @@ function renderLogos() {
 }
 
 
+
+// ── Image Carousel ────────────────────────────────────────
+// Usage in lesson content HTML:
+//   <div class="carousel" data-carousel='[
+//     {"src":"https://...","caption":"وصف الصورة"},
+//     {"src":"https://...","caption":""},
+//     {"src":"https://..."}
+//   ]' data-height="320"></div>
+//
+// Or call directly: renderCarousel(el, slides, height)
+
+function renderCarousel(el, slides, height) {
+  if (!slides || !slides.length) return;
+  height = height || 320;
+  el.style.height = height + 'px';
+
+  var current = 0;
+
+  // Track
+  var track = document.createElement('div');
+  track.className = 'carousel-track';
+  track.style.height = height + 'px';
+
+  slides.forEach(function(slide) {
+    var slideEl = document.createElement('div');
+    slideEl.className = 'carousel-slide';
+    slideEl.style.height = height + 'px';
+    var img = document.createElement('img');
+    img.src = slide.src || slide;
+    img.alt = slide.caption || '';
+    img.style.height = height + 'px';
+    img.onerror = function() {
+      this.parentNode.innerHTML = '<div style="width:100%;height:'+height+'px;display:flex;align-items:center;justify-content:center;background:var(--warm2);color:var(--text3);font-size:13px">لا يمكن تحميل الصورة</div>';
+    };
+    slideEl.appendChild(img);
+    if (slide.caption) {
+      var cap = document.createElement('div');
+      cap.className = 'slide-caption';
+      cap.textContent = slide.caption;
+      slideEl.appendChild(cap);
+    }
+    track.appendChild(slideEl);
+  });
+
+  el.appendChild(track);
+
+  // Prev / Next buttons
+  if (slides.length > 1) {
+    var prevBtn = document.createElement('button');
+    prevBtn.className = 'carousel-btn prev';
+    prevBtn.innerHTML = '›';
+    prevBtn.title = 'السابق';
+    prevBtn.onclick = function(e) { e.stopPropagation(); go(current - 1); };
+
+    var nextBtn = document.createElement('button');
+    nextBtn.className = 'carousel-btn next';
+    nextBtn.innerHTML = '‹';
+    nextBtn.title = 'التالي';
+    nextBtn.onclick = function(e) { e.stopPropagation(); go(current + 1); };
+
+    el.appendChild(prevBtn);
+    el.appendChild(nextBtn);
+
+    // Dots
+    var dotsRow = document.createElement('div');
+    dotsRow.className = 'carousel-dots';
+    var dots = [];
+    slides.forEach(function(_, i) {
+      var dot = document.createElement('button');
+      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = function(e) { e.stopPropagation(); go(i); };
+      dotsRow.appendChild(dot);
+      dots.push(dot);
+    });
+    el.appendChild(dotsRow);
+
+    // Touch / swipe
+    var touchStartX = 0;
+    el.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive:true});
+    el.addEventListener('touchend', function(e) {
+      var diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 40) go(diff > 0 ? current + 1 : current - 1);
+    }, {passive:true});
+
+    function go(n) {
+      current = (n + slides.length) % slides.length;
+      track.style.transform = 'translateX(' + (current * 100) + '%)';
+      dots.forEach(function(d, i) { d.className = 'carousel-dot' + (i === current ? ' active' : ''); });
+    }
+  }
+}
+
+// Auto-initialize any carousel in rendered content
+function initCarousels(container) {
+  var carousels = (container || document).querySelectorAll('[data-carousel]');
+  carousels.forEach(function(el) {
+    if (el.dataset.initialized) return;
+    el.dataset.initialized = '1';
+    try {
+      var slides = JSON.parse(el.dataset.carousel);
+      var height = parseInt(el.dataset.height || '320');
+      renderCarousel(el, slides, height);
+    } catch(e) { console.warn('Carousel parse error:', e); }
+  });
+}
+
 // ── Admin content overrides ───────────────────────────────
 function getAdminStageContent(stageId) {
   try {
