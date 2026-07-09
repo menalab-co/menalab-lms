@@ -392,13 +392,55 @@ function simulatePurchase(type, amount) {
 
 // ── Courses / Mentors / Events data ──────────────────────
 var COURSES = [
-  {id:'dt',   title:'التفكير التصميمي',      icon:'🧠',price:0,  free:true, credits:30,category:'design',     level:'مبتدئ',duration:'٨ ساعات', lessons:7, desc:'مسار كامل عبر مراحل Design Thinking بمنهج d.school',badge:'🧠 مفكّر تصميمي'},
-  {id:'cad',  title:'Fusion 360 للمبتدئين',icon:'🖥️',price:149,free:false,credits:30,category:'fabrication',level:'مبتدئ',duration:'٦ ساعات', lessons:5, desc:'من الصفر إلى تصميم قطع ثلاثية الأبعاد',badge:'⚙️ مهندس CAD'},
-  {id:'3dp',  title:'الطباعة ثلاثية الأبعاد',icon:'🖨️',price:119,free:false,credits:25,category:'fabrication',level:'مبتدئ',duration:'٥ ساعات', lessons:4, desc:'إعداد الطابعة، اختيار المواد، وطباعة أول نموذج',badge:'🖨️ طابع ثلاثي'},
-  {id:'laser',title:'قطع الليزر',            icon:'🔆',price:119,free:false,credits:25,category:'fabrication',level:'مبتدئ',duration:'٤ ساعات', lessons:3, desc:'أساسيات القطع والنقش بالليزر',badge:'🔆 ليزر'},
-  {id:'ux',   title:'UX/UI Design',           icon:'📱',price:179,free:false,credits:40,category:'design',     level:'متوسط',duration:'١٠ ساعات',lessons:8, desc:'تصميم تجربة المستخدم من البحث إلى النموذج',badge:'📱 مصمم UX'},
-  {id:'elec', title:'الإلكترونيات وArduino',  icon:'💡',price:149,free:false,credits:30,category:'fabrication',level:'مبتدئ',duration:'٦ ساعات', lessons:5, desc:'برمجة الإلكترونيات من الصفر مع مشاريع عملية',badge:'💡 صانع إلكتروني'},
-  {id:'cnc',  title:'تصنيع CNC',              icon:'⚙️',price:119,free:false,credits:25,category:'fabrication',level:'متوسط',duration:'٤ ساعات', lessons:3, desc:'مبادئ التفريز CNC وبرمجة G-code',badge:'⚙️ مصنّع CNC'}
+  // ── LIVE COURSE ────────────────────────────────────────
+  {id:'prototyping', title:'مقدمة في النمذجة الأولية', icon:'🛠️',
+   price:0, free:true, credits:30, category:'fabrication',
+   level:'مبتدئ', duration:'٤ ساعات', lessons:5,
+   desc:'تعلّم كيف تحوّل فكرتك إلى نموذج ملموس في ساعات — باستخدام الورق والكرتون والأدوات الرقمية',
+   badge:'🛠️ بانٍ', live:true, comingSoon:false},
+
+  // ── COMING SOON ─────────────────────────────────────────
+  {id:'dt',    title:'رحلة التفكير التصميمي', icon:'🧠',
+   price:0,   free:true,  credits:30, category:'design',
+   level:'مبتدئ', duration:'٨ ساعات', lessons:7,
+   desc:'مسار كامل عبر مراحل Design Thinking — التعاطف، تحديد المشكلة، الأفكار، النمذجة، والاختبار',
+   badge:'🧠 مفكّر تصميمي', live:false, comingSoon:true},
+
+  {id:'cad',   title:'Fusion 360 للمبتدئين', icon:'🖥️',
+   price:149, free:false, credits:30, category:'fabrication',
+   level:'مبتدئ', duration:'٦ ساعات', lessons:5,
+   desc:'من الصفر إلى تصميم قطع ثلاثية الأبعاد احترافية',
+   badge:'⚙️ مهندس CAD', live:false, comingSoon:true},
+
+  {id:'3dp',   title:'الطباعة ثلاثية الأبعاد', icon:'🖨️',
+   price:119, free:false, credits:25, category:'fabrication',
+   level:'مبتدئ', duration:'٥ ساعات', lessons:4,
+   desc:'إعداد الطابعة، اختيار المواد، وطباعة أول نموذج',
+   badge:'🖨️ طابع ثلاثي', live:false, comingSoon:true},
+
+  {id:'laser', title:'قطع الليزر', icon:'🔆',
+   price:119, free:false, credits:25, category:'fabrication',
+   level:'مبتدئ', duration:'٤ ساعات', lessons:3,
+   desc:'أساسيات القطع والنقش بالليزر للمبتدئين',
+   badge:'🔆 ليزر', live:false, comingSoon:true},
+
+  {id:'ux',    title:'UX/UI Design', icon:'📱',
+   price:179, free:false, credits:40, category:'design',
+   level:'متوسط', duration:'١٠ ساعات', lessons:8,
+   desc:'تصميم تجربة المستخدم من البحث إلى النموذج',
+   badge:'📱 مصمم UX', live:false, comingSoon:true},
+
+  {id:'elec',  title:'الإلكترونيات وArduino', icon:'💡',
+   price:149, free:false, credits:30, category:'fabrication',
+   level:'مبتدئ', duration:'٦ ساعات', lessons:5,
+   desc:'برمجة الإلكترونيات من الصفر مع مشاريع عملية',
+   badge:'💡 صانع إلكتروني', live:false, comingSoon:true},
+
+  {id:'cnc',   title:'تصنيع CNC', icon:'⚙️',
+   price:119, free:false, credits:25, category:'fabrication',
+   level:'متوسط', duration:'٤ ساعات', lessons:3,
+   desc:'مبادئ التفريز CNC وبرمجة G-code',
+   badge:'⚙️ مصنّع CNC', live:false, comingSoon:true}
 ];
 
 var MENTORS = [
@@ -415,6 +457,192 @@ var EVENTS = [
   {id:'e4',type:'webinar',    title:'كيف تبني منتجاً ناجحاً بـ DT',      date:'2025-08-10',time:'20:00',dur:'٦٠ دقيقة',host:'أ. نورة السالم', free:true, price:0,  seats:300,reg:198,platform:'Google Meet',  link:'https://eventbrite.com',desc:'قصص نجاح حقيقية.',            tags:['ريادة','مجاني']},
   {id:'e5',type:'competition',title:'هاكاثون شكّل ٢٠٢٥',                 date:'2025-08-22',time:'09:00',dur:'٤٨ ساعة', host:'فريق شكّل',     free:true, price:0,  seats:80, reg:64, platform:'هجين',         link:'https://eventbrite.com',desc:'جوائز لأفضل ٣ فرق.',         tags:['مسابقة','جوائز']},
   {id:'e6',type:'workshop',   title:'ورشة: أساسيات قطع الليزر',           date:'2025-09-05',time:'14:00',dur:'٤ ساعات', host:'م. أحمد الزهراني',free:false,price:100,seats:12, reg:5,  platform:'Fab Lab جدة',   link:'https://eventbrite.com',desc:'تعلّم قطع الليزر.',           tags:['حضوري','ليزر']}
+];
+
+
+// ── Prototyping course lessons (LIVE) ────────────────────
+var PROTOTYPING_LESSONS = [
+  {
+    id: 'proto_1',
+    title: 'ما هو النموذج الأولي؟',
+    type: 'video',
+    dur: '١٢ دقيقة',
+    xp: 50,
+    videoUrl: '', // Admin fills via admin panel → sh_lesson_proto_1
+    objectives: [
+      'فهم مفهوم النمذجة الأولية',
+      'الفرق بين النموذج والمنتج النهائي',
+      'لماذا نبني بسرعة؟'
+    ],
+    content: `
+<h3>ما هو النموذج الأولي (Prototype)؟</h3>
+<p>النموذج الأولي هو <strong>أسرع وأرخص</strong> طريقة لاختبار فكرتك قبل الاستثمار فيها. إنه ليس المنتج النهائي — بل هو أداة تعلّم.</p>
+<div class="callout gold">⚡ <strong>المبدأ الذهبي:</strong> ابنِ بسرعة، اختبر مبكراً، وتعلّم من الفشل الرخيص.</div>
+<h3>النموذج الأولي مقابل المنتج النهائي</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
+  <div style="background:var(--red-light);border-radius:var(--r);padding:12px">
+    <strong>المنتج النهائي</strong>
+    <ul style="margin-top:8px"><li>يستغرق شهوراً</li><li>تكلفة عالية</li><li>يصعب تعديله</li></ul>
+  </div>
+  <div style="background:var(--teal-light);border-radius:var(--r);padding:12px">
+    <strong>النموذج الأولي</strong>
+    <ul style="margin-top:8px"><li>يستغرق ساعات</li><li>تكلفة منخفضة جداً</li><li>سهل التعديل والتغيير</li></ul>
+  </div>
+</div>
+<h3>لماذا نبني بسرعة؟</h3>
+<p>كلما أسرعت في بناء نموذج واختباره، كلما تعلمت أسرع. الهدف ليس البناء المثالي — بل <strong>التعلم السريع</strong>.</p>
+<div class="callout">💡 شركة IDEO تبني ما يصل لـ ١٠ نماذج في اليوم الواحد — هذا سر ابتكارها!</div>`,
+    quiz: [
+      {q: 'ما الهدف الأساسي من النموذج الأولي؟', opts: ['بناء المنتج النهائي', 'التعلم بأقل تكلفة وأسرع وقت', 'إرضاء العميل', 'الحصول على تمويل'], a: 1},
+      {q: 'ما الفرق الرئيسي بين النموذج الأولي والمنتج النهائي؟', opts: ['لا فرق بينهما', 'النموذج أرخص وأسرع وأسهل تعديلاً', 'المنتج النهائي أفضل دائماً', 'النموذج للعرض فقط'], a: 1},
+      {q: 'ما المبدأ الذهبي في النمذجة الأولية؟', opts: ['ابنِ ببطء وإتقان', 'انتظر حتى تجمع كل المعلومات', 'ابنِ بسرعة، اختبر مبكراً، تعلّم', 'لا تبنِ قبل الحصول على ميزانية كافية'], a: 2}
+    ]
+  },
+  {
+    id: 'proto_2',
+    title: 'أنواع النماذج الأولية',
+    type: 'video',
+    dur: '١٥ دقيقة',
+    xp: 50,
+    videoUrl: '',
+    objectives: [
+      'التعرف على أنواع النماذج الأربعة',
+      'كيف تختار النوع المناسب لفكرتك',
+      'مثال عملي لكل نوع'
+    ],
+    content: `
+<h3>أنواع النماذج الأولية الأربعة</h3>
+<h4>١. النموذج الورقي 📄</h4>
+<p>الأسرع والأرخص. مناسب لـ: التطبيقات، الواجهات، عمليات الخدمات.</p>
+<div class="callout teal">✅ مثال: ارسم شاشات التطبيق على أوراق وضعها أمام المستخدم. كلّفك ٠ ريال!</div>
+<h4>٢. النموذج المادي 📦</h4>
+<p>كرتون، صمغ، مقص، فوم. مناسب لـ: المنتجات المادية، الأثاث، الأجهزة.</p>
+<div class="callout gold">💡 نصيحة: لا تستخدم مواد غالية في المرحلة الأولى. الكرتون يؤدي نفس الغرض!</div>
+<h4>٣. النموذج الرقمي 💻</h4>
+<p>Figma, PowerPoint, Canva. مناسب لـ: الخدمات، المواقع، تدفق العمل.</p>
+<div class="callout">🎨 Figma مجاني للاستخدام الأساسي وسهل التعلم.</div>
+<h4>٤. النموذج المطبوع ثلاثياً 🖨️</h4>
+<p>للقطع الدقيقة التي لا يمكن بناؤها يدوياً. يحتاج وقتاً أطول وتكلفة أعلى.</p>
+<div class="callout red">⚠️ لا تقفز للطباعة ثلاثية الأبعاد مبكراً — جرّب الكرتون أولاً!</div>
+<h3>كيف تختار؟</h3>
+<p>اختر <strong>أسرع طريقة</strong> لاختبار الفرضية الأكثر خطورة في فكرتك.</p>`,
+    quiz: [
+      {q: 'ما أسرع وأرخص نوع من النماذج؟', opts: ['المطبوع ثلاثياً', 'الورقي', 'الرقمي', 'المادي بالكرتون'], a: 1},
+      {q: 'ما البرنامج المجاني الموصى به للنماذج الرقمية؟', opts: ['Adobe XD', 'Sketch', 'Figma', 'Photoshop'], a: 2},
+      {q: 'متى تستخدم النموذج المطبوع ثلاثياً؟', opts: ['دائماً', 'أبداً', 'للقطع الدقيقة التي لا يمكن بناؤها يدوياً', 'في أول مرحلة دائماً'], a: 2}
+    ]
+  },
+  {
+    id: 'proto_3',
+    title: 'تمرين: ابنِ في ٦٠ دقيقة',
+    type: 'exercise',
+    dur: '٢٥ دقيقة',
+    xp: 75,
+    videoUrl: '',
+    objectives: [
+      'تطبيق قاعدة الساعة الواحدة',
+      'بناء نموذج ورقي أو كرتوني',
+      'توثيق عملية البناء'
+    ],
+    content: `
+<h3>قاعدة الساعة الواحدة ⏱️</h3>
+<p>أعطِ نفسك <strong>٦٠ دقيقة فقط</strong> لبناء نموذجك. القيود الزمنية تحفز الإبداع وتمنعك من الإفراط في التفاصيل.</p>
+<div class="callout gold">🎯 الهدف ليس الكمال — الهدف هو <strong>شيء ملموس يمكن اختباره</strong>.</div>
+<h3>الأدوات التي تحتاجها (كلها متاحة في المنزل)</h3>
+<ul>
+  <li>📦 كرتون أو ورق مقوى</li>
+  <li>✂️ مقص أو سكين</li>
+  <li>🖊️ أقلام وماركر</li>
+  <li>📎 دبابيس أو شريط لاصق</li>
+  <li>📝 ملاحظات لاصقة (Post-it)</li>
+</ul>
+<h3>خطوات التمرين</h3>
+<ol>
+  <li><strong>٥ دقائق:</strong> ارسم مخططاً سريعاً لما ستبنيه</li>
+  <li><strong>٤٥ دقيقة:</strong> ابنِ النموذج دون توقف</li>
+  <li><strong>١٠ دقائق:</strong> التقط صوراً ووثّق ما بنيته</li>
+</ol>
+<div class="callout teal">📸 شارك صورة نموذجك في مجتمع شكّل!</div>`,
+    quiz: [
+      {q: 'ما قاعدة الساعة الواحدة في النمذجة؟', opts: ['الراحة لساعة قبل البناء', 'إعطاء نفسك ٦٠ دقيقة فقط لبناء النموذج', 'بناء نموذج كل ساعة', 'العمل لساعة يومياً'], a: 1},
+      {q: 'ما أهمية القيود الزمنية في البناء؟', opts: ['تقلل الجودة', 'تحفز الإبداع وتمنع الإفراط في التفاصيل', 'لا فائدة منها', 'تجعل العمل أصعب فقط'], a: 1},
+      {q: 'ما الهدف من نموذجك بعد ٦٠ دقيقة؟', opts: ['نموذج مثالي', 'شيء ملموس يمكن اختباره مع الآخرين', 'نموذج للعرض فقط', 'تقرير مكتوب'], a: 1}
+    ]
+  },
+  {
+    id: 'proto_4',
+    title: 'اختبار النموذج مع المستخدمين',
+    type: 'video',
+    dur: '١٨ دقيقة',
+    xp: 75,
+    videoUrl: '',
+    objectives: [
+      'كيف تُجري جلسة اختبار بسيطة',
+      'ما تراقبه أثناء الاختبار',
+      'كيف تجمع التغذية الراجعة'
+    ],
+    content: `
+<h3>اختبار النموذج</h3>
+<p>النموذج بلا اختبار لا قيمة له. الاختبار هو <strong>قلب النمذجة الأولية</strong>.</p>
+<div class="callout">🎯 هدفك: <strong>تعلّم</strong> ما لا يعمل، لا إثبات أن فكرتك صحيحة.</div>
+<h3>كيف تجري جلسة اختبار بسيطة؟</h3>
+<ol>
+  <li><strong>اختر ٣ أشخاص</strong> من شريحتك المستهدفة</li>
+  <li><strong>أعطهم مهمة</strong> واضحة — لا توجيه مسبق</li>
+  <li><strong>اصمت وراقب</strong> — لا تتدخل حتى ينتهوا</li>
+  <li><strong>اسأل بعدها</strong> — "ما الذي كان صعباً؟ ما الذي أعجبك؟ لماذا؟"</li>
+</ol>
+<h3>ما تراقبه؟</h3>
+<ul>
+  <li>أين يتوقفون أو يشعرون بالارتباك</li>
+  <li>ما يقولونه مقارنةً بما يفعلونه</li>
+  <li>ردود الفعل التلقائية (ابتسامة، تجهّم، تساؤل)</li>
+</ul>
+<div class="callout gold">💡 القاعدة الذهبية: اسأل "لماذا؟" ثلاث مرات بعد كل رد فعل.</div>`,
+    quiz: [
+      {q: 'ما هدف اختبار النموذج؟', opts: ['إثبات أن الفكرة صحيحة', 'التعلم ما لا يعمل وتحسين الحل', 'إقناع المستثمرين', 'الانتهاء من المشروع'], a: 1},
+      {q: 'كم شخصاً يكفي لاختبار النموذج في الجولة الأولى؟', opts: ['١ شخص', '٣ أشخاص', '٢٠ شخصاً', 'لا يهم العدد'], a: 1},
+      {q: 'ماذا تفعل أثناء اختبار المستخدم للنموذج؟', opts: ['تشرح كيف يستخدمه', 'تتدخل عند كل خطأ', 'تصمت وتراقب', 'تحكي عن مميزات الفكرة'], a: 2}
+    ]
+  },
+  {
+    id: 'proto_5',
+    title: 'التكرار: تحسين النموذج بناءً على التغذية الراجعة',
+    type: 'exercise',
+    dur: '٢٠ دقيقة',
+    xp: 100,
+    videoUrl: '',
+    objectives: [
+      'كيف تحلل نتائج الاختبار',
+      'ما الذي تعدّله وما تبقيه',
+      'دورة البناء-الاختبار-التعلم'
+    ],
+    content: `
+<h3>دورة البناء — الاختبار — التعلم</h3>
+<p>هذه هي الدورة الأساسية لكل صانع ومصمم ناجح. كلما كررتها أسرع، كلما وصلت للحل الصح بشكل أسرع.</p>
+<div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:20px;background:var(--warm3);border-radius:var(--r2);margin:12px 0">
+  <div style="text-align:center"><div style="font-size:32px">🛠️</div><div style="font-size:12px;font-weight:600;margin-top:4px">ابنِ</div></div>
+  <div style="font-size:24px;color:var(--gold-dark)">→</div>
+  <div style="text-align:center"><div style="font-size:32px">🧪</div><div style="font-size:12px;font-weight:600;margin-top:4px">اختبر</div></div>
+  <div style="font-size:24px;color:var(--gold-dark)">→</div>
+  <div style="text-align:center"><div style="font-size:32px">📚</div><div style="font-size:12px;font-weight:600;margin-top:4px">تعلّم</div></div>
+  <div style="font-size:24px;color:var(--gold-dark)">→</div>
+  <div style="text-align:center"><div style="font-size:32px">🔄</div><div style="font-size:12px;font-weight:600;margin-top:4px">كرّر</div></div>
+</div>
+<h3>كيف تحلل نتائج الاختبار؟</h3>
+<ol>
+  <li>اجمع كل ملاحظاتك في مكان واحد</li>
+  <li>ابحث عن <strong>الأنماط</strong> — ما تكرّر عند أكثر من شخص</li>
+  <li>صنّف: ما يجب تعديله / ما يبقى / ما يُحذف</li>
+  <li>عدّل شيئاً <strong>واحداً</strong> في كل مرة لتعرف ما الذي أحدث الفرق</li>
+</ol>
+<div class="callout teal">🏆 مبروك! أكملت دورة النمذجة الأولية. الآن أنت جاهز لتحويل أفكارك لواقع!</div>`,
+    quiz: [
+      {q: 'ما الدورة الأساسية للنمذجة الأولية؟', opts: ['فكّر، اكتب، انشر', 'ابنِ، اختبر، تعلّم', 'خطّط، نفّذ، سلّم', 'اسأل، اجب، انتهِ'], a: 1},
+      {q: 'عند تعديل النموذج، كم شيئاً تعدّله في كل مرة؟', opts: ['كل شيء', 'لا شيء', 'شيئاً واحداً لتعرف ما أحدث الفرق', 'اثنان'], a: 2},
+      {q: 'ما أهم ما تبحث عنه في ملاحظات الاختبار؟', opts: ['ردود الفعل الإيجابية فقط', 'الأنماط المتكررة عند أكثر من مستخدم', 'أطول التعليقات', 'آراء الخبراء فقط'], a: 1}
+    ]
+  }
 ];
 
 var DT_STAGES = [
@@ -517,6 +745,28 @@ function renderLogos() {
     var size = el.dataset.logo || '36';
     el.innerHTML = LOGO_SVG.replace(/width="36"/g,'width="'+size+'"').replace(/height="36"/g,'height="'+size+'"');
   });
+}
+
+
+// ── Admin content overrides ───────────────────────────────
+function getAdminStageContent(stageId) {
+  try {
+    var override = JSON.parse(localStorage.getItem('sh_stage_content_' + stageId) || 'null');
+    return override;
+  } catch(e) { return null; }
+}
+
+function getAdminStageQuiz(stageId) {
+  try {
+    var override = JSON.parse(localStorage.getItem('sh_stage_quiz_' + stageId) || 'null');
+    return override && override.length ? override : null;
+  } catch(e) { return null; }
+}
+
+function getAdminStageVideo(stageId) {
+  try {
+    return localStorage.getItem('sh_stage_video_' + stageId) || null;
+  } catch(e) { return null; }
 }
 
 // ── Init ──────────────────────────────────────────────────
