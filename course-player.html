@@ -276,6 +276,8 @@ function openLesson(lid){
   }
   // Content
   document.getElementById('lesson-content-area').innerHTML=l.content||'';
+  // Initialize any carousels embedded in the content
+  setTimeout(function(){ initCarousels(document.getElementById('lesson-content-area')); }, 50);
   document.getElementById('complete-btn-area').style.display='block';
   var state=getUserState();
   var isDone=(state.completedLessons||[]).includes(l.id);
