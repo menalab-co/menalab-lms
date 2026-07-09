@@ -15,6 +15,9 @@
 .filter-btn.active{background:var(--ink);color:var(--gold);border-color:var(--ink)}
 @media(max-width:900px){.courses-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.courses-grid{grid-template-columns:1fr}}
+
+.coming-soon-card{opacity:.75}
+.coming-soon-card .course-thumb{filter:saturate(.4)}
 </style>
 </head>
 <body>
@@ -48,64 +51,112 @@
 </div>
 <script src="_shared.js"></script>
 <script>
-var activeFilter = '';
+var BG_COLORS = {prototyping:'#E8F5E9',dt:'#FFF8E1',cad:'#E3F2FD','3dp':'#E8F5E9',laser:'#FFF3E0',ux:'#F3E5F5',elec:'#FFF9C4',cnc:'#EFEBE9'};
+
 function filterCourses(cat) {
   activeFilter = cat;
-  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
   event.target.classList.add('active');
   renderCourses();
 }
-var BG_COLORS = {dt:'#FFF8E1',cad:'#E3F2FD','3dp':'#E8F5E9',laser:'#FFF3E0',ux:'#F3E5F5',elec:'#FFF9C4',cnc:'#EFEBE9'};
+
 function renderCourses() {
   var grid = document.getElementById('courses-grid');
   var state = getUserState();
-  var enrolled = state.enrolledCourses||['dt'];
-  var filtered = COURSES.filter(function(c){
-    if(activeFilter==='free') return c.free;
-    if(activeFilter) return c.category===activeFilter;
+  var enrolled = state.enrolledCourses || [];
+  var filtered = COURSES.filter(function(c) {
+    if (activeFilter === 'free') return c.free;
+    if (activeFilter === 'live') return !c.comingSoon;
+    if (activeFilter) return c.category === activeFilter;
     return true;
   });
+
   grid.innerHTML = '';
   filtered.forEach(function(c) {
     var isEnrolled = enrolled.includes(c.id);
-    var card = document.createElement('a');
-    card.href = 'course-player.html?course='+c.id;
-    card.className = 'course-card';
-    card.innerHTML =
-      '<div class="course-thumb" style="background:'+( BG_COLORS[c.id]||'#f5f5f0')+'">'+c.icon+'</div>'+
-      '<div class="course-body">'+
-        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">'+
-          '<span class="badge '+(c.free?'badge-free':'badge-paid')+'">'+(c.free?'مجاني':''+toAr(c.price)+' ر.س')+'</span>'+
-          '<span class="badge badge-gray">'+c.level+'</span>'+
-          (isEnrolled?'<span class="badge badge-teal">مسجّل</span>':'')+
-        '</div>'+
-        '<div style="font-size:15px;font-weight:700;margin-bottom:4px">'+c.title+'</div>'+
-        '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">'+c.desc+'</div>'+
-        '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:14px">'+
-          '<span>⏱ '+c.duration+'</span><span>📖 '+toAr(c.lessons)+' دروس</span><span>🔋 '+toAr(c.credits)+' AI</span>'+
-        '</div>'+
-        '<button onclick="event.preventDefault();enrollCourse(\''+c.id+'\')" class="btn btn-full '+(isEnrolled?'btn-teal':'btn-primary')+'" style="font-size:13px">'+
-          (isEnrolled?'← متابعة الدورة':'سجّل الآن'+(c.free?' — مجاني':' — '+toAr(c.price)+' ر.س'))+
-        '</button>'+
-      '</div>';
+    var isLive = !c.comingSoon;
+    var thumbBg = BG_COLORS[c.id] || '#f5f5f0';
+
+    var card = document.createElement('div');
+    card.className = 'course-card' + (isLive ? '' : ' coming-soon-card');
+
+    // Thumb
+    var thumb = document.createElement('div');
+    thumb.className = 'course-thumb';
+    thumb.style.background = thumbBg;
+    thumb.style.position = 'relative';
+    thumb.innerHTML = '<span style="font-size:52px">' + c.icon + '</span>';
+    if (!isLive) {
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;border-radius:var(--r2) var(--r2) 0 0';
+      overlay.innerHTML = '<span style="font-size:13px;font-weight:700;color:var(--text2)">⏳ قريباً</span>';
+      thumb.appendChild(overlay);
+    }
+
+    // Body
+    var body = document.createElement('div');
+    body.className = 'course-body';
+
+    // Badges
+    var badges = '';
+    if (isLive) badges += '<span class="badge" style="background:#E8F5E9;color:#2E7D32;font-size:10px">🟢 متاح الآن</span>';
+    else badges += '<span class="badge badge-gray" style="font-size:10px">⏳ قريباً</span>';
+    if (c.free) badges += '<span class="badge badge-free">مجاني</span>';
+    badges += '<span class="badge badge-gray">' + c.level + '</span>';
+    if (isEnrolled && isLive) badges += '<span class="badge badge-teal">مسجّل</span>';
+
+    body.innerHTML =
+      '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px">' + badges + '</div>' +
+      '<div style="font-size:15px;font-weight:700;margin-bottom:4px;color:' + (isLive ? 'var(--text)' : 'var(--text3)') + '">' + c.title + '</div>' +
+      '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">' + c.desc + '</div>' +
+      (isLive ? '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:14px"><span>⏱ ' + c.duration + '</span><span>📖 ' + toAr(c.lessons) + ' دروس</span><span>🔋 ' + toAr(c.credits) + ' AI</span></div>' : '');
+
+    // Button
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-full ' + (isLive ? (isEnrolled ? 'btn-teal' : 'btn-primary') : 'btn-outline');
+    btn.style.fontSize = '13px';
+    if (!isLive) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed'; }
+    btn.textContent = isLive
+      ? (isEnrolled ? '← متابعة الدورة' : 'سجّل الآن' + (c.free ? ' — مجاني' : ' — ' + toAr(c.price) + ' ر.س'))
+      : '🔔 أبلغني عند الإطلاق';
+    if (isLive) {
+      (function(cid){ btn.onclick = function(){ enrollCourse(cid); }; })(c.id);
+    }
+
+    body.appendChild(btn);
+    card.appendChild(thumb);
+    card.appendChild(body);
     grid.appendChild(card);
   });
 }
+
 function enrollCourse(cid) {
   var state = getUserState();
-  if(!state.enrolledCourses) state.enrolledCourses=[];
-  if(!state.enrolledCourses.includes(cid)) {
-    var course = COURSES.find(function(c){return c.id===cid;});
+  if (!state.enrolledCourses) state.enrolledCourses = [];
+  if (!state.enrolledCourses.includes(cid)) {
+    var course = COURSES.find(function(c){ return c.id === cid; });
     state.enrolledCourses.push(cid);
-    state.aiCredits = (state.aiCredits||0) + (course?course.credits:30);
-    state.maxCredits = (state.maxCredits||0) + (course?course.credits:30);
+    state.aiCredits = (state.aiCredits || 0) + (course ? course.credits : 30);
+    state.maxCredits = (state.maxCredits || 0) + (course ? course.credits : 30);
     saveUserState(state);
     addXP(50);
     showToast('✅ تم التسجيل في الدورة!');
   }
-  window.location.href = 'course-player.html?course='+cid;
+  window.location.href = 'course-player.html?course=' + cid;
 }
-document.addEventListener('DOMContentLoaded', renderCourses);
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Add "live" filter button
+  var filterBar = document.querySelector('.filter-bar');
+  if (filterBar) {
+    var liveBtn = document.createElement('button');
+    liveBtn.className = 'filter-btn';
+    liveBtn.textContent = '🟢 متاح الآن';
+    liveBtn.onclick = function(){ filterCourses('live'); };
+    filterBar.insertBefore(liveBtn, filterBar.firstChild.nextSibling);
+  }
+  renderCourses();
+});
 </script>
 </body>
 </html>
