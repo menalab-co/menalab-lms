@@ -74,6 +74,10 @@
         <button type="button" onclick="insertCarouselCode()" class="btn btn-primary btn-sm" style="margin-top:14px;white-space:nowrap">← أدرج في المحتوى</button>
       </div>
       <div style="font-size:10px;color:var(--text3);margin-top:8px">💡 يمكنك أيضاً لصق كود الكاروسيل مباشرة في حقل HTML أعلاه</div>
+      <div style="background:#E3F2FD;border-radius:var(--r);padding:8px 12px;font-size:11px;color:#1565C0;margin-top:6px">
+        📸 <strong>Google Drive:</strong> الصق رابط المشاركة العادي — يتحول تلقائياً للعرض المباشر<br>
+        مثال: <span dir="ltr" style="font-size:10px">drive.google.com/file/d/FILE_ID/view</span> ← يعمل مباشرة
+      </div>
     </div>
 
     <div class="form-group" style="margin-bottom:16px">
@@ -435,8 +439,27 @@ function openLessonEdit(courseId, lessonId){
   document.getElementById('lm-title').value=custom.title||lesson.title||'';
   document.getElementById('lm-video').value=custom.videoUrl||'';
   document.getElementById('lm-dur').value=custom.dur||'';
-  document.getElementById('lm-content').value=custom.content||'';
   document.getElementById('lm-quiz').value=custom.quiz?JSON.stringify(custom.quiz):'';
+
+  // Parse existing carousels out of content into the builder
+  var content = custom.content||'';
+  var container = document.getElementById('carousel-builder-rows');
+  container.innerHTML = '';
+  var carouselRx = /<div[^>]+data-carousel='([^']+)'[^>]*data-height="(\d+)"[^>]*><\/div>/g;
+  var match;
+  while((match = carouselRx.exec(content)) !== null) {
+    try {
+      var slides = JSON.parse(match[1]);
+      var h = match[2];
+      document.getElementById('carousel-height').value = h;
+      slides.forEach(function(slide){
+        addCarouselRowWithValues(slide.src||slide, slide.caption||'');
+      });
+    } catch(e) {}
+  }
+  // Strip carousel tags from the textarea (they live in the builder now)
+  var cleanContent = content.replace(/<div[^>]+data-carousel='[^']*'[^>]*><\/div>/g,'').trim();
+  document.getElementById('lm-content').value = cleanContent;
   openModal('lesson-modal');
 }
 
@@ -445,11 +468,15 @@ function saveLessonEdit(){
   var quizRaw=document.getElementById('lm-quiz').value.trim();
   var quizData=null;
   if(quizRaw){try{quizData=JSON.parse(quizRaw);}catch(e){showToast('خطأ في صيغة JSON للتقييم');return;}}
+  // Re-collect carousel from builder and append to content
+  var carouselCode = buildCarouselCode('');
+  var textContent = document.getElementById('lm-content').value.trim();
+  var finalContent = textContent + (carouselCode ? '\n' + carouselCode : '');
   var custom={
     title:document.getElementById('lm-title').value.trim(),
     videoUrl:document.getElementById('lm-video').value.trim(),
     dur:document.getElementById('lm-dur').value.trim(),
-    content:document.getElementById('lm-content').value.trim(),
+    content:finalContent,
     quiz:quizData
   };
   localStorage.setItem('sh_lesson_'+lessonId,JSON.stringify(custom));
@@ -678,20 +705,38 @@ function openStageEdit(stageId){
   document.getElementById('sm-stage-id').value=stageId;
   document.getElementById('stage-modal-title').textContent='✏️ تعديل: '+stage.icon+' '+stage.label;
   document.getElementById('sm-video').value=localStorage.getItem('sh_stage_video_'+stageId)||'';
-  document.getElementById('sm-content').value=localStorage.getItem('sh_stage_content_'+stageId)||'';
   var quiz=localStorage.getItem('sh_stage_quiz_'+stageId);
   document.getElementById('sm-quiz').value=quiz||'';
+  // Parse carousels from stage content
+  var content=localStorage.getItem('sh_stage_content_'+stageId)||'';
+  var container=document.getElementById('carousel-builder-rows-s');
+  container.innerHTML='';
+  var carouselRx=/<div[^>]+data-carousel='([^']+)'[^>]*data-height="(\d+)"[^>]*><\/div>/g;
+  var match;
+  while((match=carouselRx.exec(content))!==null){
+    try{
+      var slides=JSON.parse(match[1]);
+      var h=match[2];
+      document.getElementById('carousel-height-s').value=h;
+      slides.forEach(function(slide){ addCarouselRowWithValues(slide.src||slide,slide.caption||'',"s"); });
+    }catch(e){}
+  }
+  var cleanContent=content.replace(/<div[^>]+data-carousel='[^']*'[^>]*><\/div>/g,'').trim();
+  document.getElementById('sm-content').value=cleanContent;
   openModal('stage-modal');
 }
 
 function saveStageEdit(){
   var stageId=document.getElementById('sm-stage-id').value;
   var video=document.getElementById('sm-video').value.trim();
-  var content=document.getElementById('sm-content').value.trim();
   var quizRaw=document.getElementById('sm-quiz').value.trim();
   if(quizRaw){
     try{JSON.parse(quizRaw);}catch(e){showToast('خطأ في صيغة JSON للتقييم: '+e.message);return;}
   }
+  // Re-collect carousel and append to content
+  var carouselCode=buildCarouselCode('s');
+  var textContent=document.getElementById('sm-content').value.trim();
+  var content=textContent+(carouselCode?'\n'+carouselCode:'');
   if(video) localStorage.setItem('sh_stage_video_'+stageId,video);
   else localStorage.removeItem('sh_stage_video_'+stageId);
   if(content) localStorage.setItem('sh_stage_content_'+stageId,content);
@@ -734,31 +779,65 @@ function addCarouselRow(suffix) {
   container.appendChild(row);
 }
 
-function insertCarouselCode(suffix) {
+function addCarouselRowWithValues(src, caption, suffix) {
   suffix = suffix || '';
   var container = document.getElementById('carousel-builder-rows' + (suffix ? '-'+suffix : ''));
-  var contentField = document.getElementById(suffix ? 'sm-content' : 'lm-content');
-  var heightField = document.getElementById('carousel-height' + (suffix ? '-'+suffix : ''));
-  if (!container || !contentField) return;
+  if (!container) return;
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  var inp1 = document.createElement('input');
+  inp1.type = 'text'; inp1.placeholder = 'رابط الصورة https://...';
+  inp1.className = 'inp'; inp1.dir = 'ltr';
+  inp1.style.cssText = 'flex:2;height:32px;font-size:12px';
+  inp1.value = src || '';
+  var inp2 = document.createElement('input');
+  inp2.type = 'text'; inp2.placeholder = 'تعليق (اختياري)';
+  inp2.className = 'inp';
+  inp2.style.cssText = 'flex:1;height:32px;font-size:12px';
+  inp2.value = caption || '';
+  var delBtn = document.createElement('button');
+  delBtn.type = 'button'; delBtn.textContent = '✕';
+  delBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:4px;width:28px;height:28px;cursor:pointer;color:var(--red);flex-shrink:0';
+  (function(r){ delBtn.onclick = function(){ r.remove(); }; })(row);
+  row.appendChild(inp1); row.appendChild(inp2); row.appendChild(delBtn);
+  container.appendChild(row);
+}
 
+function buildCarouselCode(suffix) {
+  suffix = suffix || '';
+  var container = document.getElementById('carousel-builder-rows' + (suffix ? '-'+suffix : ''));
+  var heightField = document.getElementById('carousel-height' + (suffix ? '-'+suffix : ''));
+  if (!container) return '';
   var rows = container.querySelectorAll('div');
   var slides = [];
   rows.forEach(function(row) {
     var inputs = row.querySelectorAll('input');
     if (inputs.length >= 1 && inputs[0].value.trim()) {
-      var slide = {src: inputs[0].value.trim()};
+      var slide = { src: inputs[0].value.trim() };
       if (inputs[1] && inputs[1].value.trim()) slide.caption = inputs[1].value.trim();
       slides.push(slide);
     }
   });
+  if (!slides.length) return '';
+  var h = parseInt(heightField ? heightField.value : '320') || 320;
+  // Use a div element to safely build the attribute string
+  var div = document.createElement('div');
+  div.className = 'carousel';
+  div.setAttribute('data-carousel', JSON.stringify(slides));
+  div.setAttribute('data-height', String(h));
+  return div.outerHTML;
+}
 
-  if (!slides.length) { showToast('أضف رابط صورة واحدة على الأقل'); return; }
 
-  var height = parseInt(heightField ? heightField.value : '320') || 320;
-  var code = '\n<div class="carousel" data-carousel=\'' + JSON.stringify(slides) + '\' data-height="' + height + '"></div>\n';
-  contentField.value += code;
-  // Clear the builder rows
-  container.innerHTML = '';
+function insertCarouselCode(suffix) {
+  suffix = suffix || '';
+  var code = buildCarouselCode(suffix);
+  if (!code) { showToast('أضف رابط صورة واحدة على الأقل'); return; }
+  var contentField = document.getElementById(suffix ? 'sm-content' : 'lm-content');
+  if (contentField) contentField.value += '\n' + code + '\n';
+  // Clear builder after inserting
+  var container = document.getElementById('carousel-builder-rows' + (suffix ? '-'+suffix : ''));
+  if (container) container.innerHTML = '';
   showToast('✅ تم إدراج الكاروسيل في المحتوى');
 }
 
