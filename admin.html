@@ -48,6 +48,28 @@
   </div>
 </div>
 
+<!-- STAGE EDIT MODAL -->
+<div class="modal-overlay" id="stage-modal">
+  <div class="modal-box" style="max-width:580px">
+    <button class="modal-close" onclick="closeModal('stage-modal')">✕</button>
+    <h3 style="margin-bottom:16px" id="stage-modal-title">✏️ تعديل مرحلة</h3>
+    <input type="hidden" id="sm-stage-id">
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">رابط الفيديو (Vimeo / YouTube embed)</label>
+      <input class="inp" id="sm-video" dir="ltr" placeholder="https://player.vimeo.com/video/...">
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">المحتوى (HTML)</label>
+      <textarea class="inp textarea" id="sm-content" style="min-height:120px" placeholder="&lt;h3&gt;عنوان&lt;/h3&gt;&lt;p&gt;المحتوى...&lt;/p&gt;"></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label">أسئلة التقييم (JSON) — اتركه فارغاً للإبقاء على الأسئلة الافتراضية</label>
+      <textarea class="inp textarea" id="sm-quiz" dir="ltr" style="font-family:monospace;font-size:11px;min-height:80px" placeholder='[{"q":"السؤال","opts":["أ","ب","ج","د"],"a":0}]'></textarea>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveStageEdit()">حفظ التغييرات ✓</button>
+  </div>
+</div>
+
 <!-- EVENT MODAL -->
 <div class="modal-overlay" id="event-modal">
   <div class="modal-box">
@@ -152,10 +174,19 @@
 
   <!-- CONTENT -->
   <div id="sec-content" style="display:none">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="course-filter-btns">
-      <button class="filter-btn active" onclick="filterContentCourse('')">الكل</button>
+    <div class="tab-nav" style="margin-bottom:16px">
+      <button class="tab-btn active" id="ct-courses" onclick="switchTab('ct-courses','cp-courses','tab-btn')">📚 دروس الدورات</button>
+      <button class="tab-btn" id="ct-stages" onclick="switchTab('ct-stages','cp-stages','tab-btn')">🎯 مراحل المشاريع</button>
     </div>
-    <div id="content-lessons-list"></div>
+    <div class="tab-panel active" id="cp-courses">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="course-filter-btns">
+        <button class="filter-btn active" onclick="filterContentCourse('')">الكل</button>
+      </div>
+      <div id="content-lessons-list"></div>
+    </div>
+    <div class="tab-panel" id="cp-stages">
+      <div id="stages-content-list"></div>
+    </div>
   </div>
 
   <!-- QA LIBRARY -->
@@ -209,6 +240,13 @@
 <script>
 // Course lessons data (reference from course-player)
 var ADMIN_LESSONS = {
+  prototyping: [
+    {id:'proto_1',title:'ما هو النموذج الأولي؟'},
+    {id:'proto_2',title:'أنواع النماذج الأولية'},
+    {id:'proto_3',title:'تمرين: ابنِ في ٦٠ دقيقة'},
+    {id:'proto_4',title:'اختبار النموذج مع المستخدمين'},
+    {id:'proto_5',title:'التكرار: تحسين النموذج'}
+  ],
   dt:   [{id:'dt_1',title:'مقدمة في التفكير التصميمي'},{id:'dt_2',title:'مرحلة التعاطف'},{id:'dt_3',title:'تحديد المشكلة وHMW'},{id:'dt_4',title:'توليد الأفكار'},{id:'dt_5',title:'النمذجة والاختبار'},{id:'dt_6',title:'التكرار'},{id:'dt_7',title:'مشروع تطبيقي'}],
   cad:  [{id:'cad_1',title:'مقدمة في Fusion 360'},{id:'cad_2',title:'رسم المقاطع 2D'},{id:'cad_3',title:'الأجسام 3D'},{id:'cad_4',title:'التجميع'},{id:'cad_5',title:'التصدير للطباعة'}],
   '3dp':[{id:'3dp_1',title:'مقدمة الطباعة ثلاثية الأبعاد'},{id:'3dp_2',title:'أنواع المواد'},{id:'3dp_3',title:'إعدادات Cura'},{id:'3dp_4',title:'تصحيح الأخطاء'}],
@@ -263,6 +301,7 @@ function renderAll(){
   renderQA();
   renderEventsAdmin();
   renderMentorsAdmin();
+  renderStagesContent();
   renderUsers();
   renderRequests();
 }
@@ -557,6 +596,64 @@ function renderRequests(){
   if(!reqs.length) tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">لا توجد طلبات</td></tr>';
 }
 
+function renderStagesContent(){
+  var list=document.getElementById('stages-content-list');
+  if(!list) return;
+  list.innerHTML='';
+  DT_STAGES.forEach(function(stage){
+    var hasVideo=!!localStorage.getItem('sh_stage_video_'+stage.id);
+    var hasContent=!!localStorage.getItem('sh_stage_content_'+stage.id);
+    var hasQuiz=!!localStorage.getItem('sh_stage_quiz_'+stage.id);
+    var card=document.createElement('div');
+    card.className='section-card';
+    card.style.cssText='padding:14px;display:flex;align-items:center;gap:12px';
+    var editBtn=document.createElement('button');
+    editBtn.className='btn btn-outline btn-sm';
+    editBtn.textContent='✏️ تعديل';
+    (function(sid){editBtn.onclick=function(){openStageEdit(sid);};})(stage.id);
+    card.innerHTML=
+      '<span style="font-size:24px">'+stage.icon+'</span>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+stage.label+'</div></div>'+
+      (hasVideo?'<span class="badge badge-teal">📹 فيديو</span>':'<span class="badge badge-gray">بدون فيديو</span>')+
+      (hasContent?'<span class="badge badge-blue">📝 محتوى</span>':'')+
+      (hasQuiz?'<span class="badge badge-purple">❓ تقييم</span>':'');
+    card.appendChild(editBtn);
+    list.appendChild(card);
+  });
+}
+
+function openStageEdit(stageId){
+  var stage=DT_STAGES.find(function(s){return s.id===stageId;});
+  if(!stage) return;
+  document.getElementById('sm-stage-id').value=stageId;
+  document.getElementById('stage-modal-title').textContent='✏️ تعديل: '+stage.icon+' '+stage.label;
+  document.getElementById('sm-video').value=localStorage.getItem('sh_stage_video_'+stageId)||'';
+  document.getElementById('sm-content').value=localStorage.getItem('sh_stage_content_'+stageId)||'';
+  var quiz=localStorage.getItem('sh_stage_quiz_'+stageId);
+  document.getElementById('sm-quiz').value=quiz||'';
+  openModal('stage-modal');
+}
+
+function saveStageEdit(){
+  var stageId=document.getElementById('sm-stage-id').value;
+  var video=document.getElementById('sm-video').value.trim();
+  var content=document.getElementById('sm-content').value.trim();
+  var quizRaw=document.getElementById('sm-quiz').value.trim();
+  if(quizRaw){
+    try{JSON.parse(quizRaw);}catch(e){showToast('خطأ في صيغة JSON للتقييم: '+e.message);return;}
+  }
+  if(video) localStorage.setItem('sh_stage_video_'+stageId,video);
+  else localStorage.removeItem('sh_stage_video_'+stageId);
+  if(content) localStorage.setItem('sh_stage_content_'+stageId,content);
+  else localStorage.removeItem('sh_stage_content_'+stageId);
+  if(quizRaw) localStorage.setItem('sh_stage_quiz_'+stageId,quizRaw);
+  else localStorage.removeItem('sh_stage_quiz_'+stageId);
+  closeModal('stage-modal');
+  showToast('✅ تم حفظ مرحلة '+stageId);
+  renderStagesContent();
+}
+
+// Also call renderStagesContent in renderAll
 function exportData(){
   var state=getUserState();
   var rows=[['نوع','قيمة'],['XP',state.xp],['المشاريع',(state.projects||[]).length],['الدروس المكتملة',(state.completedLessons||[]).length],['AI Credits',state.aiCredits]];
