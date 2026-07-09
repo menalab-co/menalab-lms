@@ -171,14 +171,40 @@ var COURSE_LESSONS = {
   }
 });
 
+// ── Merge admin lesson overrides ────────────────────────
+function applyAdminLessonOverrides() {
+  Object.keys(COURSE_LESSONS).forEach(function(cid) {
+    COURSE_LESSONS[cid].forEach(function(lesson, idx) {
+      var custom = null;
+      try { custom = JSON.parse(localStorage.getItem('sh_lesson_' + lesson.id) || 'null'); } catch(e) {}
+      if (custom) {
+        if (custom.title)    COURSE_LESSONS[cid][idx].title    = custom.title;
+        if (custom.videoUrl) COURSE_LESSONS[cid][idx].videoUrl = custom.videoUrl;
+        if (custom.dur)      COURSE_LESSONS[cid][idx].dur      = custom.dur;
+        if (custom.content)  COURSE_LESSONS[cid][idx].content  = custom.content;
+        if (custom.quiz && custom.quiz.length) COURSE_LESSONS[cid][idx].quiz = custom.quiz;
+      }
+    });
+  });
+}
+
 var currentCourse=null, currentLesson=null, qState={qs:[],cur:0,ans:[],done:false};
 
 function init(){
+  // Load prototyping lessons from _shared.js
+  if (typeof PROTOTYPING_LESSONS !== 'undefined') {
+    COURSE_LESSONS['prototyping'] = PROTOTYPING_LESSONS;
+  }
+  applyAdminLessonOverrides();
   var params=new URLSearchParams(window.location.search);
   var cid=params.get('course')||'dt';
   var lid=params.get('lesson');
   currentCourse=COURSES.find(function(c){return c.id===cid;})||COURSES[0];
   document.getElementById('course-title-nav').textContent=currentCourse.title;
+  if (currentCourse.comingSoon) {
+    document.getElementById('player-main').innerHTML='<div style="text-align:center;padding:80px 24px"><div style="font-size:64px;margin-bottom:16px">⏳</div><h2>هذه الدورة قادمة قريباً</h2><p style="margin-top:8px;color:var(--text2)">نعمل على إعداد المحتوى. سيتم إشعارك عند الإطلاق.</p><a href="courses.html" class="btn btn-primary btn-lg" style="margin-top:24px;display:inline-flex">← العودة للدورات</a></div>';
+    return;
+  }
   document.getElementById('course-icon-sb').textContent=currentCourse.icon;
   document.getElementById('course-title-sb').textContent=currentCourse.title;
   var state=getUserState();
