@@ -424,7 +424,7 @@ function renderStage(stageId) {
     '</div>' +
     '<div class="tab-panel active" id="panel-learn">' +
       (getAdminStageVideo(stageId) ? '<div style="aspect-ratio:16/9;background:#000;border-radius:var(--r2);overflow:hidden;margin-bottom:16px"><iframe src="'+getAdminStageVideo(stageId)+'" style="width:100%;height:100%;border:none" allow="autoplay;fullscreen" allowfullscreen></iframe></div>' : '') +
-      '<div class="lesson-content">' + (getAdminStageContent(stageId)||STAGE_CONTENT[stageId]||'') + '</div>' +
+      '<div class="lesson-content" id="stage-content-'+stageId+'">' + (getAdminStageContent(stageId)||STAGE_CONTENT[stageId]||'') + '</div>' +
       '<div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap">' +
         '<button class="btn btn-primary btn-lg" onclick="markContentViewed()">✅ قرأت المحتوى — متابعة إلى القوالب ←</button>' +
         '<div style="background:var(--ink);border-radius:var(--r2);padding:12px 14px;flex:1;min-width:200px">' +
@@ -446,6 +446,7 @@ function renderStage(stageId) {
       renderQuizPanel(stageId, sd) +
     '</div>';
 
+  initStageCarousels(stageId);
   if (!sd.contentViewed) {
     setTimeout(function(){
       if (currentStage===stageId) markContentViewed(true);
@@ -577,6 +578,14 @@ function checkStageBadge(stageId) {
     saveUserState(state);
     showToast('🏅 حصلت على شارة جديدة!');
   }
+}
+
+// Init carousels after stage renders
+function initStageCarousels(stageId) {
+  setTimeout(function() {
+    var el = document.getElementById('stage-content-' + stageId);
+    if (el && typeof initCarousels === 'function') initCarousels(el);
+  }, 80);
 }
 
 function markContentViewed(silent) {
