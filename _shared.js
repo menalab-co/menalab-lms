@@ -749,6 +749,60 @@ function renderLogos() {
 
 
 
+
+// ── Image URL normalizer ──────────────────────────────────
+// Converts Google Drive share/preview links to direct image URLs
+function normalizeImageUrl(url) {
+  if (!url || !url.trim()) return url;
+  url = url.trim();
+
+  // Google Drive: /file/d/FILE_ID/view  or  /file/d/FILE_ID/preview
+  // → https://drive.google.com/uc?export=view&id=FILE_ID
+  var driveFile = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveFile) {
+    return 'https://drive.google.com/uc?export=view&id=' + driveFile[1];
+  }
+
+  // Google Drive: open?id=FILE_ID
+  var driveOpen = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+  if (driveOpen) {
+    return 'https://drive.google.com/uc?export=view&id=' + driveOpen[1];
+  }
+
+  // Google Drive: uc?id=FILE_ID (missing export param)
+  var driveUc = url.match(/drive\.google\.com\/uc\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+  if (driveUc && !url.includes('export=view')) {
+    return 'https://drive.google.com/uc?export=view&id=' + driveUc[1];
+  }
+
+  // Already a direct image URL or other host — use as-is
+  return url;
+}
+
+// ── Video URL normalizer ──────────────────────────────────
+function normalizeVideoUrl(url) {
+  if (!url || !url.trim()) return null;
+  url = url.trim();
+  if (url.includes('/preview') || url.includes('/embed') ||
+      url.includes('player.vimeo') || url.includes('youtube.com/embed')) {
+    return url;
+  }
+  var driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveMatch) return 'https://drive.google.com/file/d/' + driveMatch[1] + '/preview';
+  var driveOpen = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+  if (driveOpen) return 'https://drive.google.com/file/d/' + driveOpen[1] + '/preview';
+  var ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1] + '?rel=0';
+  var vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return 'https://player.vimeo.com/video/' + vimeoMatch[1];
+  return url;
+}
+
+function isDirectVideo(url) {
+  if (!url) return false;
+  return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+}
+
 // ── Image Carousel ────────────────────────────────────────
 // Usage in lesson content HTML:
 //   <div class="carousel" data-carousel='[
@@ -776,7 +830,7 @@ function renderCarousel(el, slides, height) {
     slideEl.className = 'carousel-slide';
     slideEl.style.height = height + 'px';
     var img = document.createElement('img');
-    img.src = slide.src || slide;
+    img.src = normalizeImageUrl(slide.src || slide);
     img.alt = slide.caption || '';
     img.style.height = height + 'px';
     img.onerror = function() {
