@@ -32,19 +32,57 @@
 
 <!-- LESSON EDIT MODAL -->
 <div class="modal-overlay" id="lesson-modal">
-  <div class="modal-box" style="max-width:580px">
+  <div class="modal-box" style="max-width:600px">
     <button class="modal-close" onclick="closeModal('lesson-modal')">✕</button>
     <h3 style="margin-bottom:16px">✏️ تعديل الدرس</h3>
     <input type="hidden" id="lm-course-id">
     <input type="hidden" id="lm-lesson-id">
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">عنوان الدرس</label><input class="inp" id="lm-title" placeholder="عنوان الدرس"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <div class="form-group"><label class="form-label">رابط الفيديو (Vimeo/YouTube)</label><input class="inp" id="lm-video" placeholder="https://..." dir="ltr"></div>
-      <div class="form-group"><label class="form-label">المدة</label><input class="inp" id="lm-dur" placeholder="١٥ دقيقة"></div>
+
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">عنوان الدرس</label>
+      <input class="inp" id="lm-title" placeholder="عنوان الدرس">
     </div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">المحتوى (HTML)</label><textarea class="inp textarea" id="lm-content" style="min-height:100px" placeholder="محتوى الدرس..."></textarea></div>
-    <div class="form-group" style="margin-bottom:16px"><label class="form-label">سؤال تقييمي (JSON) — مثال: [{q:'السؤال',opts:['أ','ب','ج'],a:1}]</label><textarea class="inp textarea" id="lm-quiz" dir="ltr" style="font-family:monospace;min-height:60px" placeholder='[{"q":"...","opts":["أ","ب","ج"],"a":0}]'></textarea></div>
-    <button class="btn btn-primary btn-full" onclick="saveLessonEdit()">حفظ التغييرات ✓</button>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
+      <div class="form-group">
+        <label class="form-label">رابط الفيديو</label>
+        <input class="inp" id="lm-video" placeholder="YouTube / Vimeo / Google Drive" dir="ltr">
+      </div>
+      <div class="form-group">
+        <label class="form-label">المدة</label>
+        <input class="inp" id="lm-dur" placeholder="١٥ دقيقة">
+      </div>
+    </div>
+    <div style="background:#FFF8E1;border-radius:var(--r);padding:8px 12px;font-size:11px;color:#7a5c00;margin-bottom:12px">
+      💡 Google Drive: شارك الملف "لأي شخص لديه الرابط" ثم الصق رابط /view أو /preview — يتحول تلقائياً
+    </div>
+
+    <div class="form-group" style="margin-bottom:8px">
+      <label class="form-label">المحتوى (HTML)</label>
+      <textarea class="inp textarea" id="lm-content" style="min-height:120px" placeholder="&lt;h3&gt;عنوان القسم&lt;/h3&gt;&lt;p&gt;المحتوى...&lt;/p&gt;"></textarea>
+    </div>
+
+    <div style="background:var(--warm3);border-radius:var(--r2);padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px">🖼️ إضافة كاروسيل صور إلى المحتوى</div>
+      <div id="carousel-builder-rows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+      <button type="button" onclick="addCarouselRow()" class="btn btn-outline btn-sm" style="margin-bottom:10px">+ إضافة صورة</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="form-group" style="flex:1;margin:0">
+          <label class="form-label" style="font-size:10px">ارتفاع الكاروسيل (px)</label>
+          <input class="inp" id="carousel-height" type="number" value="320" style="height:32px">
+        </div>
+        <button type="button" onclick="insertCarouselCode()" class="btn btn-primary btn-sm" style="margin-top:14px;white-space:nowrap">← أدرج في المحتوى</button>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px">💡 يمكنك أيضاً لصق كود الكاروسيل مباشرة في حقل HTML أعلاه</div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label">أسئلة التقييم (JSON)</label>
+      <textarea class="inp textarea" id="lm-quiz" dir="ltr" style="font-family:monospace;font-size:11px;min-height:60px" placeholder='[{"q":"السؤال","opts":["أ","ب","ج","د"],"a":0}]'></textarea>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">اتركه فارغاً للإبقاء على الأسئلة الافتراضية</div>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-lg" onclick="saveLessonEdit()">حفظ التغييرات ✓</button>
   </div>
 </div>
 
@@ -54,9 +92,12 @@
     <button class="modal-close" onclick="closeModal('stage-modal')">✕</button>
     <h3 style="margin-bottom:16px" id="stage-modal-title">✏️ تعديل مرحلة</h3>
     <input type="hidden" id="sm-stage-id">
-    <div class="form-group" style="margin-bottom:10px">
-      <label class="form-label">رابط الفيديو (Vimeo / YouTube embed)</label>
-      <input class="inp" id="sm-video" dir="ltr" placeholder="https://player.vimeo.com/video/...">
+    <div class="form-group" style="margin-bottom:4px">
+      <label class="form-label">رابط الفيديو</label>
+      <input class="inp" id="sm-video" dir="ltr" placeholder="YouTube / Vimeo / Google Drive">
+    </div>
+    <div style="background:#FFF8E1;border-radius:var(--r);padding:8px 12px;font-size:11px;color:#7a5c00;margin-bottom:12px">
+      💡 Google Drive: شارك الملف "لأي شخص لديه الرابط" ثم الصق الرابط — يتحول تلقائياً للعرض
     </div>
     <div class="form-group" style="margin-bottom:10px">
       <label class="form-label">المحتوى (HTML)</label>
