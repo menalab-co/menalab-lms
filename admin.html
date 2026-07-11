@@ -563,13 +563,29 @@ function renderContent(){
     addBtn.textContent='+ درس جديد';
     (function(cid, ctitle){ addBtn.onclick=function(){ openAddLesson(cid, ctitle); }; })(c.id, c.title);
     hdr.appendChild(addBtn);
+
+    // Hide/show entire module (for built-in courses)
+    var hideBtn = document.createElement('button');
+    hideBtn.className='btn btn-sm';
+    hideBtn.style.cssText='background:var(--red-light);color:var(--red);border:none;cursor:pointer;padding:5px 8px;border-radius:var(--r)';
+    hideBtn.title='إخفاء هذا الموديول بالكامل من المنصة';
+    hideBtn.textContent = getCourseStatus(c.id) === 'inactive' ? '👁️ إظهار' : '🙈 إخفاء';
+    (function(cid){ hideBtn.onclick=function(){
+      var cur = getCourseStatus(cid);
+      setCourseStatus(cid, cur === 'inactive' ? 'active' : 'inactive');
+      showToast(cur === 'inactive' ? '✅ تم إظهار الموديول' : '🙈 تم إخفاء الموديول');
+      renderContent();
+    }; })(c.id);
+    hdr.appendChild(hideBtn);
+
     section.appendChild(hdr);
 
     // Lessons list
     var lessonList = document.createElement('div');
     lessonList.style.cssText='display:flex;flex-direction:column;gap:6px';
-    // Built-in lessons
-    lessons.forEach(function(l, idx){
+    // Built-in lessons (filter out any marked as deleted)
+    var deletedLessons = getDeletedBuiltinLessons(c.id);
+    lessons.filter(function(l){ return !deletedLessons.includes(l.id); }).forEach(function(l, idx){
       var custom=JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
       var hasVideo=!!(custom.videoUrl||'');
       var row=document.createElement('div');
@@ -583,6 +599,16 @@ function renderContent(){
       editBtn.textContent='✏️ تعديل';
       (function(cid,lid){ editBtn.onclick=function(){ openLessonEdit(cid,lid); }; })(c.id,l.id);
       row.appendChild(editBtn);
+
+      // Delete built-in lesson (hides it by marking as deleted in localStorage)
+      var delBtn=document.createElement('button');
+      delBtn.className='btn btn-sm';
+      delBtn.style.cssText='background:var(--red-light);color:var(--red);border:none;cursor:pointer;padding:5px 8px;border-radius:var(--r)';
+      delBtn.title='حذف الدرس';
+      delBtn.textContent='🗑️';
+      (function(cid,lid){ delBtn.onclick=function(){ deleteBuiltinLesson(cid,lid); }; })(c.id,l.id);
+      row.appendChild(delBtn);
+
       lessonList.appendChild(row);
     });
     // Admin-added lessons
@@ -611,6 +637,33 @@ function renderContent(){
       lessonList.appendChild(row);
     });
     section.appendChild(lessonList);
+
+    // Show deleted lessons with restore option
+    var deletedIds = getDeletedBuiltinLessons(c.id);
+    if (deletedIds.length > 0) {
+      var deletedSection = document.createElement('div');
+      deletedSection.style.cssText='margin-top:10px;padding:10px;background:var(--red-light);border-radius:var(--r)';
+      var deletedTitle = document.createElement('div');
+      deletedTitle.style.cssText='font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px';
+      deletedTitle.textContent='دروس مخفية (' + toAr(deletedIds.length) + ')';
+      deletedSection.appendChild(deletedTitle);
+      var allLessons = ADMIN_LESSONS[c.id] || [];
+      allLessons.filter(function(l){ return deletedIds.includes(l.id); }).forEach(function(l){
+        var custom = JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
+        var rrow = document.createElement('div');
+        rrow.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;margin-bottom:3px';
+        rrow.innerHTML='<span style="font-size:12px;flex:1;color:var(--red);text-decoration:line-through">'+(custom.title||l.title)+'</span>';
+        var restoreBtn = document.createElement('button');
+        restoreBtn.className='btn btn-sm';
+        restoreBtn.style.cssText='background:var(--teal-light);color:var(--teal);border:none;cursor:pointer;padding:3px 8px;border-radius:4px;font-size:11px';
+        restoreBtn.textContent='↩️ استعادة';
+        (function(cid,lid){ restoreBtn.onclick=function(){ restoreBuiltinLesson(cid,lid); }; })(c.id,l.id);
+        rrow.appendChild(restoreBtn);
+        deletedSection.appendChild(rrow);
+      });
+      section.appendChild(deletedSection);
+    }
+
     list.appendChild(section);
   });
 
@@ -1242,6 +1295,30 @@ function deleteAdminModule(moduleId) {
   localStorage.removeItem('sh_course_status_' + moduleId);
   renderContent();
   showToast('تم الحذف');
+}
+
+
+// ── Built-in lesson delete (soft delete via localStorage) ─
+function getDeletedBuiltinLessons(courseId) {
+  try {
+    return JSON.parse(localStorage.getItem('sh_deleted_lessons_' + courseId) || '[]');
+  } catch(e) { return []; }
+}
+
+function deleteBuiltinLesson(courseId, lessonId) {
+  if (!confirm('إخفاء هذا الدرس من المنصة؟ يمكنك استعادته من خلال "استعادة الدروس".')) return;
+  var deleted = getDeletedBuiltinLessons(courseId);
+  if (!deleted.includes(lessonId)) deleted.push(lessonId);
+  localStorage.setItem('sh_deleted_lessons_' + courseId, JSON.stringify(deleted));
+  showToast('✅ تم إخفاء الدرس');
+  renderContent();
+}
+
+function restoreBuiltinLesson(courseId, lessonId) {
+  var deleted = getDeletedBuiltinLessons(courseId).filter(function(id){ return id !== lessonId; });
+  localStorage.setItem('sh_deleted_lessons_' + courseId, JSON.stringify(deleted));
+  showToast('✅ تمت استعادة الدرس');
+  renderContent();
 }
 
 function exportData(){
