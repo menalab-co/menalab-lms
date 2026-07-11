@@ -174,6 +174,7 @@ var COURSE_LESSONS = {
 // ── Merge admin lesson overrides ────────────────────────
 function applyAdminLessonOverrides() {
   Object.keys(COURSE_LESSONS).forEach(function(cid) {
+    // Apply overrides to existing lessons
     COURSE_LESSONS[cid].forEach(function(lesson, idx) {
       var custom = null;
       try { custom = JSON.parse(localStorage.getItem('sh_lesson_' + lesson.id) || 'null'); } catch(e) {}
@@ -185,6 +186,27 @@ function applyAdminLessonOverrides() {
         if (custom.quiz && custom.quiz.length) COURSE_LESSONS[cid][idx].quiz = custom.quiz;
       }
     });
+    // Append admin-added lessons
+    try {
+      var adminAdded = JSON.parse(localStorage.getItem('sh_admin_lessons_' + cid) || '[]');
+      adminAdded.forEach(function(l) {
+        // Only add if not already in list
+        if (!COURSE_LESSONS[cid].find(function(x){ return x.id === l.id; })) {
+          var custom = null;
+          try { custom = JSON.parse(localStorage.getItem('sh_lesson_' + l.id) || 'null'); } catch(e) {}
+          COURSE_LESSONS[cid].push({
+            id:       l.id,
+            title:    (custom && custom.title)   || l.title    || 'درس جديد',
+            type:     (custom && custom.type)    || l.type     || 'video',
+            dur:      (custom && custom.dur)     || l.dur      || '',
+            xp:       l.xp || 50,
+            videoUrl: (custom && custom.videoUrl)|| '',
+            content:  (custom && custom.content) || '',
+            quiz:     (custom && custom.quiz)    || null
+          });
+        }
+      });
+    } catch(e) {}
   });
 }
 
@@ -257,7 +279,9 @@ function openLesson(lid){
   if(!l)return;
   currentLesson=l;
   document.getElementById('lesson-title').textContent=l.title;
-  document.getElementById('lesson-meta').textContent=l.dur+' · '+({video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'}[l.type]||'');
+  var typeLabel = {video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'}[l.type]||'';
+  var durLabel  = (l.dur && l.videoUrl) ? l.dur + ' · ' : '';
+  document.getElementById('lesson-meta').textContent = durLabel + typeLabel;
   document.getElementById('lesson-xp').textContent='+'+toAr(l.xp)+' XP';
   // Video
   var frame=document.getElementById('video-frame');
