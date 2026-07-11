@@ -264,15 +264,29 @@ function openLesson(lid){
   var icon=document.getElementById('video-placeholder-icon');
   var iframeContainer=document.getElementById('lesson-iframe-container');
   iframeContainer.innerHTML='';
-  if(l.videoUrl){
-    var iframe=document.createElement('iframe');
-    iframe.src=l.videoUrl;
-    iframe.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:var(--r2)';
-    iframe.setAttribute('allow','autoplay;fullscreen');
-    iframeContainer.appendChild(iframe);
+  // Check for admin-overridden video URL
+  var videoSrc = l.videoUrl || '';
+  if(videoSrc && videoSrc.trim()){
+    // Show the frame and embed the video
+    if(frame) frame.style.display='';
+    var resolved = (typeof normalizeVideoUrl==='function') ? normalizeVideoUrl(videoSrc) : videoSrc;
+    if(typeof isDirectVideo==='function' && isDirectVideo(resolved)){
+      var video=document.createElement('video');
+      video.src=resolved;video.controls=true;
+      video.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:var(--r2);background:#000';
+      iframeContainer.appendChild(video);
+    } else {
+      var iframe=document.createElement('iframe');
+      iframe.src=resolved;
+      iframe.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:var(--r2)';
+      iframe.setAttribute('allow','autoplay;fullscreen;picture-in-picture');
+      iframe.setAttribute('allowfullscreen','');
+      iframeContainer.appendChild(iframe);
+    }
     if(icon)icon.style.display='none';
   } else {
-    if(icon){icon.style.display='';icon.textContent={video:'📹',text:'📄',exercise:'✏️',lab:'🔬'}[l.type]||'📖';}
+    // No video — hide the entire frame, don't show the empty box
+    if(frame) frame.style.display='none';
   }
   // Content
   document.getElementById('lesson-content-area').innerHTML=l.content||'';
