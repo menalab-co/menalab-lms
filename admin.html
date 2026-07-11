@@ -47,6 +47,36 @@
   </div>
 </div>
 
+<!-- ADD LESSON MODAL -->
+<div class="modal-overlay" id="add-lesson-modal">
+  <div class="modal-box" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('add-lesson-modal')">✕</button>
+    <h3 style="margin-bottom:4px">➕ درس جديد</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px" id="add-lesson-course-label"></p>
+    <input type="hidden" id="al-course-id">
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">عنوان الدرس *</label>
+      <input class="inp" id="al-title" placeholder="مثال: مقدمة في التصميم">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <div class="form-group">
+        <label class="form-label">نوع الدرس</label>
+        <select class="inp select" id="al-type">
+          <option value="video">🎬 فيديو</option>
+          <option value="text">📄 نص</option>
+          <option value="exercise">✏️ تمرين</option>
+          <option value="lab">🔬 مختبر</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">المدة</label>
+        <input class="inp" id="al-dur" placeholder="١٥ دقيقة">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="saveNewLesson()">إضافة الدرس ←</button>
+  </div>
+</div>
+
 <!-- LESSON EDIT MODAL -->
 <div class="modal-overlay" id="lesson-modal">
   <div class="modal-box" style="max-width:600px">
@@ -452,24 +482,69 @@ function renderContent(){
     var lessons=ADMIN_LESSONS[c.id]||[];
     var section=document.createElement('div');
     section.className='section-card';
-    section.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:22px">'+c.icon+'</span><h4>'+c.title+'</h4></div>'+
-      '<div style="display:flex;flex-direction:column;gap:6px">'+
-      lessons.map(function(l){
-        var custom=JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
-        var hasVideo=!!(custom.videoUrl||'');
-        return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--warm3);border-radius:var(--r)">'+
-          '<span style="font-size:12px;flex:1">'+l.title+'</span>'+
-          (hasVideo?'<span class="badge badge-teal">📹 فيديو</span>':'<span class="badge badge-gray">بدون فيديو</span>')+
-          '<button onclick="openLessonEdit(\''+c.id+'\',\''+l.id+'\')" class="btn btn-outline btn-sm">✏️ تعديل</button>'+
-          '</div>';
-      }).join('')+
-      '</div>';
+    // Header row with add button
+    var hdr = document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px';
+    hdr.innerHTML='<span style="font-size:22px">'+c.icon+'</span><h4 style="flex:1">'+c.title+'</h4>';
+    var addBtn = document.createElement('button');
+    addBtn.className='btn btn-primary btn-sm';
+    addBtn.textContent='+ درس جديد';
+    (function(cid, ctitle){ addBtn.onclick=function(){ openAddLesson(cid, ctitle); }; })(c.id, c.title);
+    hdr.appendChild(addBtn);
+    section.appendChild(hdr);
+
+    // Lessons list
+    var lessonList = document.createElement('div');
+    lessonList.style.cssText='display:flex;flex-direction:column;gap:6px';
+    // Built-in lessons
+    lessons.forEach(function(l, idx){
+      var custom=JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
+      var hasVideo=!!(custom.videoUrl||'');
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--warm3);border-radius:var(--r)';
+      row.innerHTML=
+        '<span style="font-size:11px;color:var(--text3);min-width:20px">'+toAr(idx+1)+'</span>'+
+        '<span style="font-size:13px;flex:1">'+(custom.title||l.title)+'</span>'+
+        (hasVideo?'<span class="badge badge-teal">📹 فيديو</span>':'<span class="badge badge-gray">بدون فيديو</span>');
+      var editBtn=document.createElement('button');
+      editBtn.className='btn btn-outline btn-sm';
+      editBtn.textContent='✏️ تعديل';
+      (function(cid,lid){ editBtn.onclick=function(){ openLessonEdit(cid,lid); }; })(c.id,l.id);
+      row.appendChild(editBtn);
+      lessonList.appendChild(row);
+    });
+    // Admin-added lessons
+    var adminLessons=getAdminAddedLessons(c.id);
+    adminLessons.forEach(function(l,i){
+      var custom=JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
+      var hasVideo=!!(custom.videoUrl||l.videoUrl||'');
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;background:#E8F5E9;border-radius:var(--r);border:1px solid #C8E6C9';
+      row.innerHTML=
+        '<span style="font-size:11px;color:var(--text3);min-width:20px">'+toAr(lessons.length+i+1)+'</span>'+
+        '<span style="font-size:13px;flex:1">'+(custom.title||l.title)+'</span>'+
+        '<span class="badge badge-teal" style="font-size:10px">جديد</span>'+
+        (hasVideo?'<span class="badge badge-teal">📹 فيديو</span>':'<span class="badge badge-gray">بدون فيديو</span>');
+      var editBtn=document.createElement('button');
+      editBtn.className='btn btn-outline btn-sm';
+      editBtn.textContent='✏️ تعديل';
+      (function(cid,lid){ editBtn.onclick=function(){ openLessonEdit(cid,lid); }; })(c.id,l.id);
+      var delBtn=document.createElement('button');
+      delBtn.className='btn btn-sm';
+      delBtn.style.cssText='background:var(--red-light);color:var(--red);border:none;cursor:pointer';
+      delBtn.textContent='🗑️';
+      (function(cid,lid){ delBtn.onclick=function(){ deleteAdminLesson(cid,lid); }; })(c.id,l.id);
+      row.appendChild(editBtn);
+      row.appendChild(delBtn);
+      lessonList.appendChild(row);
+    });
+    section.appendChild(lessonList);
     list.appendChild(section);
   });
 }
 
 function openLessonEdit(courseId, lessonId){
-  var lessons=ADMIN_LESSONS[courseId]||[];
+  var lessons=(ADMIN_LESSONS[courseId]||[]).concat(getAdminAddedLessons(courseId));
   var lesson=lessons.find(function(l){return l.id===lessonId;});
   if(!lesson) return;
   var custom=JSON.parse(localStorage.getItem('sh_lesson_'+lessonId)||'{}');
@@ -878,6 +953,56 @@ function insertCarouselCode(suffix) {
   var container = document.getElementById('carousel-builder-rows' + (suffix ? '-'+suffix : ''));
   if (container) container.innerHTML = '';
   showToast('✅ تم إدراج الكاروسيل في المحتوى');
+}
+
+
+// ── Admin-added lessons ───────────────────────────────────
+// Stored as JSON in localStorage: sh_admin_lessons_[courseId]
+function getAdminAddedLessons(courseId) {
+  try {
+    return JSON.parse(localStorage.getItem('sh_admin_lessons_'+courseId)||'[]');
+  } catch(e) { return []; }
+}
+
+function saveAdminAddedLessons(courseId, lessons) {
+  localStorage.setItem('sh_admin_lessons_'+courseId, JSON.stringify(lessons));
+}
+
+function openAddLesson(courseId, courseTitle) {
+  document.getElementById('al-course-id').value = courseId;
+  document.getElementById('al-course-label').textContent = 'إضافة درس إلى: ' + courseTitle;
+  document.getElementById('al-title').value = '';
+  document.getElementById('al-dur').value = '';
+  document.getElementById('al-type').value = 'video';
+  openModal('add-lesson-modal');
+}
+
+function saveNewLesson() {
+  var courseId = document.getElementById('al-course-id').value;
+  var title    = document.getElementById('al-title').value.trim();
+  var type     = document.getElementById('al-type').value;
+  var dur      = document.getElementById('al-dur').value.trim();
+  if (!title) { showToast('يرجى كتابة عنوان الدرس'); return; }
+  // Generate a unique lesson ID
+  var lessonId = courseId + '_custom_' + Date.now();
+  var lessons = getAdminAddedLessons(courseId);
+  lessons.push({ id: lessonId, title: title, type: type, dur: dur, xp: 50 });
+  saveAdminAddedLessons(courseId, lessons);
+  // Save lesson data so course-player can find it
+  var lessonData = { title: title, type: type, dur: dur, content: '', videoUrl: '', quiz: null };
+  localStorage.setItem('sh_lesson_' + lessonId, JSON.stringify(lessonData));
+  closeModal('add-lesson-modal');
+  showToast('✅ تمت إضافة الدرس: ' + title);
+  renderContent();
+}
+
+function deleteAdminLesson(courseId, lessonId) {
+  if (!confirm('حذف هذا الدرس نهائياً؟')) return;
+  var lessons = getAdminAddedLessons(courseId).filter(function(l){ return l.id !== lessonId; });
+  saveAdminAddedLessons(courseId, lessons);
+  localStorage.removeItem('sh_lesson_' + lessonId);
+  renderContent();
+  showToast('تم حذف الدرس');
 }
 
 function exportData(){
