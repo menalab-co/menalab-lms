@@ -14,6 +14,23 @@
 .stat-val{font-size:28px;font-weight:700;margin-bottom:4px}
 .stat-lbl{font-size:12px;color:var(--text3)}
 .section-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:16px}
+
+/* ── Visual Content Builder ── */
+.vb-block{border:1.5px solid var(--border);border-radius:var(--r);background:var(--white);overflow:hidden}
+.vb-block-header{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--warm3);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text2)}
+.vb-block-body{padding:10px}
+.vb-handle{cursor:grab;color:var(--text3);font-size:14px;flex-shrink:0}
+.vb-del{margin-right:auto;background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:0 2px}
+.vb-del:hover{color:var(--red)}
+.vb-input{width:100%;border:1px solid var(--border);border-radius:5px;padding:6px 9px;font-family:inherit;font-size:13px;color:var(--text);outline:none;resize:vertical;direction:rtl}
+.vb-input:focus{border-color:var(--gold-dark)}
+.vb-input.mono{font-family:monospace;font-size:11px}
+.vb-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vb-col-label{font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px}
+.callout-type-row{display:flex;gap:4px;margin-bottom:8px}
+.callout-type-btn{padding:3px 10px;border-radius:12px;border:1.5px solid var(--border);font-size:11px;cursor:pointer;font-family:inherit;background:var(--white)}
+.callout-type-btn.active{border-color:var(--gold-dark);background:rgba(235,200,76,.15)}
+
 </style>
 </head>
 <body>
@@ -58,8 +75,30 @@
     </div>
 
     <div class="form-group" style="margin-bottom:8px">
-      <label class="form-label">المحتوى (HTML)</label>
-      <textarea class="inp textarea" id="lm-content" style="min-height:120px" placeholder="&lt;h3&gt;عنوان القسم&lt;/h3&gt;&lt;p&gt;المحتوى...&lt;/p&gt;"></textarea>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label class="form-label" style="margin:0">المحتوى</label>
+        <div style="display:flex;gap:4px">
+          <button type="button" onclick="setContentMode('visual')" id="mode-visual" class="btn btn-primary btn-sm" style="font-size:11px">🎨 مرئي</button>
+          <button type="button" onclick="setContentMode('html')" id="mode-html" class="btn btn-outline btn-sm" style="font-size:11px">💻 HTML</button>
+        </div>
+      </div>
+
+      <!-- Visual builder -->
+      <div id="visual-builder">
+        <div id="vb-blocks" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;min-height:40px"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          <button type="button" onclick="addBlock('heading')"   class="btn btn-outline btn-sm" style="font-size:11px">H عنوان</button>
+          <button type="button" onclick="addBlock('paragraph')" class="btn btn-outline btn-sm" style="font-size:11px">¶ فقرة</button>
+          <button type="button" onclick="addBlock('callout')"   class="btn btn-outline btn-sm" style="font-size:11px">💡 تنبيه</button>
+          <button type="button" onclick="addBlock('compare')"   class="btn btn-outline btn-sm" style="font-size:11px">⚖️ مقارنة</button>
+          <button type="button" onclick="addBlock('list')"      class="btn btn-outline btn-sm" style="font-size:11px">• قائمة</button>
+          <button type="button" onclick="addBlock('steps')"     class="btn btn-outline btn-sm" style="font-size:11px">① خطوات</button>
+          <button type="button" onclick="addBlock('divider')"   class="btn btn-outline btn-sm" style="font-size:11px">─ فاصل</button>
+        </div>
+      </div>
+
+      <!-- Raw HTML fallback -->
+      <textarea class="inp textarea" id="lm-content" style="min-height:120px;display:none;margin-top:8px;font-family:monospace;font-size:12px" placeholder="&lt;h3&gt;عنوان&lt;/h3&gt;&lt;p&gt;نص...&lt;/p&gt;"></textarea>
     </div>
 
     <div style="background:var(--warm3);border-radius:var(--r2);padding:14px;margin-bottom:12px">
@@ -847,6 +886,474 @@ function exportData(){
   var csv=rows.map(function(r){return r.join(',');}).join('\n');
   var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='shakkel-stats.csv';a.click();
 }
+
+// ═══════════════════════════════════════════════════════════
+// VISUAL CONTENT BUILDER
+// ═══════════════════════════════════════════════════════════
+var _contentMode = 'visual'; // 'visual' | 'html'
+
+function setContentMode(mode) {
+  _contentMode = mode;
+  var builder = document.getElementById('visual-builder');
+  var textarea = document.getElementById('lm-content');
+  var btnV = document.getElementById('mode-visual');
+  var btnH = document.getElementById('mode-html');
+
+  if (mode === 'visual') {
+    // Sync HTML → blocks if switching from html mode
+    if (textarea && textarea.style.display !== 'none') {
+      parseHTMLToBlocks(textarea.value);
+    }
+    if (builder) builder.style.display = '';
+    if (textarea) textarea.style.display = 'none';
+    if (btnV) { btnV.className = 'btn btn-primary btn-sm'; btnV.style.fontSize='11px'; }
+    if (btnH) { btnH.className = 'btn btn-outline btn-sm'; btnH.style.fontSize='11px'; }
+  } else {
+    // Sync blocks → HTML when switching to html mode
+    if (textarea) { textarea.value = buildHTMLFromBlocks(); textarea.style.display = ''; }
+    if (builder) builder.style.display = 'none';
+    if (btnV) { btnV.className = 'btn btn-outline btn-sm'; btnV.style.fontSize='11px'; }
+    if (btnH) { btnH.className = 'btn btn-primary btn-sm'; btnH.style.fontSize='11px'; }
+  }
+}
+
+// ── Block templates ─────────────────────────────────────────
+var _blocks = []; // [{type, data}]
+var _blockId = 0;
+
+function addBlock(type, data) {
+  var id = 'b' + (++_blockId);
+  _blocks.push({ id: id, type: type, data: data || {} });
+  renderBlock(id, type, data || {});
+}
+
+function renderBlock(id, type, data) {
+  var container = document.getElementById('vb-blocks');
+  if (!container) return;
+
+  var el = document.createElement('div');
+  el.className = 'vb-block';
+  el.id = 'vb-' + id;
+
+  var labels = {
+    heading:'H عنوان', paragraph:'¶ فقرة', callout:'💡 تنبيه',
+    compare:'⚖️ مقارنة', list:'• قائمة', steps:'① خطوات', divider:'─ فاصل'
+  };
+
+  // ── Header ──────────────────────────────────────────────
+  var hdr = document.createElement('div');
+  hdr.className = 'vb-block-header';
+  hdr.innerHTML = '<span class="vb-handle">⠿</span><span>' + (labels[type]||type) + '</span>';
+
+  var delBtn = document.createElement('button');
+  delBtn.type = 'button'; delBtn.className = 'vb-del'; delBtn.textContent = '🗑️';
+  (function(bid){ delBtn.onclick = function(){ deleteBlock(bid); }; })(id);
+
+  var upBtn = document.createElement('button');
+  upBtn.type='button'; upBtn.textContent='▲'; upBtn.title='لأعلى';
+  upBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3)';
+  (function(bid){ upBtn.onclick = function(){ moveBlock(bid,-1); }; })(id);
+
+  var dnBtn = document.createElement('button');
+  dnBtn.type='button'; dnBtn.textContent='▼'; dnBtn.title='لأسفل';
+  dnBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3)';
+  (function(bid){ dnBtn.onclick = function(){ moveBlock(bid,1); }; })(id);
+
+  hdr.appendChild(delBtn);
+  hdr.appendChild(upBtn);
+  hdr.appendChild(dnBtn);
+  el.appendChild(hdr);
+
+  // ── Body ─────────────────────────────────────────────────
+  var body = document.createElement('div');
+  body.className = 'vb-block-body';
+
+  function inp(idSuffix, val, placeholder, tag, rows) {
+    var e = document.createElement(tag||'input');
+    e.id = id + '-' + idSuffix;
+    e.className = 'vb-input';
+    e.placeholder = placeholder||'';
+    if (tag==='textarea') { e.rows=rows||3; e.value=val||''; }
+    else { e.type='text'; e.value=val||''; }
+    return e;
+  }
+  function sel(idSuffix, opts, curVal) {
+    var e = document.createElement('select');
+    e.id = id + '-' + idSuffix;
+    e.className = 'vb-input';
+    e.style.height='32px';
+    opts.forEach(function(o){
+      var opt=document.createElement('option');
+      opt.value=o[0]; opt.textContent=o[1];
+      if(o[0]===curVal) opt.selected=true;
+      e.appendChild(opt);
+    });
+    return e;
+  }
+  function lbl(text) {
+    var e=document.createElement('div');
+    e.className='vb-col-label';
+    e.textContent=text;
+    return e;
+  }
+  function row() {
+    var e=document.createElement('div');
+    e.className='vb-row';
+    return e;
+  }
+  function div(style) {
+    var e=document.createElement('div');
+    if(style) e.style.cssText=style;
+    return e;
+  }
+
+  switch (type) {
+
+    case 'heading':
+      body.appendChild(sel('level',
+        [['h3','عنوان رئيسي (H3)'],['h4','عنوان فرعي (H4)']],
+        data.level||'h3'));
+      body.lastChild.style.marginBottom='6px';
+      body.appendChild(inp('text', data.text, 'نص العنوان...'));
+      break;
+
+    case 'paragraph':
+      body.appendChild(inp('text', data.text, 'نص الفقرة...', 'textarea', 3));
+      var fmtRow = div('display:flex;gap:8px;margin-top:6px;align-items:center');
+      var fmtLbl = document.createElement('label');
+      fmtLbl.style.cssText='font-size:11px;color:var(--text3)';
+      fmtLbl.textContent='تنسيق:';
+      fmtRow.appendChild(fmtLbl);
+      [['strong','<b>B</b>'],['em','<i>I</i>']].forEach(function(pair) {
+        var b=document.createElement('button');
+        b.type='button'; b.className='btn btn-outline btn-sm';
+        b.style.cssText='font-size:11px;padding:3px 8px';
+        b.innerHTML=pair[1];
+        (function(tag, bid){
+          b.onclick=function(){ wrapSel(bid+'-text','<'+tag+'>','</'+tag+'>'); };
+        })(pair[0], id);
+        fmtRow.appendChild(b);
+      });
+      body.appendChild(fmtRow);
+      break;
+
+    case 'callout':
+      var ctype = data.ctype||'gold';
+      var ctypeInp = document.createElement('input');
+      ctypeInp.type='hidden'; ctypeInp.id=id+'-ctype'; ctypeInp.value=ctype;
+      body.appendChild(ctypeInp);
+
+      var ctypeRow = div('display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap');
+      var CTYPES = {
+        gold:{label:'💡 ذهبي',color:'#7a5c00'},
+        blue:{label:'ℹ️ أزرق',color:'#1565C0'},
+        teal:{label:'✅ أخضر',color:'#2E7D32'},
+        red: {label:'⚠️ أحمر',color:'#C62828'}
+      };
+      Object.keys(CTYPES).forEach(function(t) {
+        var btn=document.createElement('button');
+        btn.type='button'; btn.id=id+'-ct-'+t;
+        btn.className='callout-type-btn'+(t===ctype?' active':'');
+        btn.style.color=CTYPES[t].color;
+        btn.textContent=CTYPES[t].label;
+        (function(ct){ btn.onclick=function(){ setCalloutType(id,ct); }; })(t);
+        ctypeRow.appendChild(btn);
+      });
+      body.appendChild(ctypeRow);
+
+      var iconRow = div('display:flex;gap:6px;margin-bottom:6px');
+      var iconInp = inp('icon', data.icon||'💡', 'أيقونة');
+      iconInp.style.cssText='width:60px';
+      var titleInp = inp('title', data.title||'', 'العنوان (اختياري)');
+      titleInp.style.cssText='flex:1';
+      iconRow.appendChild(iconInp);
+      iconRow.appendChild(titleInp);
+      body.appendChild(iconRow);
+      body.appendChild(inp('text', data.text||'', 'نص التنبيه...', 'textarea', 2));
+      break;
+
+    case 'compare':
+      var cmpRow = row();
+
+      var rCol = div('');
+      rCol.appendChild(lbl('العمود الأيمن'));
+      rCol.appendChild(inp('r-title', data.rTitle, 'العنوان...'));
+      rCol.lastChild.style.marginBottom='4px';
+      var rColorSel = sel('r-color', [
+        ['red-light','🔴 أحمر'],['teal-light','🟢 أخضر'],
+        ['blue-light','🔵 أزرق'],['warm2','⚪ رمادي']
+      ], data.rColor||'red-light');
+      rColorSel.style.marginBottom='4px';
+      rCol.appendChild(rColorSel);
+      rCol.appendChild(inp('r-items', data.rItems||'', 'بند واحد في كل سطر...', 'textarea', 3));
+
+      var lCol = div('');
+      lCol.appendChild(lbl('العمود الأيسر'));
+      lCol.appendChild(inp('l-title', data.lTitle, 'العنوان...'));
+      lCol.lastChild.style.marginBottom='4px';
+      var lColorSel = sel('l-color', [
+        ['teal-light','🟢 أخضر'],['red-light','🔴 أحمر'],
+        ['blue-light','🔵 أزرق'],['warm2','⚪ رمادي']
+      ], data.lColor||'teal-light');
+      lColorSel.style.marginBottom='4px';
+      lCol.appendChild(lColorSel);
+      lCol.appendChild(inp('l-items', data.lItems||'', 'بند واحد في كل سطر...', 'textarea', 3));
+
+      cmpRow.appendChild(rCol);
+      cmpRow.appendChild(lCol);
+      body.appendChild(cmpRow);
+      break;
+
+    case 'list':
+      var listTypeRow = div('display:flex;gap:6px;margin-bottom:6px;align-items:center');
+      listTypeRow.appendChild(sel('ltype',
+        [['ul','• نقطية'],['ol','① مرقّمة']],
+        data.ltype||'ul'));
+      body.appendChild(listTypeRow);
+      body.appendChild(inp('items', data.items||'', 'بند واحد في كل سطر...', 'textarea', 4));
+      break;
+
+    case 'steps':
+      body.appendChild(inp('items', data.items||'', 'خطوة واحدة في كل سطر...', 'textarea', 4));
+      break;
+
+    case 'divider':
+      body.style.cssText='text-align:center;color:var(--text3);font-size:12px';
+      body.textContent='── فاصل أفقي ──';
+      break;
+  }
+
+  el.appendChild(body);
+  container.appendChild(el);
+}
+
+
+function deleteBlock(id) {
+  _blocks = _blocks.filter(function(b){ return b.id !== id; });
+  var el = document.getElementById('vb-' + id);
+  if (el) el.remove();
+}
+
+function moveBlock(id, dir) {
+  var idx = _blocks.findIndex(function(b){ return b.id === id; });
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= _blocks.length) return;
+  var tmp = _blocks[idx]; _blocks[idx] = _blocks[newIdx]; _blocks[newIdx] = tmp;
+  var container = document.getElementById('vb-blocks');
+  if (!container) return;
+  var els = Array.from(container.children);
+  var elA = document.getElementById('vb-' + id);
+  var elB = document.getElementById('vb-' + _blocks[idx].id);
+  if (dir < 0) container.insertBefore(elA, elB);
+  else container.insertBefore(elB, elA);
+}
+
+function setCalloutType(id, ctype) {
+  document.getElementById(id + '-ctype').value = ctype;
+  ['gold','blue','teal','red'].forEach(function(t) {
+    var btn = document.getElementById(id + '-ct-' + t);
+    if (btn) btn.className = 'callout-type-btn' + (t === ctype ? ' active' : '');
+  });
+}
+
+function wrapSelBtn(btn) {
+  var inputId = btn.getAttribute('data-target');
+  var before  = btn.getAttribute('data-before').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  var after   = btn.getAttribute('data-after').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  wrapSel(inputId, before, after);
+}
+function wrapSel(inputId, before, after) {
+  var el = document.getElementById(inputId);
+  if (!el) return;
+  var s = el.selectionStart, e = el.selectionEnd;
+  var val = el.value;
+  el.value = val.substring(0, s) + before + val.substring(s, e) + after + val.substring(e);
+  el.focus();
+}
+
+// ── Read values from a rendered block ──────────────────────
+function readBlockData(b) {
+  function val(suffix) {
+    var el = document.getElementById(b.id + '-' + suffix);
+    return el ? el.value : '';
+  }
+  switch (b.type) {
+    case 'heading':   return { level: val('level'), text: val('text') };
+    case 'paragraph': return { text: val('text') };
+    case 'callout':   return { ctype: val('ctype'), icon: val('icon'), title: val('title'), text: val('text') };
+    case 'compare':   return { rTitle: val('r-title'), rColor: val('r-color'), rItems: val('r-items'), lTitle: val('l-title'), lColor: val('l-color'), lItems: val('l-items') };
+    case 'list':      return { ltype: val('ltype'), items: val('items') };
+    case 'steps':     return { items: val('items') };
+    case 'divider':   return {};
+    default: return {};
+  }
+}
+
+// ── Convert blocks → HTML string ───────────────────────────
+function buildHTMLFromBlocks() {
+  var COLOR_MAP = {
+    'red-light':'#FFEBEE','teal-light':'#E8F5E9','blue-light':'#E3F2FD','warm2':'#E5E0D8',
+    'gold-light':'rgba(235,200,76,.12)'
+  };
+  var BORDER_MAP = { 'red-light':'#C62828','teal-light':'#2E7D32','blue-light':'#1565C0','warm2':'#888','gold-light':'#EBC84C' };
+  var CALLOUT_COLORS = {
+    gold:  { bg:'rgba(235,200,76,.12)', border:'#EBC84C',  text:'#7a5c00' },
+    blue:  { bg:'#E3F2FD',             border:'#1565C0',   text:'#0d47a1' },
+    teal:  { bg:'#E8F5E9',             border:'#2E7D32',   text:'#1B5E20' },
+    red:   { bg:'#FFEBEE',             border:'#C62828',   text:'#B71C1C' }
+  };
+
+  var parts = [];
+  _blocks.forEach(function(b) {
+    var d = readBlockData(b);
+    switch (b.type) {
+      case 'heading':
+        var tag = d.level || 'h3';
+        parts.push('<' + tag + '>' + (d.text||'عنوان') + '</' + tag + '>');
+        break;
+
+      case 'paragraph':
+        parts.push('<p>' + (d.text||'').split('\n').join('<br>') + '</p>');      break;
+
+      case 'callout':
+        var cc = CALLOUT_COLORS[d.ctype||'gold'];
+        parts.push(
+          '<div style="background:' + cc.bg + ';border-right:3px solid ' + cc.border + ';' +
+          'padding:12px 14px;border-radius:0 8px 8px 0;margin:12px 0;color:' + cc.text + '">' +
+          (d.icon ? '<strong>' + d.icon + (d.title ? ' ' + d.title + ':</strong> ' : '</strong> ') : '') +
+          (d.text||'') + '</div>'
+        );
+        break;
+
+      case 'compare':
+        var rBg = COLOR_MAP[d.rColor||'red-light'] || '#fafafa';
+        var lBg = COLOR_MAP[d.lColor||'teal-light'] || '#fafafa';
+        var toItems = function(str) {
+          return (str||'').split('\n').filter(function(s){return s.trim();})
+            .map(function(s){ return '<li>' + s.trim() + '</li>'; }).join('');
+        };
+        parts.push(
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">' +
+            '<div style="background:' + rBg + ';border-radius:8px;padding:12px">' +
+              (d.rTitle ? '<strong>' + d.rTitle + '</strong>' : '') +
+              '<ul style="margin-top:8px">' + toItems(d.rItems) + '</ul>' +
+            '</div>' +
+            '<div style="background:' + lBg + ';border-radius:8px;padding:12px">' +
+              (d.lTitle ? '<strong>' + d.lTitle + '</strong>' : '') +
+              '<ul style="margin-top:8px">' + toItems(d.lItems) + '</ul>' +
+            '</div>' +
+          '</div>'
+        );
+        break;
+
+      case 'list':
+        var tag2 = d.ltype === 'ol' ? 'ol' : 'ul';
+        var items2 = (d.items||'').split('\n').filter(function(s){return s.trim();})
+          .map(function(s){ return '<li>' + s.trim() + '</li>'; }).join('');
+        parts.push('<' + tag2 + ' style="padding-right:20px;margin:8px 0">' + items2 + '</' + tag2 + '>');
+        break;
+
+      case 'steps':
+        var steps = (d.items||'').split('\n').filter(function(s){return s.trim();});
+        var stepHTML = steps.map(function(s, i) {
+          return '<li style="margin-bottom:6px"><strong>' + (i+1) + '.</strong> ' + s.trim() + '</li>';
+        }).join('');
+        parts.push('<ol style="padding-right:20px;margin:8px 0">' + stepHTML + '</ol>');
+        break;
+
+      case 'divider':
+        parts.push('<hr style="border:none;border-top:1px solid #e0ddd8;margin:16px 0">');
+        break;
+    }
+  });
+  return parts.join('\n');
+}
+
+// ── Parse HTML back to blocks (basic) ──────────────────────
+function parseHTMLToBlocks(rawHTML) {
+  _blocks = [];
+  _blockId = 0;
+  var container = document.getElementById('vb-blocks');
+  if (container) container.innerHTML = '';
+  if (!rawHTML || !rawHTML.trim()) return;
+
+  // Simple line-by-line parser for our known block types
+  // For complex HTML just add as raw paragraph
+  var div = document.createElement('div');
+  div.innerHTML = rawHTML;
+
+  Array.from(div.childNodes).forEach(function(node) {
+    if (node.nodeType !== 1) return; // skip text nodes
+    var tag = node.tagName ? node.tagName.toLowerCase() : '';
+    var html = node.outerHTML || '';
+    var text = node.innerText || node.textContent || '';
+
+    if (tag === 'h3') { addBlock('heading', {level:'h3', text: text.trim()}); }
+    else if (tag === 'h4') { addBlock('heading', {level:'h4', text: text.trim()}); }
+    else if (tag === 'p') { addBlock('paragraph', {text: text.trim()}); }
+    else if (tag === 'hr') { addBlock('divider', {}); }
+    else if (tag === 'ul') {
+      var items = Array.from(node.querySelectorAll('li')).map(function(li){ return li.textContent.trim(); }).join('\n');
+      addBlock('list', {ltype:'ul', items: items});
+    }
+    else if (tag === 'ol') {
+      var items = Array.from(node.querySelectorAll('li')).map(function(li){ return li.textContent.trim(); }).join('\n');
+      addBlock('steps', {items: items});
+    }
+    else if (tag === 'div' && html.includes('border-right')) {
+      // Callout — detect color
+      var ctype = 'gold';
+      if (html.includes('#1565C0')) ctype = 'blue';
+      else if (html.includes('#2E7D32')) ctype = 'teal';
+      else if (html.includes('#C62828')) ctype = 'red';
+      addBlock('callout', {ctype: ctype, text: text.trim()});
+    }
+    else if (tag === 'div' && html.includes('grid-template-columns')) {
+      // Compare block — parse left/right
+      var cols = Array.from(node.querySelectorAll(':scope > div'));
+      if (cols.length === 2) {
+        var rItems = Array.from(cols[0].querySelectorAll('li')).map(function(li){return li.textContent.trim();}).join('\n');
+        var lItems = Array.from(cols[1].querySelectorAll('li')).map(function(li){return li.textContent.trim();}).join('\n');
+        var rStrong = cols[0].querySelector('strong');
+        var lStrong = cols[1].querySelector('strong');
+        addBlock('compare', {
+          rTitle: rStrong ? rStrong.textContent : '', rItems: rItems,
+          lTitle: lStrong ? lStrong.textContent : '', lItems: lItems
+        });
+      }
+    }
+    else {
+      // Unknown HTML → paragraph
+      addBlock('paragraph', {text: text.trim()});
+    }
+  });
+}
+
+// ── Override openLessonEdit to init visual builder ──────────
+var _origOpenLessonEdit = openLessonEdit;
+openLessonEdit = function(courseId, lessonId) {
+  _origOpenLessonEdit(courseId, lessonId);
+  // After modal opens, populate visual builder from content
+  setTimeout(function() {
+    var textarea = document.getElementById('lm-content');
+    if (textarea) {
+      parseHTMLToBlocks(textarea.value);
+      setContentMode('visual');
+    }
+  }, 50);
+};
+
+// ── Override saveLessonEdit to collect visual builder HTML ──
+var _origSaveLessonEdit = saveLessonEdit;
+saveLessonEdit = function() {
+  if (_contentMode === 'visual') {
+    var textarea = document.getElementById('lm-content');
+    if (textarea) textarea.value = buildHTMLFromBlocks();
+  }
+  _origSaveLessonEdit();
+};
+
+
 </script>
 </body>
 </html>
