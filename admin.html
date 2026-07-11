@@ -47,6 +47,59 @@
   </div>
 </div>
 
+<!-- ADD MODULE MODAL -->
+<div class="modal-overlay" id="add-module-modal">
+  <div class="modal-box" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('add-module-modal')">✕</button>
+    <h3 style="margin-bottom:4px">📦 وحدة (موديول) جديدة</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">أضف دورة جديدة إلى المنصة</p>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">اسم الوحدة / الدورة *</label>
+      <input class="inp" id="am-title" placeholder="مثال: مقدمة في الليزر">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">الأيقونة (emoji)</label>
+        <input class="inp" id="am-icon" placeholder="🔆" style="font-size:20px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">التصنيف</label>
+        <select class="inp select" id="am-category">
+          <option value="design">🎨 تصميم</option>
+          <option value="fabrication">🛠️ تصنيع</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group">
+        <label class="form-label">المستوى</label>
+        <select class="inp select" id="am-level">
+          <option value="مبتدئ">مبتدئ</option>
+          <option value="متوسط">متوسط</option>
+          <option value="متقدم">متقدم</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">السعر (0 = مجاني)</label>
+        <input class="inp" id="am-price" type="number" value="0" min="0">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">وصف مختصر</label>
+      <textarea class="inp" id="am-desc" rows="2" placeholder="ماذا سيتعلم المتعلم؟"></textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--warm3);border-radius:var(--r);margin-bottom:16px">
+      <label class="form-label" style="margin:0">الحالة:</label>
+      <select class="inp select" id="am-status" style="width:auto;flex:1">
+        <option value="active">🟢 نشطة (يمكن التسجيل)</option>
+        <option value="coming_soon">⏳ قريباً</option>
+        <option value="inactive">⛔ غير نشطة (مخفية)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="saveNewModule()">إضافة الوحدة ←</button>
+  </div>
+</div>
+
 <!-- ADD LESSON MODAL -->
 <div class="modal-overlay" id="add-lesson-modal">
   <div class="modal-box" style="max-width:420px">
@@ -302,8 +355,11 @@
       <button class="tab-btn" id="ct-stages" onclick="switchTab('ct-stages','cp-stages','tab-btn')">🎯 مراحل المشاريع</button>
     </div>
     <div class="tab-panel active" id="cp-courses">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="course-filter-btns">
-        <button class="filter-btn active" onclick="filterContentCourse('')">الكل</button>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1" id="course-filter-btns">
+          <button class="filter-btn active" onclick="filterContentCourse('')">الكل</button>
+        </div>
+        <button class="btn btn-dark btn-sm" onclick="openModal('add-module-modal')" style="white-space:nowrap">📦 وحدة جديدة</button>
       </div>
       <div id="content-lessons-list"></div>
     </div>
@@ -482,10 +538,26 @@ function renderContent(){
     var lessons=ADMIN_LESSONS[c.id]||[];
     var section=document.createElement('div');
     section.className='section-card';
-    // Header row with add button
+    // Status for this course
+    var courseStatus = getCourseStatus(c.id);
+    var statusColors = {active:'badge-teal', coming_soon:'badge-gold', inactive:'badge-red'};
+    var statusLabels = {active:'🟢 نشطة', coming_soon:'⏳ قريباً', inactive:'⛔ غير نشطة'};
+
+    // Header row
     var hdr = document.createElement('div');
-    hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px';
+    hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap';
     hdr.innerHTML='<span style="font-size:22px">'+c.icon+'</span><h4 style="flex:1">'+c.title+'</h4>';
+
+    // Status badge (clickable to cycle)
+    var statusBadge = document.createElement('span');
+    statusBadge.className='badge '+(statusColors[courseStatus]||'badge-gray');
+    statusBadge.style.cursor='pointer';
+    statusBadge.title='اضغط لتغيير الحالة';
+    statusBadge.textContent=statusLabels[courseStatus]||courseStatus;
+    (function(cid){ statusBadge.onclick=function(){ cycleCourseStatus(cid); }; })(c.id);
+    hdr.appendChild(statusBadge);
+
+    // Add lesson button
     var addBtn = document.createElement('button');
     addBtn.className='btn btn-primary btn-sm';
     addBtn.textContent='+ درس جديد';
@@ -539,6 +611,97 @@ function renderContent(){
       lessonList.appendChild(row);
     });
     section.appendChild(lessonList);
+    list.appendChild(section);
+  });
+
+  // Admin-added modules
+  var adminModules = getAdminModules();
+  if (adminModules.length) {
+    var modHeader = document.createElement('div');
+    modHeader.style.cssText='margin:20px 0 10px;display:flex;align-items:center;gap:8px';
+    modHeader.innerHTML='<span style="font-size:16px;font-weight:700">وحدات مضافة</span><span class="badge badge-gold">'+toAr(adminModules.length)+'</span>';
+    list.appendChild(modHeader);
+  }
+
+  adminModules.forEach(function(mod) {
+    var adminLessons = getAdminAddedLessons(mod.id);
+    var courseStatus = getCourseStatus(mod.id);
+    var statusColors = {active:'badge-teal', coming_soon:'badge-gold', inactive:'badge-red'};
+    var statusLabels = {active:'🟢 نشطة', coming_soon:'⏳ قريباً', inactive:'⛔ غير نشطة'};
+
+    var section = document.createElement('div');
+    section.className = 'section-card';
+    section.style.borderRight = '3px solid var(--gold)';
+
+    // Header
+    var hdr = document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap';
+    hdr.innerHTML='<span style="font-size:22px">'+mod.icon+'</span><h4 style="flex:1">'+mod.title+'</h4>';
+
+    var statusBadge = document.createElement('span');
+    statusBadge.className='badge '+(statusColors[courseStatus]||'badge-gray');
+    statusBadge.style.cursor='pointer';
+    statusBadge.title='اضغط لتغيير الحالة';
+    statusBadge.textContent=statusLabels[courseStatus]||courseStatus;
+    (function(mid){ statusBadge.onclick=function(){ cycleCourseStatus(mid); }; })(mod.id);
+    hdr.appendChild(statusBadge);
+
+    var addLessonBtn = document.createElement('button');
+    addLessonBtn.className='btn btn-primary btn-sm';
+    addLessonBtn.textContent='+ درس جديد';
+    (function(mid, mtitle){ addLessonBtn.onclick=function(){ openAddLesson(mid, mtitle); }; })(mod.id, mod.title);
+    hdr.appendChild(addLessonBtn);
+
+    var delModBtn = document.createElement('button');
+    delModBtn.className='btn btn-sm';
+    delModBtn.style.cssText='background:var(--red-light);color:var(--red);border:none;cursor:pointer';
+    delModBtn.textContent='🗑️ حذف الوحدة';
+    (function(mid){ delModBtn.onclick=function(){ deleteAdminModule(mid); }; })(mod.id);
+    hdr.appendChild(delModBtn);
+    section.appendChild(hdr);
+
+    // Info row
+    var info = document.createElement('div');
+    info.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px';
+    info.innerHTML=
+      '<span class="badge badge-gray">'+mod.level+'</span>'+
+      '<span class="badge '+(mod.free?'badge-free':'badge-paid')+'">'+(mod.free?'مجاني':toAr(mod.price)+' ر.س')+'</span>'+
+      (mod.desc ? '<span style="font-size:12px;color:var(--text2)">'+mod.desc+'</span>' : '');
+    section.appendChild(info);
+
+    // Lessons
+    if (adminLessons.length === 0) {
+      var empty = document.createElement('div');
+      empty.style.cssText='padding:12px;text-align:center;color:var(--text3);font-size:13px;background:var(--warm3);border-radius:var(--r)';
+      empty.textContent='لا توجد دروس بعد — اضغط "+ درس جديد" لإضافة أول درس';
+      section.appendChild(empty);
+    } else {
+      var lessonList = document.createElement('div');
+      lessonList.style.cssText='display:flex;flex-direction:column;gap:6px';
+      adminLessons.forEach(function(l, i) {
+        var custom=JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
+        var hasVideo=!!(custom.videoUrl||l.videoUrl||'');
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--warm3);border-radius:var(--r)';
+        row.innerHTML=
+          '<span style="font-size:11px;color:var(--text3);min-width:20px">'+toAr(i+1)+'</span>'+
+          '<span style="font-size:13px;flex:1">'+(custom.title||l.title)+'</span>'+
+          (hasVideo?'<span class="badge badge-teal">📹 فيديو</span>':'<span class="badge badge-gray">بدون فيديو</span>');
+        var editBtn=document.createElement('button');
+        editBtn.className='btn btn-outline btn-sm';
+        editBtn.textContent='✏️ تعديل';
+        (function(mid,lid){ editBtn.onclick=function(){ openLessonEdit(mid,lid); }; })(mod.id,l.id);
+        var delBtn=document.createElement('button');
+        delBtn.className='btn btn-sm';
+        delBtn.style.cssText='background:var(--red-light);color:var(--red);border:none;cursor:pointer';
+        delBtn.textContent='🗑️';
+        (function(mid,lid){ delBtn.onclick=function(){ deleteAdminLesson(mid,lid); }; })(mod.id,l.id);
+        row.appendChild(editBtn);
+        row.appendChild(delBtn);
+        lessonList.appendChild(row);
+      });
+      section.appendChild(lessonList);
+    }
     list.appendChild(section);
   });
 }
@@ -970,7 +1133,7 @@ function saveAdminAddedLessons(courseId, lessons) {
 
 function openAddLesson(courseId, courseTitle) {
   document.getElementById('al-course-id').value = courseId;
-  document.getElementById('al-course-label').textContent = 'إضافة درس إلى: ' + courseTitle;
+  document.getElementById('add-lesson-course-label').textContent = 'إضافة درس إلى: ' + courseTitle;
   document.getElementById('al-title').value = '';
   document.getElementById('al-dur').value = '';
   document.getElementById('al-type').value = 'video';
@@ -1003,6 +1166,82 @@ function deleteAdminLesson(courseId, lessonId) {
   localStorage.removeItem('sh_lesson_' + lessonId);
   renderContent();
   showToast('تم حذف الدرس');
+}
+
+
+// ── Module / Course status management ────────────────────
+// Status stored per course: 'active' | 'coming_soon' | 'inactive'
+// Admin-added modules stored in sh_admin_modules
+
+function getCourseStatus(courseId) {
+  try {
+    return localStorage.getItem('sh_course_status_' + courseId) || 'active';
+  } catch(e) { return 'active'; }
+}
+
+function setCourseStatus(courseId, status) {
+  localStorage.setItem('sh_course_status_' + courseId, status);
+}
+
+function cycleCourseStatus(courseId) {
+  var cycle = {active:'coming_soon', coming_soon:'inactive', inactive:'active'};
+  var current = getCourseStatus(courseId);
+  var next = cycle[current] || 'active';
+  setCourseStatus(courseId, next);
+  var labels = {active:'🟢 نشطة', coming_soon:'⏳ قريباً', inactive:'⛔ غير نشطة'};
+  showToast('تم تغيير حالة الدورة إلى: ' + (labels[next]||next));
+  renderContent();
+}
+
+// Admin-added modules
+function getAdminModules() {
+  try {
+    return JSON.parse(localStorage.getItem('sh_admin_modules') || '[]');
+  } catch(e) { return []; }
+}
+
+function saveAdminModules(modules) {
+  localStorage.setItem('sh_admin_modules', JSON.stringify(modules));
+}
+
+function saveNewModule() {
+  var title    = document.getElementById('am-title').value.trim();
+  var icon     = document.getElementById('am-icon').value.trim() || '📚';
+  var category = document.getElementById('am-category').value;
+  var level    = document.getElementById('am-level').value;
+  var price    = parseInt(document.getElementById('am-price').value) || 0;
+  var desc     = document.getElementById('am-desc').value.trim();
+  var status   = document.getElementById('am-status').value;
+
+  if (!title) { showToast('يرجى كتابة اسم الوحدة'); return; }
+
+  var id = 'module_' + Date.now();
+  var modules = getAdminModules();
+  modules.push({ id, title, icon, category, level, price, desc,
+    free: price === 0, credits: 25, lessons: 0, duration: '' });
+  saveAdminModules(modules);
+
+  // Set initial status
+  setCourseStatus(id, status);
+
+  // Init empty lesson list
+  localStorage.setItem('sh_admin_lessons_' + id, '[]');
+
+  closeModal('add-module-modal');
+  document.getElementById('am-title').value = '';
+  document.getElementById('am-desc').value  = '';
+  showToast('✅ تمت إضافة الوحدة: ' + title);
+  renderContent();
+}
+
+function deleteAdminModule(moduleId) {
+  if (!confirm('حذف هذه الوحدة وجميع دروسها؟')) return;
+  var modules = getAdminModules().filter(function(m){ return m.id !== moduleId; });
+  saveAdminModules(modules);
+  localStorage.removeItem('sh_admin_lessons_' + moduleId);
+  localStorage.removeItem('sh_course_status_' + moduleId);
+  renderContent();
+  showToast('تم الحذف');
 }
 
 function exportData(){
