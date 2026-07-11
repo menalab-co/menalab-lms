@@ -279,8 +279,10 @@ function openLesson(lid){
   if(!l)return;
   currentLesson=l;
   document.getElementById('lesson-title').textContent=l.title;
-  var typeLabel = {video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'}[l.type]||'';
-  var durLabel  = (l.dur && l.videoUrl) ? l.dur + ' · ' : '';
+  // Only show type label and duration when a video exists
+  var hasVideo = !!(l.videoUrl && l.videoUrl.trim());
+  var typeLabel = hasVideo ? ({video:'فيديو',text:'نص',exercise:'تمرين',lab:'مختبر'}[l.type]||'') : '';
+  var durLabel  = (hasVideo && l.dur) ? l.dur + ' · ' : '';
   document.getElementById('lesson-meta').textContent = durLabel + typeLabel;
   document.getElementById('lesson-xp').textContent='+'+toAr(l.xp)+' XP';
   // Video
