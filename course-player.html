@@ -364,6 +364,186 @@ function sendAI(){
     msgs.scrollTop=msgs.scrollHeight;
   },400);
 }
+
+// ── State ────────────────────────────────────────────────
+var currentCourse = null;
+var currentLesson = null;
+var qState = {qs:[], cur:0, ans:[], done:false};
+
+// ── Init ─────────────────────────────────────────────────
+function init() {
+  var params = new URLSearchParams(window.location.search);
+  var cid = params.get('course') || 'prototyping';
+
+  // Load prototyping lessons from _shared.js
+  if (typeof PROTOTYPING_LESSONS !== 'undefined') {
+    COURSE_LESSONS['prototyping'] = PROTOTYPING_LESSONS;
+  }
+
+  applyAdminLessonOverrides();
+
+  currentCourse = COURSES.find(function(c){ return c.id === cid; }) || COURSES[0];
+
+  // Handle coming-soon courses
+  var storedStatus = localStorage.getItem('sh_course_status_' + cid);
+  var isComingSoon = storedStatus === 'coming_soon' || currentCourse.comingSoon;
+  if (storedStatus === 'active') isComingSoon = false;
+
+  document.getElementById('course-title-nav').textContent = currentCourse.title;
+
+  if (isComingSoon || storedStatus === 'inactive') {
+    document.getElementById('player-main').innerHTML =
+      '<div style="text-align:center;padding:80px 24px">' +
+        '<div style="font-size:64px;margin-bottom:16px">⏳</div>' +
+        '<h2>هذه الدورة قادمة قريباً</h2>' +
+        '<p style="margin-top:8px;color:var(--text2)">نعمل على إعداد المحتوى. سيتم إشعارك عند الإطلاق.</p>' +
+        '<a href="courses.html" class="btn btn-primary btn-lg" style="margin-top:24px;display:inline-flex">← العودة للدورات</a>' +
+      '</div>';
+    return;
+  }
+
+  // Enroll and grant credits if needed
+  var state = getUserState();
+  if (!(state.enrolledCourses||[]).includes(cid)) {
+    state.enrolledCourses = state.enrolledCourses || [];
+    state.enrolledCourses.push(cid);
+    state.aiCredits = (state.aiCredits||0) + (currentCourse.credits||25);
+    saveUserState(state);
+  }
+
+  renderSidebar();
+
+  // Open first incomplete lesson or first lesson
+  var lessons = COURSE_LESSONS[cid] || [];
+  var state2 = getUserState();
+  var firstIncomplete = lessons.find(function(l){
+    return !(state2.completedLessons||[]).includes(l.id);
+  });
+
+  var lid = params.get('lesson');
+  if (lid) {
+    var target = lessons.find(function(l){ return l.id === lid; });
+    if (target) { openLesson(target.id); return; }
+  }
+  if (firstIncomplete) openLesson(firstIncomplete.id);
+  else if (lessons.length) openLesson(lessons[0].id);
+}
+
+// ── Sidebar ───────────────────────────────────────────────
+function renderSidebar() {
+  if (!currentCourse) return;
+  var lessons = COURSE_LESSONS[currentCourse.id] || [];
+  var state = getUserState();
+  var done = state.completedLessons || [];
+  var completed = done.filter(function(l){ return l.startsWith(currentCourse.id+'_') || lessons.find(function(x){ return x.id===l; }); }).length;
+  var pct = lessons.length ? Math.round(completed / lessons.length * 100) : 0;
+
+  var iconEl = document.getElementById('course-icon-sb');
+  var titleEl = document.getElementById('course-title-sb');
+  var fillEl  = document.getElementById('course-progress-fill');
+  var labelEl = document.getElementById('course-progress-label');
+  var navLabel = document.getElementById('nav-progress');
+
+  if (iconEl)  iconEl.textContent = currentCourse.icon;
+  if (titleEl) titleEl.textContent = currentCourse.title;
+  if (fillEl)  fillEl.style.width = pct + '%';
+  if (labelEl) labelEl.textContent = toAr(completed) + '/' + toAr(lessons.length) + ' دروس (' + toAr(pct) + '%)';
+  if (navLabel) navLabel.textContent = toAr(completed) + '/' + toAr(lessons.length);
+
+  var list = document.getElementById('lessons-sidebar-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  var TYPE_ICONS = {video:'🎬', text:'📄', exercise:'✏️', lab:'🔬'};
+  lessons.forEach(function(l, i) {
+    var isDone = done.includes(l.id);
+    var isActive = currentLesson && currentLesson.id === l.id;
+    var isLocked = !isDone && !isLessonUnlocked(i);
+
+    var item = document.createElement('div');
+    item.className = 'lesson-list-item' + (isActive?' active':'') + (isDone?' done':'') + (isLocked?' locked':'');
+    item.onclick = function() {
+      if (isLocked) { showToast('🔒 أكمل الدرس السابق أولاً'); return; }
+      openLesson(l.id);
+    };
+    item.innerHTML =
+      '<div class="lesson-num">' + (isDone ? '✓' : isActive ? (TYPE_ICONS[l.type]||'📖') : toAr(i+1)) + '</div>' +
+      '<div style="flex:1;overflow:hidden">' +
+        '<div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + l.title + '</div>' +
+        (!l.videoUrl && !isDone ? '<div style="font-size:10px;color:var(--text3);margin-top:1px">+' + toAr(l.xp) + ' XP</div>' :
+         '<div style="font-size:10px;color:var(--text3);margin-top:1px">' + (l.dur||'') + (l.dur&&l.videoUrl?' · ':'') + '+' + toAr(l.xp) + ' XP</div>') +
+      '</div>';
+    list.appendChild(item);
+  });
+}
+
+// ── Open lesson ───────────────────────────────────────────
+function openLesson(lid) {
+  var lessons = COURSE_LESSONS[currentCourse.id] || [];
+  var l = lessons.find(function(x){ return x.id === lid; });
+  if (!l) return;
+  currentLesson = l;
+
+  // Title & meta
+  document.getElementById('lesson-title').textContent = l.title;
+  var hasVideo = !!(l.videoUrl && l.videoUrl.trim());
+  var typeLabel = hasVideo ? ({video:'فيديو', text:'نص', exercise:'تمرين', lab:'مختبر'}[l.type]||'') : '';
+  var durLabel  = (hasVideo && l.dur) ? l.dur + ' · ' : '';
+  document.getElementById('lesson-meta').textContent = durLabel + typeLabel;
+  document.getElementById('lesson-xp').textContent = '+' + toAr(l.xp) + ' XP';
+
+  // Video frame
+  var frame = document.getElementById('video-frame');
+  var icon  = document.getElementById('video-placeholder-icon');
+  var iframeContainer = document.getElementById('lesson-iframe-container');
+  iframeContainer.innerHTML = '';
+
+  var videoSrc = l.videoUrl || '';
+  if (videoSrc && videoSrc.trim()) {
+    if (frame) frame.style.display = '';
+    var resolved = (typeof normalizeVideoUrl === 'function') ? normalizeVideoUrl(videoSrc) : videoSrc;
+    if (typeof isDirectVideo === 'function' && isDirectVideo(resolved)) {
+      var video = document.createElement('video');
+      video.src = resolved; video.controls = true;
+      video.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;background:#000';
+      iframeContainer.appendChild(video);
+    } else {
+      var iframe = document.createElement('iframe');
+      iframe.src = resolved;
+      iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:var(--r2)';
+      iframe.setAttribute('allow', 'autoplay;fullscreen;picture-in-picture');
+      iframe.setAttribute('allowfullscreen', '');
+      iframeContainer.appendChild(iframe);
+    }
+    if (icon) icon.style.display = 'none';
+  } else {
+    if (frame) frame.style.display = 'none';
+  }
+
+  // Content
+  document.getElementById('lesson-content-area').innerHTML = l.content || '';
+  setTimeout(function(){ initCarousels(document.getElementById('lesson-content-area')); }, 50);
+
+  // Complete button
+  document.getElementById('complete-btn-area').style.display = 'block';
+  var state = getUserState();
+  var isDone = (state.completedLessons||[]).includes(l.id);
+  var btn = document.getElementById('complete-btn');
+  if (isDone) {
+    btn.textContent = '✅ مكتمل'; btn.disabled = true; btn.style.opacity = '0.6';
+  } else {
+    btn.textContent = '✅ إكمال الدرس والانتقال للتالي ←'; btn.disabled = false; btn.style.opacity = '1';
+  }
+
+  // Quiz
+  document.getElementById('quiz-area').innerHTML =
+    '<button class="btn btn-primary btn-lg" onclick="startQuiz()">ابدأ التقييم ←</button>' +
+    '<div id="quiz-questions"></div>';
+
+  renderSidebar();
+  switchTab('lt-content', 'lp-content', 'tab-btn');
+}
+
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
