@@ -756,26 +756,32 @@ function normalizeImageUrl(url) {
   if (!url || !url.trim()) return url;
   url = url.trim();
 
-  // Google Drive: /file/d/FILE_ID/view  or  /file/d/FILE_ID/preview
-  // → https://drive.google.com/uc?export=view&id=FILE_ID
-  var driveFile = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (driveFile) {
-    return 'https://drive.google.com/uc?export=view&id=' + driveFile[1];
+  // Extract Google Drive file ID from any Drive URL
+  var driveId = null;
+
+  // /file/d/FILE_ID/view or /file/d/FILE_ID/preview
+  var m1 = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m1) driveId = m1[1];
+
+  // open?id=FILE_ID
+  var m2 = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+  if (m2) driveId = m2[1];
+
+  // uc?id=FILE_ID or uc?export=view&id=FILE_ID
+  var m3 = url.match(/drive\.google\.com\/uc\?(?:[^&]+&)?id=([a-zA-Z0-9_-]+)/);
+  if (m3) driveId = m3[1];
+
+  // thumbnail?id=FILE_ID
+  var m4 = url.match(/drive\.google\.com\/thumbnail\?(?:[^&]+&)?id=([a-zA-Z0-9_-]+)/);
+  if (m4) driveId = m4[1];
+
+  if (driveId) {
+    // thumbnail API: works cross-origin, no redirect issues
+    // sz=w1200 gives high resolution
+    return 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w1200';
   }
 
-  // Google Drive: open?id=FILE_ID
-  var driveOpen = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
-  if (driveOpen) {
-    return 'https://drive.google.com/uc?export=view&id=' + driveOpen[1];
-  }
-
-  // Google Drive: uc?id=FILE_ID (missing export param)
-  var driveUc = url.match(/drive\.google\.com\/uc\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-  if (driveUc && !url.includes('export=view')) {
-    return 'https://drive.google.com/uc?export=view&id=' + driveUc[1];
-  }
-
-  // Already a direct image URL or other host — use as-is
+  // Not a Drive URL — return as-is
   return url;
 }
 
@@ -804,6 +810,23 @@ function isDirectVideo(url) {
 }
 
 // ── Image Carousel ────────────────────────────────────────
+// Extract Google Drive file ID from any Drive URL
+function extractDriveId(url) {
+  if (!url) return null;
+  var patterns = [
+    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/uc\?(?:[^&]+&)*id=([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/thumbnail\?(?:[^&]+&)*id=([a-zA-Z0-9_-]+)/
+  ];
+  for (var i = 0; i < patterns.length; i++) {
+    var m = url.match(patterns[i]);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+
 // Usage in lesson content HTML:
 //   <div class="carousel" data-carousel='[
 //     {"src":"https://...","caption":"وصف الصورة"},
@@ -829,14 +852,33 @@ function renderCarousel(el, slides, height) {
     var slideEl = document.createElement('div');
     slideEl.className = 'carousel-slide';
     slideEl.style.height = height + 'px';
-    var img = document.createElement('img');
-    img.src = normalizeImageUrl(slide.src || slide);
-    img.alt = slide.caption || '';
-    img.style.height = height + 'px';
-    img.onerror = function() {
-      this.parentNode.innerHTML = '<div style="width:100%;height:'+height+'px;display:flex;align-items:center;justify-content:center;background:var(--warm2);color:var(--text3);font-size:13px">لا يمكن تحميل الصورة</div>';
-    };
-    slideEl.appendChild(img);
+    var rawSrc = slide.src || slide;
+    var driveId = extractDriveId(rawSrc);
+
+    if (driveId) {
+      // Google Drive: use iframe with /preview — always works, no CORS issues
+      var iframe = document.createElement('iframe');
+      iframe.src = 'https://drive.google.com/file/d/' + driveId + '/preview?rm=minimal';
+      iframe.style.cssText = 'width:100%;height:' + height + 'px;border:none;display:block';
+      iframe.setAttribute('allow', 'autoplay');
+      iframe.setAttribute('allowfullscreen', '');
+      slideEl.appendChild(iframe);
+    } else {
+      // Regular image URL
+      var img = document.createElement('img');
+      img.src = rawSrc;
+      img.alt = slide.caption || '';
+      img.style.cssText = 'width:100%;height:' + height + 'px;object-fit:cover;display:block';
+      img.onerror = function() {
+        this.parentNode.innerHTML =
+          '<div style="width:100%;height:' + height + 'px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--warm2);color:var(--text3);gap:8px;padding:16px;text-align:center">' +
+            '<span style="font-size:28px">🖼️</span>' +
+            '<span style="font-size:13px;font-weight:600">تعذّر تحميل الصورة</span>' +
+            '<span style="font-size:11px;color:var(--text3)">تأكد أن الرابط صحيح ومتاح للعموم</span>' +
+          '</div>';
+      };
+      slideEl.appendChild(img);
+    }
     if (slide.caption) {
       var cap = document.createElement('div');
       cap.className = 'slide-caption';
