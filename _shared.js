@@ -838,40 +838,67 @@ function extractDriveId(url) {
 
 function renderCarousel(el, slides, height) {
   if (!slides || !slides.length) return;
-  height = height || 320;
-  el.style.height = height + 'px';
 
+  // height param is now optional — if omitted or 0, carousel auto-sizes to image
+  var fixedHeight = height && parseInt(height) > 0 ? parseInt(height) : 0;
   var current = 0;
+
+  // Outer wrapper — no fixed height unless explicitly set
+  if (fixedHeight) {
+    el.style.height = fixedHeight + 'px';
+  } else {
+    el.style.height = 'auto';
+    el.style.minHeight = '80px';
+  }
 
   // Track
   var track = document.createElement('div');
   track.className = 'carousel-track';
-  track.style.height = height + 'px';
+  track.style.height = fixedHeight ? fixedHeight + 'px' : 'auto';
 
-  slides.forEach(function(slide) {
+  slides.forEach(function(slide, idx) {
     var slideEl = document.createElement('div');
     slideEl.className = 'carousel-slide';
-    slideEl.style.height = height + 'px';
+    if (fixedHeight) slideEl.style.height = fixedHeight + 'px';
+
     var rawSrc = slide.src || slide;
     var driveId = extractDriveId(rawSrc);
 
     if (driveId) {
-      // Google Drive: use iframe with /preview — always works, no CORS issues
+      // Google Drive: iframe — use fixed height or fallback to 400px
+      var iframeH = fixedHeight || 420;
+      slideEl.style.height = iframeH + 'px';
+      if (!fixedHeight) track.style.height = iframeH + 'px';
       var iframe = document.createElement('iframe');
       iframe.src = 'https://drive.google.com/file/d/' + driveId + '/preview?rm=minimal';
-      iframe.style.cssText = 'width:100%;height:' + height + 'px;border:none;display:block';
+      iframe.style.cssText = 'width:100%;height:' + iframeH + 'px;border:none;display:block';
       iframe.setAttribute('allow', 'autoplay');
       iframe.setAttribute('allowfullscreen', '');
       slideEl.appendChild(iframe);
     } else {
-      // Regular image URL
+      // Regular image — let it define the height naturally
       var img = document.createElement('img');
       img.src = rawSrc;
       img.alt = slide.caption || '';
-      img.style.cssText = 'width:100%;height:' + height + 'px;object-fit:cover;display:block';
+      img.style.cssText = 'width:100%;display:block;' + (fixedHeight ? 'height:' + fixedHeight + 'px;object-fit:cover;' : 'height:auto;');
+
+      if (!fixedHeight) {
+        // When first image loads, set track height to match
+        img.onload = (function(t, s, i) {
+          return function() {
+            if (i === 0) {
+              // Set all slide heights to match first image
+              var h = this.naturalHeight * (el.offsetWidth / this.naturalWidth);
+              t.style.height = h + 'px';
+              Array.prototype.forEach.call(t.children, function(ch){ ch.style.height = h + 'px'; });
+            }
+          };
+        })(track, slideEl, idx);
+      }
+
       img.onerror = function() {
         this.parentNode.innerHTML =
-          '<div style="width:100%;height:' + height + 'px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--warm2);color:var(--text3);gap:8px;padding:16px;text-align:center">' +
+          '<div style="width:100%;padding:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--warm2);color:var(--text3);gap:8px;text-align:center">' +
             '<span style="font-size:28px">🖼️</span>' +
             '<span style="font-size:13px;font-weight:600">تعذّر تحميل الصورة</span>' +
             '<span style="font-size:11px;color:var(--text3)">تأكد أن الرابط صحيح ومتاح للعموم</span>' +
@@ -879,6 +906,7 @@ function renderCarousel(el, slides, height) {
       };
       slideEl.appendChild(img);
     }
+
     if (slide.caption) {
       var cap = document.createElement('div');
       cap.className = 'slide-caption';
@@ -890,7 +918,7 @@ function renderCarousel(el, slides, height) {
 
   el.appendChild(track);
 
-  // Prev / Next buttons
+  // Navigation (only needed for multiple slides)
   if (slides.length > 1) {
     var prevBtn = document.createElement('button');
     prevBtn.className = 'carousel-btn prev';
@@ -920,18 +948,20 @@ function renderCarousel(el, slides, height) {
     });
     el.appendChild(dotsRow);
 
-    // Touch / swipe
+    // Touch swipe
     var touchStartX = 0;
-    el.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive:true});
+    el.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive: true});
     el.addEventListener('touchend', function(e) {
       var diff = touchStartX - e.changedTouches[0].clientX;
       if (Math.abs(diff) > 40) go(diff > 0 ? current + 1 : current - 1);
-    }, {passive:true});
+    }, {passive: true});
 
     function go(n) {
       current = (n + slides.length) % slides.length;
       track.style.transform = 'translateX(' + (current * 100) + '%)';
-      dots.forEach(function(d, i) { d.className = 'carousel-dot' + (i === current ? ' active' : ''); });
+      dots.forEach(function(d, i) {
+        d.className = 'carousel-dot' + (i === current ? ' active' : '');
+      });
     }
   }
 }
