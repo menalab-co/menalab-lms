@@ -189,19 +189,24 @@ function applyAdminLessonOverrides() {
     try {
       var adminAdded = JSON.parse(localStorage.getItem('sh_admin_lessons_' + cid) || '[]');
       adminAdded.forEach(function(l) {
-        if (!COURSE_LESSONS[cid].find(function(x){ return x.id === l.id; })) {
-          var custom = null;
-          try { custom = JSON.parse(localStorage.getItem('sh_lesson_' + l.id) || 'null'); } catch(e) {}
-          COURSE_LESSONS[cid].push({
-            id: l.id,
-            title:    (custom && custom.title)    || l.title    || 'درس جديد',
-            type:     (custom && custom.type)     || l.type     || 'video',
-            dur:      (custom && custom.dur)      || l.dur      || '',
-            xp:       l.xp || 50,
-            videoUrl: (custom && custom.videoUrl) || '',
-            content:  (custom && custom.content)  || '',
-            quiz:     (custom && custom.quiz)     || null
-          });
+        var custom = null;
+        try { custom = JSON.parse(localStorage.getItem('sh_lesson_' + l.id) || 'null'); } catch(e) {}
+        var lessonData = {
+          id:       l.id,
+          title:    (custom && custom.title)    || l.title    || 'درس جديد',
+          type:     (custom && custom.type)     || l.type     || 'video',
+          dur:      (custom && custom.dur)      || l.dur      || '',
+          xp:       l.xp || 50,
+          videoUrl: (custom && custom.videoUrl) || '',
+          content:  (custom ? custom.content    : '') || '',
+          quiz:     (custom && custom.quiz)     || null
+        };
+        // Always update/replace to ensure latest content is shown
+        var existIdx = COURSE_LESSONS[cid].findIndex(function(x){ return x.id === l.id; });
+        if (existIdx >= 0) {
+          COURSE_LESSONS[cid][existIdx] = lessonData; // update in place
+        } else {
+          COURSE_LESSONS[cid].push(lessonData);
         }
       });
     } catch(e) {}
@@ -214,19 +219,23 @@ function applyAdminLessonOverrides() {
       if (!COURSE_LESSONS[mod.id]) COURSE_LESSONS[mod.id] = [];
       var adminLessons = JSON.parse(localStorage.getItem('sh_admin_lessons_' + mod.id) || '[]');
       adminLessons.forEach(function(l) {
-        if (!COURSE_LESSONS[mod.id].find(function(x){ return x.id === l.id; })) {
-          var custom = null;
-          try { custom = JSON.parse(localStorage.getItem('sh_lesson_' + l.id) || 'null'); } catch(e) {}
-          COURSE_LESSONS[mod.id].push({
-            id: l.id,
-            title:    (custom && custom.title)    || l.title    || 'درس جديد',
-            type:     (custom && custom.type)     || l.type     || 'video',
-            dur:      (custom && custom.dur)      || l.dur      || '',
-            xp:       l.xp || 50,
-            videoUrl: (custom && custom.videoUrl) || '',
-            content:  (custom && custom.content)  || '',
-            quiz:     (custom && custom.quiz)     || null
-          });
+        var custom = null;
+        try { custom = JSON.parse(localStorage.getItem('sh_lesson_' + l.id) || 'null'); } catch(e) {}
+        var lessonData = {
+          id:       l.id,
+          title:    (custom && custom.title)    || l.title    || 'درس جديد',
+          type:     (custom && custom.type)     || l.type     || 'video',
+          dur:      (custom && custom.dur)      || l.dur      || '',
+          xp:       l.xp || 50,
+          videoUrl: (custom && custom.videoUrl) || '',
+          content:  (custom ? custom.content    : '') || '',
+          quiz:     (custom && custom.quiz)     || null
+        };
+        var existIdx = COURSE_LESSONS[mod.id].findIndex(function(x){ return x.id === l.id; });
+        if (existIdx >= 0) {
+          COURSE_LESSONS[mod.id][existIdx] = lessonData;
+        } else {
+          COURSE_LESSONS[mod.id].push(lessonData);
         }
       });
       // Also add to COURSES array if not already there
