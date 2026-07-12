@@ -859,7 +859,7 @@ function renderCarousel(el, slides, height) {
   slides.forEach(function(slide, idx) {
     var slideEl = document.createElement('div');
     slideEl.className = 'carousel-slide';
-    if (fixedHeight) slideEl.style.height = fixedHeight + 'px';
+    if (fixedHeight) { slideEl.style.height = fixedHeight + 'px'; slideEl.style.overflow = 'hidden'; }
 
     var rawSrc = slide.src || slide;
     var driveId = extractDriveId(rawSrc);
@@ -868,6 +868,7 @@ function renderCarousel(el, slides, height) {
       // Google Drive: iframe — use fixed height or fallback to 400px
       var iframeH = fixedHeight || 420;
       slideEl.style.height = iframeH + 'px';
+      slideEl.style.background = 'var(--warm3)';
       if (!fixedHeight) track.style.height = iframeH + 'px';
       var iframe = document.createElement('iframe');
       iframe.src = 'https://drive.google.com/file/d/' + driveId + '/preview?rm=minimal';
