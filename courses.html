@@ -52,11 +52,12 @@
 <script src="_shared.js"></script>
 <script>
 var BG_COLORS = {prototyping:'#E8F5E9',dt:'#FFF8E1',cad:'#E3F2FD','3dp':'#E8F5E9',laser:'#FFF3E0',ux:'#F3E5F5',elec:'#FFF9C4',cnc:'#EFEBE9'};
+var activeFilter = ''; // '' = all, 'free', 'live', 'design', 'fabrication'
 
 function filterCourses(cat) {
-  activeFilter = cat;
+  activeFilter = cat || '';
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
-  event.target.classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
   renderCourses();
 }
 
