@@ -85,7 +85,15 @@ var _selectedTime = null;
 function renderMentors() {
   var grid = document.getElementById('mentors-grid');
   grid.innerHTML = '';
-  MENTORS.forEach(function(m) {
+  // Merge hardcoded + admin-added mentors + profile edits
+  var adminMentors=[];
+  try{ adminMentors=JSON.parse(localStorage.getItem('sh_admin_mentors')||'[]'); }catch(e){}
+  var customProfiles={};
+  try{ customProfiles=JSON.parse(localStorage.getItem('sh_mentor_profiles')||'{}'); }catch(e){}
+  var allMentors=MENTORS.map(function(m){
+    return customProfiles[m.id]?Object.assign({},m,customProfiles[m.id]):m;
+  }).concat(adminMentors);
+  allMentors.forEach(function(m) {
     var card = document.createElement('div');
     card.className = 'mentor-card';
     var stars = '⭐'.repeat(Math.floor(m.rating));
@@ -189,9 +197,13 @@ function sendMentorMsg(type) {
     req.bookingTime = _selectedTime;
     req.notes = document.getElementById('m-notes').value;
   }
-  var reqs = JSON.parse(localStorage.getItem('sh_mentor_reqs') || '[]');
-  reqs.push(req);
-  localStorage.setItem('sh_mentor_reqs', JSON.stringify(reqs));
+  if (typeof dbSaveMentorRequest === 'function') {
+    dbSaveMentorRequest(req);
+  } else {
+    var reqs = JSON.parse(localStorage.getItem('sh_mentor_reqs') || '[]');
+    reqs.push(req);
+    localStorage.setItem('sh_mentor_reqs', JSON.stringify(reqs));
+  }
   closeModal('mentor-modal');
   document.getElementById('m-question').value = '';
   document.getElementById('m-topic').value = '';
