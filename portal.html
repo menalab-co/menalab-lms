@@ -350,6 +350,7 @@ function saveProject(project) {
 
 // ── Render ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
+  if(typeof dbSyncAllContent==='function'){dbSyncAllContent(function(){dbLoadCourseStatuses(null);});}
   currentProject = getProjectFromURL();
   if (!currentProject) {
     window.location.href = 'dashboard.html';
