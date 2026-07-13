@@ -553,7 +553,18 @@ function openLesson(lid) {
   switchTab('lt-content', 'lp-content', 'tab-btn');
 }
 
-document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('DOMContentLoaded', function() {
+  // Sync latest content from Supabase, then init
+  if (typeof dbSyncAllContent === 'function') {
+    dbSyncAllContent(function() {
+      dbLoadCourseStatuses(function() {
+        init();
+      });
+    });
+  } else {
+    init();
+  }
+});
 </script>
 </body>
 </html>
