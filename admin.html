@@ -1967,13 +1967,13 @@ function buildHTMLFromBlocks() {
         ];
         var toItems2 = function(str) {
           return (str||'').split('\n').filter(function(s){return s.trim();})
-            .map(function(s){ return '<li>' + s.trim() + '</li>'; }).join('');
+            .map(function(s){ return '<div style="padding:3px 0">' + s.trim() + '</div>'; }).join('');
         };
         var colsHTML = columns.map(function(col) {
           var bg = COLOR_MAP[col.color||'warm2'] || '#f5f5f0';
           return '<div style="background:' + bg + ';border-radius:8px;padding:12px">' +
-            (col.title ? '<strong>' + col.title + '</strong>' : '') +
-            (col.items ? '<ul style="margin-top:8px">' + toItems2(col.items) + '</ul>' : '') +
+            (col.title ? '<strong style="display:block;margin-bottom:6px">' + col.title + '</strong>' : '') +
+            (col.items ? '<div style="margin-top:4px">' + toItems2(col.items) + '</div>' : '') +
             '</div>';
         }).join('');
         parts.push(
