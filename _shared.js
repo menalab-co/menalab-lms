@@ -166,6 +166,138 @@ function dbLoadModules(callback) {
     });
 }
 
+
+// ── User DB functions ─────────────────────────────────────
+
+// Simple hash (not cryptographic — for demo; use Supabase Auth for production)
+function simpleHash(str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'h_' + Math.abs(hash).toString(36);
+}
+
+// Register new user — saves to Supabase + localStorage
+function dbRegisterUser(name, email, password, callback) {
+  var userId = 'u_' + Date.now();
+  var passwordHash = simpleHash(password);
+  var user = { id: userId, name: name, email: email.toLowerCase() };
+  var state = {
+    xp: 0, level: 1, aiCredits: 20, maxCredits: 20,
+    enrolledCourses: ['dt'], completedLessons: [],
+    quizScores: {}, earnedBadges: [], projects: []
+  };
+
+  if (!_sb_ready) {
+    // Offline fallback — localStorage only
+    setUser(user);
+    saveUserState(state);
+    callback(null, user);
+    return;
+  }
+
+  // Check if email already exists
+  sbFetch('GET', 'shakkel_users', null, 'email=eq.' + encodeURIComponent(email.toLowerCase()) + '&limit=1')
+    .then(function(rows) {
+      if (rows && rows.length > 0) {
+        callback('البريد الإلكتروني مستخدم بالفعل', null);
+        return;
+      }
+      var row = {
+        id: userId, name: name,
+        email: email.toLowerCase(),
+        password_hash: passwordHash,
+        xp: 0, level: 1, ai_credits: 20,
+        enrolled_courses:  JSON.stringify(state.enrolledCourses),
+        completed_lessons: JSON.stringify([]),
+        quiz_scores:       JSON.stringify({}),
+        earned_badges:     JSON.stringify([]),
+        projects:          JSON.stringify([])
+      };
+      return sbFetch('POST', 'shakkel_users', row);
+    })
+    .then(function() {
+      setUser(user);
+      saveUserState(state);
+      callback(null, user);
+    })
+    .catch(function(e) {
+      // Fallback to localStorage
+      setUser(user);
+      saveUserState(state);
+      callback(null, user);
+    });
+}
+
+// Login — check Supabase, load user state to localStorage
+function dbLoginUser(email, password, callback) {
+  var passwordHash = simpleHash(password);
+
+  if (!_sb_ready) {
+    // Offline: check localStorage only
+    var localUser = getUser();
+    if (localUser && localUser.email === email.toLowerCase()) {
+      callback(null, localUser);
+    } else {
+      callback('بريد إلكتروني أو كلمة مرور غير صحيحة', null);
+    }
+    return;
+  }
+
+  sbFetch('GET', 'shakkel_users', null,
+    'email=eq.' + encodeURIComponent(email.toLowerCase()) +
+    '&password_hash=eq.' + encodeURIComponent(passwordHash) + '&limit=1')
+    .then(function(rows) {
+      if (!rows || !rows.length) {
+        callback('بريد إلكتروني أو كلمة مرور غير صحيحة', null);
+        return;
+      }
+      var r = rows[0];
+      var user = { id: r.id, name: r.name, email: r.email };
+      var state = {
+        xp:               r.xp || 0,
+        level:            r.level || 1,
+        aiCredits:        r.ai_credits || 20,
+        maxCredits:       r.ai_credits || 20,
+        enrolledCourses:  safeJSON(r.enrolled_courses,  ['dt']),
+        completedLessons: safeJSON(r.completed_lessons, []),
+        quizScores:       safeJSON(r.quiz_scores,       {}),
+        earnedBadges:     safeJSON(r.earned_badges,     []),
+        projects:         safeJSON(r.projects,          [])
+      };
+      setUser(user);
+      saveUserState(state);
+      callback(null, user);
+    })
+    .catch(function() {
+      callback('حدث خطأ في الاتصال. حاول مرة أخرى.', null);
+    });
+}
+
+function safeJSON(val, fallback) {
+  if (!val) return fallback;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch(e) { return fallback; }
+}
+
+// Save user state to Supabase (called after XP changes, lesson completions etc.)
+function dbSaveUserState(userId, state) {
+  if (!_sb_ready || !userId) return Promise.resolve();
+  return sbFetch('PATCH', 'shakkel_users', {
+    xp:               state.xp || 0,
+    level:            state.level || 1,
+    ai_credits:       state.aiCredits || 0,
+    enrolled_courses:  JSON.stringify(state.enrolledCourses  || []),
+    completed_lessons: JSON.stringify(state.completedLessons || []),
+    quiz_scores:       JSON.stringify(state.quizScores       || {}),
+    earned_badges:     JSON.stringify(state.earnedBadges     || []),
+    projects:          JSON.stringify(state.projects         || []),
+    last_active:       new Date().toISOString()
+  }, 'id=eq.' + userId);
+}
+
 function getAdminModulesLocal() {
   try { return JSON.parse(localStorage.getItem('sh_admin_modules') || '[]'); } catch(e) { return []; }
 }
@@ -217,7 +349,17 @@ function getUserState() {
     };
   } catch(e) { return { xp:0, level:1, aiCredits:20, maxCredits:20, completedLessons:[], quizScores:{}, enrolledCourses:['dt'], earnedBadges:[], projects:[] }; }
 }
-function saveUserState(s) { localStorage.setItem('sh_state', JSON.stringify(s)); }
+function saveUserState(s) {
+  localStorage.setItem('sh_state', JSON.stringify(s));
+  // Sync to Supabase (debounced — only every 5 seconds to avoid too many calls)
+  var user = getUser();
+  if (user && user.id && _sb_ready) {
+    clearTimeout(window._saveStateTimer);
+    window._saveStateTimer = setTimeout(function() {
+      dbSaveUserState(user.id, s);
+    }, 5000);
+  }
+}
 
 // ── Levels ───────────────────────────────────────────────
 var LEVELS = [
@@ -1185,3 +1327,83 @@ document.addEventListener('DOMContentLoaded', function() {
   renderGreetingBar();
   initChatbot();
 });
+
+// ── Community posts DB ────────────────────────────────────
+function dbSavePosts(posts) {
+  localStorage.setItem('sh_posts', JSON.stringify(posts));
+  if (!_sb_ready) return Promise.resolve();
+  // Upsert all posts
+  return sbFetch('POST', 'shakkel_posts',
+    posts.map(function(p) { return {
+      id: p.id, title: p.title, body: p.body || '',
+      tag: p.tag, author: p.author,
+      votes: p.votes || 0, solved: p.solved || false,
+      replies: JSON.stringify(p.replies || []),
+      created_at: new Date(p.date || Date.now()).toISOString()
+    }; })
+  );
+}
+
+function dbLoadPosts(callback) {
+  if (!_sb_ready) { callback(getPosts()); return; }
+  sbFetch('GET', 'shakkel_posts', null, 'order=created_at.desc&limit=100')
+    .then(function(rows) {
+      if (!rows || !rows.length) { callback(getPosts()); return; }
+      var posts = rows.map(function(r) { return {
+        id: r.id, title: r.title, body: r.body,
+        tag: r.tag, author: r.author,
+        votes: r.votes, solved: r.solved,
+        replies: safeJSON(r.replies, []),
+        date: new Date(r.created_at).getTime()
+      }; });
+      localStorage.setItem('sh_posts', JSON.stringify(posts));
+      callback(posts);
+    }).catch(function() { callback(getPosts()); });
+}
+
+// ── Mentor requests DB ────────────────────────────────────
+function dbSaveMentorRequest(req) {
+  var reqs = JSON.parse(localStorage.getItem('sh_mentor_reqs') || '[]');
+  reqs.push(req);
+  localStorage.setItem('sh_mentor_reqs', JSON.stringify(reqs));
+  if (!_sb_ready) return Promise.resolve();
+  return sbFetch('POST', 'shakkel_mentor_requests', {
+    id: req.id, mentor_id: req.mentorId, type: req.type,
+    student: req.student, question: req.question || '',
+    topic: req.topic || '', booking_date: req.bookingDate || '',
+    booking_time: req.bookingTime || '', notes: req.notes || '',
+    status: req.status || 'pending',
+    created_at: new Date(req.date || Date.now()).toISOString()
+  });
+}
+
+function dbLoadMentorRequests(mentorId, callback) {
+  if (!_sb_ready) {
+    var all = JSON.parse(localStorage.getItem('sh_mentor_reqs') || '[]');
+    callback(mentorId ? all.filter(function(r){ return r.mentorId===mentorId; }) : all);
+    return;
+  }
+  var filter = 'order=created_at.desc&limit=200' + (mentorId ? '&mentor_id=eq.'+mentorId : '');
+  sbFetch('GET', 'shakkel_mentor_requests', null, filter)
+    .then(function(rows) {
+      if (!rows) { callback([]); return; }
+      var reqs = rows.map(function(r) { return {
+        id: r.id, mentorId: r.mentor_id, type: r.type,
+        student: r.student, question: r.question, topic: r.topic,
+        bookingDate: r.booking_date, bookingTime: r.booking_time,
+        notes: r.notes, status: r.status, date: new Date(r.created_at).getTime()
+      }; });
+      localStorage.setItem('sh_mentor_reqs', JSON.stringify(reqs));
+      callback(reqs);
+    }).catch(function() { callback([]); });
+}
+
+function dbUpdateMentorRequest(id, updates) {
+  // Update localStorage
+  var reqs = JSON.parse(localStorage.getItem('sh_mentor_reqs') || '[]');
+  var req = reqs.find(function(r){ return r.id === id; });
+  if (req) Object.assign(req, updates);
+  localStorage.setItem('sh_mentor_reqs', JSON.stringify(reqs));
+  if (!_sb_ready) return Promise.resolve();
+  return sbFetch('PATCH', 'shakkel_mentor_requests', updates, 'id=eq.' + id);
+}
