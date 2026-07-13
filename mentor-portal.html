@@ -113,7 +113,16 @@ function showSection(sec){
 
 function renderAll(){
   if(!currentMentor)return;
-  var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]').filter(function(r){return r.mentorId===currentMentor.id;});
+  if(typeof dbLoadMentorRequests==='function'){
+    dbLoadMentorRequests(currentMentor.id, function(allReqs){
+      _renderWithReqs(allReqs);
+    });
+  } else {
+    var allReqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]').filter(function(r){return r.mentorId===currentMentor.id;});
+    _renderWithReqs(allReqs);
+  }
+}
+function _renderWithReqs(reqs){
   var questions=reqs.filter(function(r){return r.type==='question';});
   var sessions=reqs.filter(function(r){return r.type==='session';});
   var pending_q=questions.filter(function(r){return r.status==='pending';}).length;
@@ -198,17 +207,25 @@ function renderAll(){
 function answerQuestion(id){
   var inp=document.getElementById('rep-'+id);
   if(!inp||!inp.value.trim()){showToast('يرجى كتابة الرد');return;}
-  var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
-  var req=reqs.find(function(r){return r.id===id;});
-  if(req){req.reply=inp.value.trim();req.status='answered';}
-  localStorage.setItem('sh_mentor_reqs',JSON.stringify(reqs));
+  if(typeof dbUpdateMentorRequest==='function'){
+    dbUpdateMentorRequest(id,{reply:inp.value.trim(),status:'answered'});
+  } else {
+    var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
+    var req=reqs.find(function(r){return r.id===id;});
+    if(req){req.reply=inp.value.trim();req.status='answered';}
+    localStorage.setItem('sh_mentor_reqs',JSON.stringify(reqs));
+  }
   showToast('✅ تم إرسال الرد');renderAll();
 }
 function updateSession(id,status){
-  var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
-  var req=reqs.find(function(r){return r.id===id;});
-  if(req)req.status=status;
-  localStorage.setItem('sh_mentor_reqs',JSON.stringify(reqs));
+  if(typeof dbUpdateMentorRequest==='function'){
+    dbUpdateMentorRequest(id,{status:status});
+  } else {
+    var reqs=JSON.parse(localStorage.getItem('sh_mentor_reqs')||'[]');
+    var req=reqs.find(function(r){return r.id===id;});
+    if(req)req.status=status;
+    localStorage.setItem('sh_mentor_reqs',JSON.stringify(reqs));
+  }
   showToast(status==='accepted'?'✅ تم قبول الجلسة':'تم رفض الطلب');renderAll();
 }
 function saveProfile(){
