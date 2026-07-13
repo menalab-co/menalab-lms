@@ -482,6 +482,12 @@ function renderAll(){
   renderEventsAdmin();
   renderMentorsAdmin();
   renderStagesContent();
+  // Sync from Supabase on every admin load
+  dbSyncAllContent(function(){
+    renderContent();
+    showToast('🔄 تم مزامنة المحتوى من السيرفر');
+  });
+  dbLoadCourseStatuses(function(){ renderContent(); });
   renderUsers();
   renderRequests();
 }
@@ -808,9 +814,12 @@ function saveLessonEdit(){
     content:textContent,
     quiz:quizData
   };
+  // Save to Supabase (syncs to all devices) + localStorage fallback
+  dbSaveLesson(lessonId, document.getElementById('lm-course-id').value, custom)
+    .then(function(){ showToast('✅ تم الحفظ على السيرفر'); })
+    .catch(function(){ showToast('✅ تم الحفظ محلياً'); });
   localStorage.setItem('sh_lesson_'+lessonId,JSON.stringify(custom));
   closeModal('lesson-modal');
-  showToast('✅ تم حفظ الدرس');
   renderContent();
 }
 
@@ -1066,6 +1075,11 @@ function saveStageEdit(){
   var carouselCode=buildCarouselCode('s');
   var textContent=document.getElementById('sm-content').value.trim();
   var content=textContent+(carouselCode?'\n'+carouselCode:'');
+  // Save to Supabase + localStorage fallback
+  var quizObj = quizRaw ? JSON.parse(quizRaw) : null;
+  dbSaveStage(stageId, video, content, quizObj)
+    .then(function(){ showToast('✅ تم حفظ المرحلة على السيرفر'); })
+    .catch(function(){ showToast('✅ تم الحفظ محلياً'); });
   if(video) localStorage.setItem('sh_stage_video_'+stageId,video);
   else localStorage.removeItem('sh_stage_video_'+stageId);
   if(content) localStorage.setItem('sh_stage_content_'+stageId,content);
@@ -1073,7 +1087,6 @@ function saveStageEdit(){
   if(quizRaw) localStorage.setItem('sh_stage_quiz_'+stageId,quizRaw);
   else localStorage.removeItem('sh_stage_quiz_'+stageId);
   closeModal('stage-modal');
-  showToast('✅ تم حفظ مرحلة '+stageId);
   renderStagesContent();
 }
 
@@ -1240,6 +1253,7 @@ function cycleCourseStatus(courseId) {
   var current = getCourseStatus(courseId);
   var next = cycle[current] || 'active';
   setCourseStatus(courseId, next);
+  dbSetCourseStatus(courseId, next);
   var labels = {active:'🟢 نشطة', coming_soon:'⏳ قريباً', inactive:'⛔ غير نشطة'};
   showToast('تم تغيير حالة الدورة إلى: ' + (labels[next]||next));
   renderContent();
