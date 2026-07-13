@@ -159,10 +159,11 @@
 
     <div class="form-group" style="margin-bottom:8px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <label class="form-label" style="margin:0">المحتوى</label>
-        <div style="display:flex;gap:4px">
-          <button type="button" onclick="setContentMode('visual')" id="mode-visual" class="btn btn-primary btn-sm" style="font-size:11px">🎨 مرئي</button>
-          <button type="button" onclick="setContentMode('html')" id="mode-html" class="btn btn-outline btn-sm" style="font-size:11px">💻 HTML</button>
+        <label class="form-label" style="margin:0">المحتوى <span id="content-has-data" style="display:none;font-size:10px;color:var(--teal);font-weight:600">✓ يحتوي على محتوى</span></label>
+        <div style="display:flex;gap:4px;align-items:center">
+          <span style="font-size:10px;color:var(--text3)">وضع التحرير:</span>
+          <button type="button" onclick="setContentMode('visual')" id="mode-visual" class="btn btn-outline btn-sm" style="font-size:11px">🎨 مرئي</button>
+          <button type="button" onclick="setContentMode('html')" id="mode-html" class="btn btn-primary btn-sm" style="font-size:11px">💻 HTML</button>
         </div>
       </div>
 
@@ -798,15 +799,13 @@ function saveLessonEdit(){
   var quizRaw=document.getElementById('lm-quiz').value.trim();
   var quizData=null;
   if(quizRaw){try{quizData=JSON.parse(quizRaw);}catch(e){showToast('خطأ في صيغة JSON للتقييم');return;}}
-  // Re-collect carousel from builder and append to content
-  var carouselCode = buildCarouselCode('');
+  // Content is already prepared by the saveLessonEdit override above
   var textContent = document.getElementById('lm-content').value.trim();
-  var finalContent = textContent + (carouselCode ? '\n' + carouselCode : '');
   var custom={
     title:document.getElementById('lm-title').value.trim(),
     videoUrl:document.getElementById('lm-video').value.trim(),
     dur:document.getElementById('lm-dur').value.trim(),
-    content:finalContent,
+    content:textContent,
     quiz:quizData
   };
   localStorage.setItem('sh_lesson_'+lessonId,JSON.stringify(custom));
@@ -1339,6 +1338,7 @@ function setContentMode(mode) {
   var textarea = document.getElementById('lm-content');
   var btnV = document.getElementById('mode-visual');
   var btnH = document.getElementById('mode-html');
+  var indicator = document.getElementById('content-has-data');
 
   if (mode === 'visual') {
     // Sync HTML → blocks if switching from html mode
@@ -1351,10 +1351,22 @@ function setContentMode(mode) {
     if (btnH) { btnH.className = 'btn btn-outline btn-sm'; btnH.style.fontSize='11px'; }
   } else {
     // Sync blocks → HTML when switching to html mode
-    if (textarea) { textarea.value = buildHTMLFromBlocks(); textarea.style.display = ''; }
+    // Only overwrite textarea if there are actual blocks in the visual builder
+    var container = document.getElementById('vb-blocks');
+    var hasBlocks = container && container.children && container.children.length > 0;
+    if (hasBlocks) {
+      var builtHTML = buildHTMLFromBlocks();
+      var carouselCode = buildCarouselCode('');
+      if (textarea) textarea.value = builtHTML + (carouselCode ? '\n' + carouselCode : '');
+    }
+    if (textarea) textarea.style.display = '';
     if (builder) builder.style.display = 'none';
     if (btnV) { btnV.className = 'btn btn-outline btn-sm'; btnV.style.fontSize='11px'; }
     if (btnH) { btnH.className = 'btn btn-primary btn-sm'; btnH.style.fontSize='11px'; }
+  }
+  // Show indicator if textarea has content
+  if (indicator && textarea) {
+    indicator.style.display = textarea.value.trim() ? 'inline' : 'none';
   }
 }
 
@@ -1774,22 +1786,40 @@ function parseHTMLToBlocks(rawHTML) {
 var _origOpenLessonEdit = openLessonEdit;
 openLessonEdit = function(courseId, lessonId) {
   _origOpenLessonEdit(courseId, lessonId);
-  // After modal opens, populate visual builder from content
+  // Open in HTML mode first so admin immediately sees existing content
+  // Then parse into blocks for visual editing
   setTimeout(function() {
     var textarea = document.getElementById('lm-content');
-    if (textarea) {
-      parseHTMLToBlocks(textarea.value);
+    if (!textarea) return;
+    var existing = textarea.value.trim();
+    if (existing) {
+      // Start in HTML mode so content is visible immediately
+      setContentMode('html');
+      // Also parse into blocks for visual mode
+      parseHTMLToBlocks(existing);
+    } else {
+      // Empty lesson — start in visual mode ready to add blocks
       setContentMode('visual');
     }
-  }, 50);
+  }, 80);
 };
 
 // ── Override saveLessonEdit to collect visual builder HTML ──
 var _origSaveLessonEdit = saveLessonEdit;
 saveLessonEdit = function() {
+  var textarea = document.getElementById('lm-content');
   if (_contentMode === 'visual') {
-    var textarea = document.getElementById('lm-content');
-    if (textarea) textarea.value = buildHTMLFromBlocks();
+    // In visual mode: build HTML from blocks + append any carousel rows
+    var blocksHTML = buildHTMLFromBlocks();
+    var carouselCode = buildCarouselCode('');
+    if (textarea) textarea.value = blocksHTML + (carouselCode ? '\n' + carouselCode : '');
+  } else {
+    // In HTML mode: textarea already has the final content (including carousel code)
+    // Just append any filled carousel builder rows that haven't been inserted yet
+    var carouselCode = buildCarouselCode('');
+    if (textarea && carouselCode) {
+      textarea.value = textarea.value + '\n' + carouselCode;
+    }
   }
   _origSaveLessonEdit();
 };
