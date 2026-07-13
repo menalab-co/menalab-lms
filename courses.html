@@ -63,46 +63,40 @@ function filterCourses(cat) {
 function renderCourses() {
   var grid = document.getElementById('courses-grid');
 
-  // Merge admin-added modules into COURSES (runtime only)
+  // Build a fresh display list without mutating global COURSES
+  var displayCourses = COURSES.map(function(c) {
+    var storedStatus = localStorage.getItem('sh_course_status_' + c.id);
+    if (storedStatus) {
+      return Object.assign({}, c, {
+        live:       storedStatus === 'active',
+        comingSoon: storedStatus === 'coming_soon',
+        inactive:   storedStatus === 'inactive'
+      });
+    }
+    return c;
+  });
+
+  // Add admin-added modules
   try {
     var adminModules = JSON.parse(localStorage.getItem('sh_admin_modules') || '[]');
     adminModules.forEach(function(mod) {
-      if (!COURSES.find(function(c){ return c.id === mod.id; })) {
-        var status = localStorage.getItem('sh_course_status_' + mod.id) || 'active';
-        COURSES.push({
-          id: mod.id, title: mod.title, icon: mod.icon,
-          price: mod.price || 0, free: (mod.price||0) === 0,
-          credits: mod.credits || 25, category: mod.category || 'design',
-          level: mod.level || 'مبتدئ', duration: mod.duration || '',
-          lessons: (JSON.parse(localStorage.getItem('sh_admin_lessons_'+mod.id)||'[]')).length,
-          desc: mod.desc || '', badge: mod.icon + ' ' + mod.title,
-          live: status === 'active', comingSoon: status === 'coming_soon',
-          inactive: status === 'inactive'
-        });
-      } else {
-        // Update status of existing entry
-        var idx = COURSES.findIndex(function(c){ return c.id === mod.id; });
-        if (idx >= 0) {
-          var status = localStorage.getItem('sh_course_status_' + mod.id) || 'active';
-          COURSES[idx].live = status === 'active';
-          COURSES[idx].comingSoon = status === 'coming_soon';
-          COURSES[idx].inactive = status === 'inactive';
-        }
-      }
-    });
-    // Apply status overrides to all built-in courses too
-    COURSES.forEach(function(c, i) {
-      var storedStatus = localStorage.getItem('sh_course_status_' + c.id);
-      if (storedStatus) {
-        COURSES[i].live = storedStatus === 'active';
-        COURSES[i].comingSoon = storedStatus === 'coming_soon';
-        COURSES[i].inactive = storedStatus === 'inactive';
-      }
+      if (displayCourses.find(function(c){ return c.id === mod.id; })) return;
+      var status = localStorage.getItem('sh_course_status_' + mod.id) || 'active';
+      displayCourses.push({
+        id: mod.id, title: mod.title, icon: mod.icon,
+        price: mod.price || 0, free: (mod.price||0) === 0,
+        credits: mod.credits || 25, category: mod.category || 'design',
+        level: mod.level || 'مبتدئ', duration: mod.duration || '',
+        lessons: (JSON.parse(localStorage.getItem('sh_admin_lessons_'+mod.id)||'[]')).length,
+        desc: mod.desc || '', badge: mod.icon + ' ' + mod.title,
+        live: status === 'active', comingSoon: status === 'coming_soon',
+        inactive: status === 'inactive'
+      });
     });
   } catch(e) {}
   var state = getUserState();
   var enrolled = state.enrolledCourses || [];
-  var filtered = COURSES.filter(function(c) {
+  var filtered = displayCourses.filter(function(c) {
     if (c.inactive) return false; // hidden by admin
     if (activeFilter === 'free') return c.free;
     if (activeFilter === 'live') return !c.comingSoon;
