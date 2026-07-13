@@ -185,23 +185,6 @@ function applyAdminLessonOverrides() {
         if (custom.quiz && custom.quiz.length) COURSE_LESSONS[cid][idx].quiz = custom.quiz;
       }
     });
-    // Apply custom lesson order if set by admin
-    try {
-      var storedOrder = JSON.parse(localStorage.getItem('sh_lesson_order_' + cid) || 'null');
-      if (storedOrder && storedOrder.length) {
-        var sorted = [];
-        storedOrder.forEach(function(id) {
-          var lesson = COURSE_LESSONS[cid].find(function(l){ return l.id === id; });
-          if (lesson) sorted.push(lesson);
-        });
-        // Append any lessons not in the stored order
-        COURSE_LESSONS[cid].forEach(function(l) {
-          if (!storedOrder.includes(l.id)) sorted.push(l);
-        });
-        COURSE_LESSONS[cid] = sorted;
-      }
-    } catch(e) {}
-
     // Append admin-added lessons to built-in courses
     try {
       var adminAdded = JSON.parse(localStorage.getItem('sh_admin_lessons_' + cid) || '[]');
@@ -226,6 +209,23 @@ function applyAdminLessonOverrides() {
           COURSE_LESSONS[cid].push(lessonData);
         }
       });
+    } catch(e) {}
+
+    // Apply custom lesson order AFTER all lessons (built-in + admin-added) are assembled
+    try {
+      var storedOrder = JSON.parse(localStorage.getItem('sh_lesson_order_' + cid) || 'null');
+      if (storedOrder && storedOrder.length) {
+        var sorted = [];
+        storedOrder.forEach(function(ordId) {
+          var lesson = COURSE_LESSONS[cid].find(function(l){ return l.id === ordId; });
+          if (lesson) sorted.push(lesson);
+        });
+        // Append any lessons not yet in stored order (newly added ones)
+        COURSE_LESSONS[cid].forEach(function(l) {
+          if (!storedOrder.includes(l.id)) sorted.push(l);
+        });
+        COURSE_LESSONS[cid] = sorted;
+      }
     } catch(e) {}
   });
 
@@ -255,6 +255,22 @@ function applyAdminLessonOverrides() {
           COURSE_LESSONS[mod.id].push(lessonData);
         }
       });
+      // Apply custom order for this module AFTER all its lessons are loaded
+      try {
+        var modOrder = JSON.parse(localStorage.getItem('sh_lesson_order_' + mod.id) || 'null');
+        if (modOrder && modOrder.length) {
+          var modSorted = [];
+          modOrder.forEach(function(ordId) {
+            var lesson = COURSE_LESSONS[mod.id].find(function(l){ return l.id === ordId; });
+            if (lesson) modSorted.push(lesson);
+          });
+          COURSE_LESSONS[mod.id].forEach(function(l) {
+            if (!modOrder.includes(l.id)) modSorted.push(l);
+          });
+          COURSE_LESSONS[mod.id] = modSorted;
+        }
+      } catch(e) {}
+
       // Also add to COURSES array if not already there
       if (!COURSES.find(function(c){ return c.id === mod.id; })) {
         COURSES.push({
