@@ -1708,36 +1708,65 @@ function renderBlock(id, type, data) {
       break;
 
     case 'compare':
-      var cmpRow = row();
+      // Number of columns selector
+      var colCountRow = div('display:flex;align-items:center;gap:10px;margin-bottom:10px');
+      var colCountLbl = document.createElement('span');
+      colCountLbl.style.cssText='font-size:12px;color:var(--text2);white-space:nowrap';
+      colCountLbl.textContent='عدد الأعمدة:';
+      var colCountSel = sel(id+'-cols', [['2','عمودان'],['3','ثلاثة'],['4','أربعة']], String(data.cols||2));
+      colCountSel.style.cssText='width:auto;height:30px;font-size:12px';
+      var colCountAddBtn = document.createElement('button');
+      colCountAddBtn.type='button'; colCountAddBtn.className='btn btn-outline btn-sm';
+      colCountAddBtn.textContent='تحديث الأعمدة';
+      colCountAddBtn.style.fontSize='11px';
+      (function(bid){ colCountAddBtn.onclick=function(){
+        var n=parseInt(document.getElementById(bid+'-cols').value)||2;
+        updateCompareCols(bid, n);
+      }; })(id);
+      colCountRow.appendChild(colCountLbl);
+      colCountRow.appendChild(colCountSel);
+      colCountRow.appendChild(colCountAddBtn);
+      body.appendChild(colCountRow);
 
-      var rCol = div('');
-      rCol.appendChild(lbl('العمود الأيمن'));
-      rCol.appendChild(inp('r-title', data.rTitle, 'العنوان...'));
-      rCol.lastChild.style.marginBottom='4px';
-      var rColorSel = sel('r-color', [
-        ['red-light','🔴 أحمر'],['teal-light','🟢 أخضر'],
-        ['blue-light','🔵 أزرق'],['warm2','⚪ رمادي']
-      ], data.rColor||'red-light');
-      rColorSel.style.marginBottom='4px';
-      rCol.appendChild(rColorSel);
-      rCol.appendChild(inp('r-items', data.rItems||'', 'بند واحد في كل سطر...', 'textarea', 3));
+      // Columns container
+      var colsContainer = document.createElement('div');
+      colsContainer.id = id+'-cols-container';
+      var numCols = parseInt(data.cols||2);
+      var colColors = ['red-light','teal-light','blue-light','warm2'];
+      var colDefaults = ['🔴 أحمر','🟢 أخضر','🔵 أزرق','⚪ رمادي'];
+      var colsData = data.columns || [
+        {title: data.rTitle||'', color: data.rColor||'red-light',  items: data.rItems||''},
+        {title: data.lTitle||'', color: data.lColor||'teal-light', items: data.lItems||''}
+      ];
+      function buildColsUI(n, existingData) {
+        colsContainer.innerHTML='';
+        colsContainer.style.cssText='display:grid;grid-template-columns:repeat('+n+',1fr);gap:8px';
+        for (var ci=0; ci<n; ci++) {
+          var colData = existingData[ci] || {title:'', color: colColors[ci%4], items:''};
+          var col = div('');
+          col.appendChild(lbl('العمود '+(ci+1)));
+          var tInp = inp(id+'-col-title-'+ci, colData.title, 'العنوان...');
+          tInp.style.marginBottom='4px';
+          col.appendChild(tInp);
+          var cSel = sel(id+'-col-color-'+ci, [
+            ['red-light','🔴 أحمر'],['teal-light','🟢 أخضر'],
+            ['blue-light','🔵 أزرق'],['warm2','⚪ رمادي'],['gold-light','🟡 ذهبي']
+          ], colData.color||colColors[ci%4]);
+          cSel.style.cssText='height:30px;margin-bottom:4px;font-size:11px';
+          col.appendChild(cSel);
+          col.appendChild(inp(id+'-col-items-'+ci, colData.items, 'بند واحد في كل سطر...', 'textarea', 3));
+          colsContainer.appendChild(col);
+        }
+      }
+      buildColsUI(numCols, colsData);
+      body.appendChild(colsContainer);
 
-      var lCol = div('');
-      lCol.appendChild(lbl('العمود الأيسر'));
-      lCol.appendChild(inp('l-title', data.lTitle, 'العنوان...'));
-      lCol.lastChild.style.marginBottom='4px';
-      var lColorSel = sel('l-color', [
-        ['teal-light','🟢 أخضر'],['red-light','🔴 أحمر'],
-        ['blue-light','🔵 أزرق'],['warm2','⚪ رمادي']
-      ], data.lColor||'teal-light');
-      lColorSel.style.marginBottom='4px';
-      lCol.appendChild(lColorSel);
-      lCol.appendChild(inp('l-items', data.lItems||'', 'بند واحد في كل سطر...', 'textarea', 3));
-
-      cmpRow.appendChild(rCol);
-      cmpRow.appendChild(lCol);
-      body.appendChild(cmpRow);
+      // Store cols count in hidden input
+      var colsHidden = document.createElement('input');
+      colsHidden.type='hidden'; colsHidden.id=id+'-cols-count'; colsHidden.value=numCols;
+      body.appendChild(colsHidden);
       break;
+
 
     case 'list':
       var listTypeRow = div('display:flex;gap:6px;margin-bottom:6px;align-items:center');
@@ -1762,6 +1791,51 @@ function renderBlock(id, type, data) {
   container.appendChild(el);
 }
 
+
+function updateCompareCols(bid, n) {
+  // Read existing column data, rebuild UI with new count
+  var existing = [];
+  var oldN = parseInt((document.getElementById(bid+'-cols-count')||{value:'2'}).value)||2;
+  for (var ci=0; ci<oldN; ci++) {
+    existing.push({
+      title: (document.getElementById(bid+'-col-title-'+ci)||{value:''}).value,
+      color: (document.getElementById(bid+'-col-color-'+ci)||{value:'warm2'}).value,
+      items: (document.getElementById(bid+'-col-items-'+ci)||{value:''}).value
+    });
+  }
+  var hidden = document.getElementById(bid+'-cols-count');
+  if (hidden) hidden.value = n;
+  var container = document.getElementById(bid+'-cols-container');
+  if (!container) return;
+  container.innerHTML='';
+  container.style.cssText='display:grid;grid-template-columns:repeat('+n+',1fr);gap:8px';
+  var colColors=['red-light','teal-light','blue-light','warm2'];
+  for (var ci=0; ci<n; ci++) {
+    var colData = existing[ci]||{title:'',color:colColors[ci%4],items:''};
+    var col=document.createElement('div');
+    var lblEl=document.createElement('div');
+    lblEl.className='vb-col-label';lblEl.textContent='العمود '+(ci+1);
+    col.appendChild(lblEl);
+    var tInp=document.createElement('input');
+    tInp.id=bid+'-col-title-'+ci;tInp.className='vb-input';
+    tInp.placeholder='العنوان...';tInp.value=colData.title||'';tInp.style.marginBottom='4px';
+    col.appendChild(tInp);
+    var cSel=document.createElement('select');
+    cSel.id=bid+'-col-color-'+ci;cSel.className='vb-input';
+    cSel.style.cssText='height:30px;margin-bottom:4px;font-size:11px';
+    [['red-light','🔴 أحمر'],['teal-light','🟢 أخضر'],['blue-light','🔵 أزرق'],['warm2','⚪ رمادي'],['gold-light','🟡 ذهبي']].forEach(function(o){
+      var opt=document.createElement('option');opt.value=o[0];opt.textContent=o[1];
+      if(o[0]===(colData.color||colColors[ci%4]))opt.selected=true;
+      cSel.appendChild(opt);
+    });
+    col.appendChild(cSel);
+    var tArea=document.createElement('textarea');
+    tArea.id=bid+'-col-items-'+ci;tArea.className='vb-input';tArea.rows=3;
+    tArea.placeholder='بند واحد في كل سطر...';tArea.value=colData.items||'';
+    col.appendChild(tArea);
+    container.appendChild(col);
+  }
+}
 
 function deleteBlock(id) {
   _blocks = _blocks.filter(function(b){ return b.id !== id; });
@@ -1816,7 +1890,21 @@ function readBlockData(b) {
     case 'heading':   return { level: val('level'), text: val('text') };
     case 'paragraph': return { text: val('text') };
     case 'callout':   return { ctype: val('ctype'), icon: val('icon'), title: val('title'), text: val('text') };
-    case 'compare':   return { rTitle: val('r-title'), rColor: val('r-color'), rItems: val('r-items'), lTitle: val('l-title'), lColor: val('l-color'), lItems: val('l-items') };
+    case 'compare': {
+      var n = parseInt(val('cols-count')) || parseInt(val('cols')) || 2;
+      var cols = [];
+      for (var ci=0; ci<n; ci++) {
+        cols.push({
+          title: (document.getElementById(b.id+'-col-title-'+ci)||{value:''}).value,
+          color: (document.getElementById(b.id+'-col-color-'+ci)||{value:'warm2'}).value,
+          items: (document.getElementById(b.id+'-col-items-'+ci)||{value:''}).value
+        });
+      }
+      return { cols: n, columns: cols,
+        // backward compat
+        rTitle: cols[0]&&cols[0].title, rColor: cols[0]&&cols[0].color, rItems: cols[0]&&cols[0].items,
+        lTitle: cols[1]&&cols[1].title, lColor: cols[1]&&cols[1].color, lItems: cols[1]&&cols[1].items };
+    }
     case 'list':      return { ltype: val('ltype'), items: val('items') };
     case 'steps':     return { items: val('items') };
     case 'divider':   return {};
@@ -1861,22 +1949,25 @@ function buildHTMLFromBlocks() {
         break;
 
       case 'compare':
-        var rBg = COLOR_MAP[d.rColor||'red-light'] || '#fafafa';
-        var lBg = COLOR_MAP[d.lColor||'teal-light'] || '#fafafa';
-        var toItems = function(str) {
+        var numC = d.cols || 2;
+        var columns = d.columns || [
+          {title:d.rTitle||'', color:d.rColor||'red-light',  items:d.rItems||''},
+          {title:d.lTitle||'', color:d.lColor||'teal-light', items:d.lItems||''}
+        ];
+        var toItems2 = function(str) {
           return (str||'').split('\n').filter(function(s){return s.trim();})
             .map(function(s){ return '<li>' + s.trim() + '</li>'; }).join('');
         };
+        var colsHTML = columns.map(function(col) {
+          var bg = COLOR_MAP[col.color||'warm2'] || '#f5f5f0';
+          return '<div style="background:' + bg + ';border-radius:8px;padding:12px">' +
+            (col.title ? '<strong>' + col.title + '</strong>' : '') +
+            (col.items ? '<ul style="margin-top:8px">' + toItems2(col.items) + '</ul>' : '') +
+            '</div>';
+        }).join('');
         parts.push(
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">' +
-            '<div style="background:' + rBg + ';border-radius:8px;padding:12px">' +
-              (d.rTitle ? '<strong>' + d.rTitle + '</strong>' : '') +
-              '<ul style="margin-top:8px">' + toItems(d.rItems) + '</ul>' +
-            '</div>' +
-            '<div style="background:' + lBg + ';border-radius:8px;padding:12px">' +
-              (d.lTitle ? '<strong>' + d.lTitle + '</strong>' : '') +
-              '<ul style="margin-top:8px">' + toItems(d.lItems) + '</ul>' +
-            '</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(' + numC + ',1fr);gap:12px;margin:12px 0">' +
+            colsHTML +
           '</div>'
         );
         break;
@@ -1944,16 +2035,18 @@ function parseHTMLToBlocks(rawHTML) {
       addBlock('callout', {ctype: ctype, text: text.trim()});
     }
     else if (tag === 'div' && html.includes('grid-template-columns')) {
-      // Compare block — parse left/right
+      // Compare block — parse all columns
       var cols = Array.from(node.querySelectorAll(':scope > div'));
-      if (cols.length === 2) {
-        var rItems = Array.from(cols[0].querySelectorAll('li')).map(function(li){return li.textContent.trim();}).join('\n');
-        var lItems = Array.from(cols[1].querySelectorAll('li')).map(function(li){return li.textContent.trim();}).join('\n');
-        var rStrong = cols[0].querySelector('strong');
-        var lStrong = cols[1].querySelector('strong');
+      if (cols.length >= 2) {
+        var parsedCols = cols.map(function(col) {
+          var items = Array.from(col.querySelectorAll('li')).map(function(li){return li.textContent.trim();}).join('\n');
+          var strong = col.querySelector('strong');
+          return { title: strong ? strong.textContent.trim() : '', color: 'warm2', items: items };
+        });
         addBlock('compare', {
-          rTitle: rStrong ? rStrong.textContent : '', rItems: rItems,
-          lTitle: lStrong ? lStrong.textContent : '', lItems: lItems
+          cols: cols.length, columns: parsedCols,
+          rTitle: parsedCols[0]&&parsedCols[0].title, rItems: parsedCols[0]&&parsedCols[0].items,
+          lTitle: parsedCols[1]&&parsedCols[1].title, lItems: parsedCols[1]&&parsedCols[1].items
         });
       }
     }
