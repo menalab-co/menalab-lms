@@ -22,8 +22,8 @@ var VERSION = '5.0';
 // Replace these two values with your own from:
 // Supabase → Settings → API
 // ============================================================
-var SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-var SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+var SUPABASE_URL = 'https://qudwzsmiidpynphhktuv.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1ZHd6c21paWRweW5waGhrdHV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Mzc4MTUsImV4cCI6MjA5OTUxMzgxNX0.HPlvsHNinMRPusNGcmHWjkUiDoGMwqTtsrGj8mOkqR4';
 
 // ── Supabase API helper ───────────────────────────────────
 var _sb_ready = !!(SUPABASE_URL && !SUPABASE_URL.includes('YOUR_PROJECT'));
@@ -116,7 +116,7 @@ function dbSaveStage(stageId, videoUrl, content, quiz) {
 // Load all content from Supabase into localStorage cache (called on page load)
 function dbSyncAllContent(callback) {
   if (!_sb_ready) { if(callback) callback(); return; }
-  sbFetch('GET', 'shakkel_content', null, 'limit=500')
+  sbFetch('GET', 'shakkel_content', null, 'limit=1000')
     .then(function(rows) {
       if (!rows) { if(callback) callback(); return; }
       rows.forEach(function(r) {
@@ -125,15 +125,33 @@ function dbSyncAllContent(callback) {
           var data = { title: r.title, videoUrl: r.video_url, dur: r.duration,
                        content: r.content, quiz: r.quiz };
           localStorage.setItem('sh_lesson_' + lessonId, JSON.stringify(data));
+
         } else if (r.type === 'stage') {
           var stageId = r.id.replace('stage_', '');
           if (r.video_url) localStorage.setItem('sh_stage_video_'   + stageId, r.video_url);
           if (r.content)   localStorage.setItem('sh_stage_content_' + stageId, r.content);
           if (r.quiz)      localStorage.setItem('sh_stage_quiz_'    + stageId, JSON.stringify(r.quiz));
+
+        } else if (r.type === 'lesson_order') {
+          // Lesson order for a course
+          if (r.content) localStorage.setItem('sh_lesson_order_' + r.course_id, r.content);
+
+        } else if (r.type === 'status') {
+          // Course active/coming_soon/inactive
+          if (r.course_id && r.status) localStorage.setItem('sh_course_status_' + r.course_id, r.status);
+
+        } else if (r.type === 'admin_lessons') {
+          // Admin-added lessons list for a course
+          if (r.content) localStorage.setItem('sh_admin_lessons_' + r.course_id, r.content);
+
+        } else if (r.type === 'deleted_lessons') {
+          // Soft-deleted built-in lessons
+          if (r.content) localStorage.setItem('sh_deleted_lessons_' + r.course_id, r.content);
         }
       });
       if(callback) callback();
-    });
+    })
+    .catch(function(e) { console.warn('Sync error:', e); if(callback) callback(); });
 }
 
 // Save admin-added module
@@ -305,8 +323,30 @@ function getAdminModulesLocal() {
 // Save course status (active/coming_soon/inactive)
 function dbSetCourseStatus(courseId, status) {
   localStorage.setItem('sh_course_status_' + courseId, status);
+  if (!_sb_ready) return Promise.resolve();
   var row = { id: 'status_' + courseId, type: 'status', status: status,
               course_id: courseId, updated_at: new Date().toISOString() };
+  return sbFetch('POST', 'shakkel_content', row);
+}
+
+// Save admin-added lessons list for a course to Supabase
+function dbSaveAdminLessons(courseId) {
+  var lessons = localStorage.getItem('sh_admin_lessons_' + courseId) || '[]';
+  localStorage.setItem('sh_admin_lessons_' + courseId, lessons);
+  if (!_sb_ready) return Promise.resolve();
+  var row = { id: 'admin_lessons_' + courseId, type: 'admin_lessons',
+              course_id: courseId, content: lessons,
+              updated_at: new Date().toISOString() };
+  return sbFetch('POST', 'shakkel_content', row);
+}
+
+// Save deleted lessons list for a course to Supabase  
+function dbSaveDeletedLessons(courseId) {
+  var deleted = localStorage.getItem('sh_deleted_lessons_' + courseId) || '[]';
+  if (!_sb_ready) return Promise.resolve();
+  var row = { id: 'deleted_lessons_' + courseId, type: 'deleted_lessons',
+              course_id: courseId, content: deleted,
+              updated_at: new Date().toISOString() };
   return sbFetch('POST', 'shakkel_content', row);
 }
 
