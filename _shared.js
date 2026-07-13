@@ -22,8 +22,8 @@ var VERSION = '5.0';
 // Replace these two values with your own from:
 // Supabase → Settings → API
 // ============================================================
-var SUPABASE_URL = 'https://qudwzsmiidpynphhktuv.supabase.co/rest/v1/';
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1ZHd6c21paWRweW5waGhrdHV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Mzc4MTUsImV4cCI6MjA5OTUxMzgxNX0.HPlvsHNinMRPusNGcmHWjkUiDoGMwqTtsrGj8mOkqR4';
+var SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+var SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
 
 // ── Supabase API helper ───────────────────────────────────
 var _sb_ready = !!(SUPABASE_URL && !SUPABASE_URL.includes('YOUR_PROJECT'));
@@ -1183,17 +1183,36 @@ function renderCarousel(el, slides, height) {
     var driveId = extractDriveId(rawSrc);
 
     if (driveId) {
-      // Google Drive: iframe — use fixed height or fallback to 400px
-      var iframeH = fixedHeight || 420;
-      slideEl.style.height = iframeH + 'px';
-      slideEl.style.background = 'var(--warm3)';
-      if (!fixedHeight) track.style.height = iframeH + 'px';
-      var iframe = document.createElement('iframe');
-      iframe.src = 'https://drive.google.com/file/d/' + driveId + '/preview?rm=minimal';
-      iframe.style.cssText = 'width:100%;height:' + iframeH + 'px;border:none;display:block';
-      iframe.setAttribute('allow', 'autoplay');
-      iframe.setAttribute('allowfullscreen', '');
-      slideEl.appendChild(iframe);
+      // Google Drive images: use thumbnail URL as <img> — no black background
+      var thumbnailUrl = 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w1600';
+      var img = document.createElement('img');
+      img.src = thumbnailUrl;
+      img.alt = slide.caption || '';
+      img.style.cssText = 'width:100%;height:auto;display:block;' + (fixedHeight ? 'height:' + fixedHeight + 'px;object-fit:contain;' : '');
+      img.onerror = function() {
+        // Fallback to iframe if thumbnail fails (e.g. not an image file)
+        this.style.display = 'none';
+        var iframe = document.createElement('iframe');
+        var iframeH = fixedHeight || 420;
+        iframe.src = 'https://drive.google.com/file/d/' + driveId + '/preview?rm=minimal';
+        iframe.style.cssText = 'width:100%;height:' + iframeH + 'px;border:none;display:block';
+        iframe.setAttribute('allow', 'autoplay');
+        iframe.setAttribute('allowfullscreen', '');
+        this.parentNode.appendChild(iframe);
+        if (!fixedHeight) track.style.height = iframeH + 'px';
+      };
+      if (!fixedHeight) {
+        img.onload = (function(t, s) {
+          return function() {
+            var h = this.naturalHeight * (el.offsetWidth / this.naturalWidth);
+            if (h > 0) {
+              t.style.height = h + 'px';
+              Array.prototype.forEach.call(t.children, function(ch){ ch.style.height = h + 'px'; });
+            }
+          };
+        })(track, slideEl);
+      }
+      slideEl.appendChild(img);
     } else {
       // Regular image — let it define the height naturally
       var img = document.createElement('img');
