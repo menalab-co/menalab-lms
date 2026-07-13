@@ -185,6 +185,7 @@ function enrollCourse(cid) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  if(typeof dbSyncAllContent==='function'){dbSyncAllContent(function(){dbLoadCourseStatuses(null);});}
   // Add "live" filter button
   var filterBar = document.querySelector('.filter-bar');
   if (filterBar) {
