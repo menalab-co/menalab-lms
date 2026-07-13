@@ -16,6 +16,182 @@ const LOGO_SVG = `<svg width="36" height="36" viewBox="0 0 80 80" fill="none" xm
 
 // ── Version & State ──────────────────────────────────────
 var VERSION = '5.0';
+
+// ============================================================
+// SUPABASE CONFIGURATION
+// Replace these two values with your own from:
+// Supabase → Settings → API
+// ============================================================
+var SUPABASE_URL = 'https://qudwzsmiidpynphhktuv.supabase.co/rest/v1/';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1ZHd6c21paWRweW5waGhrdHV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Mzc4MTUsImV4cCI6MjA5OTUxMzgxNX0.HPlvsHNinMRPusNGcmHWjkUiDoGMwqTtsrGj8mOkqR4';
+
+// ── Supabase API helper ───────────────────────────────────
+var _sb_ready = !!(SUPABASE_URL && !SUPABASE_URL.includes('YOUR_PROJECT'));
+
+function sbFetch(method, table, body, filters) {
+  if (!_sb_ready) return Promise.resolve(null);
+  var url = SUPABASE_URL + '/rest/v1/' + table;
+  if (filters) url += '?' + filters;
+  var opts = {
+    method: method,
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates' : ''
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(url, opts)
+    .then(function(r) { return r.status === 204 ? null : r.json(); })
+    .catch(function(e) { console.warn('Supabase error:', e); return null; });
+}
+
+// ── Content DB functions ──────────────────────────────────
+
+// Save lesson content to Supabase
+function dbSaveLesson(lessonId, courseId, data) {
+  var row = {
+    id:            'lesson_' + lessonId,
+    type:          'lesson',
+    course_id:     courseId,
+    title:         data.title    || '',
+    video_url:     data.videoUrl || '',
+    duration:      data.dur      || '',
+    content:       data.content  || '',
+    quiz:          data.quiz     || null,
+    updated_at:    new Date().toISOString()
+  };
+  // Also save to localStorage as fallback
+  localStorage.setItem('sh_lesson_' + lessonId, JSON.stringify({
+    title: data.title, videoUrl: data.videoUrl, dur: data.dur,
+    content: data.content, quiz: data.quiz
+  }));
+  return sbFetch('POST', 'shakkel_content', row);
+}
+
+// Load lesson content from Supabase (falls back to localStorage)
+function dbLoadLesson(lessonId, callback) {
+  if (!_sb_ready) {
+    var local = null;
+    try { local = JSON.parse(localStorage.getItem('sh_lesson_' + lessonId) || 'null'); } catch(e) {}
+    callback(local);
+    return;
+  }
+  sbFetch('GET', 'shakkel_content', null, 'id=eq.lesson_' + lessonId + '&limit=1')
+    .then(function(rows) {
+      if (rows && rows.length) {
+        var r = rows[0];
+        var data = { title: r.title, videoUrl: r.video_url, dur: r.duration,
+                     content: r.content, quiz: r.quiz };
+        // Also cache in localStorage
+        localStorage.setItem('sh_lesson_' + lessonId, JSON.stringify(data));
+        callback(data);
+      } else {
+        // Not in Supabase — try localStorage
+        var local = null;
+        try { local = JSON.parse(localStorage.getItem('sh_lesson_' + lessonId) || 'null'); } catch(e) {}
+        callback(local);
+      }
+    });
+}
+
+// Save stage content
+function dbSaveStage(stageId, videoUrl, content, quiz) {
+  var row = {
+    id:         'stage_' + stageId,
+    type:       'stage',
+    video_url:  videoUrl  || '',
+    content:    content   || '',
+    quiz:       quiz      || null,
+    updated_at: new Date().toISOString()
+  };
+  // localStorage fallback
+  if (videoUrl)  localStorage.setItem('sh_stage_video_'   + stageId, videoUrl);
+  if (content)   localStorage.setItem('sh_stage_content_' + stageId, content);
+  if (quiz)      localStorage.setItem('sh_stage_quiz_'    + stageId, JSON.stringify(quiz));
+  return sbFetch('POST', 'shakkel_content', row);
+}
+
+// Load all content from Supabase into localStorage cache (called on page load)
+function dbSyncAllContent(callback) {
+  if (!_sb_ready) { if(callback) callback(); return; }
+  sbFetch('GET', 'shakkel_content', null, 'limit=500')
+    .then(function(rows) {
+      if (!rows) { if(callback) callback(); return; }
+      rows.forEach(function(r) {
+        if (r.type === 'lesson') {
+          var lessonId = r.id.replace('lesson_', '');
+          var data = { title: r.title, videoUrl: r.video_url, dur: r.duration,
+                       content: r.content, quiz: r.quiz };
+          localStorage.setItem('sh_lesson_' + lessonId, JSON.stringify(data));
+        } else if (r.type === 'stage') {
+          var stageId = r.id.replace('stage_', '');
+          if (r.video_url) localStorage.setItem('sh_stage_video_'   + stageId, r.video_url);
+          if (r.content)   localStorage.setItem('sh_stage_content_' + stageId, r.content);
+          if (r.quiz)      localStorage.setItem('sh_stage_quiz_'    + stageId, JSON.stringify(r.quiz));
+        }
+      });
+      if(callback) callback();
+    });
+}
+
+// Save admin-added module
+function dbSaveModule(module) {
+  var row = {
+    id: module.id, title: module.title, icon: module.icon,
+    category: module.category, level: module.level, price: module.price,
+    description: module.desc, status: module.status || 'active'
+  };
+  localStorage.setItem('sh_admin_modules',
+    JSON.stringify(getAdminModulesLocal().concat([module])));
+  return sbFetch('POST', 'shakkel_modules', row);
+}
+
+function dbLoadModules(callback) {
+  if (!_sb_ready) {
+    callback(getAdminModulesLocal());
+    return;
+  }
+  sbFetch('GET', 'shakkel_modules', null, 'order=created_at.asc')
+    .then(function(rows) {
+      if (!rows) { callback(getAdminModulesLocal()); return; }
+      var modules = rows.map(function(r) {
+        return { id: r.id, title: r.title, icon: r.icon, category: r.category,
+                 level: r.level, price: r.price || 0, free: !(r.price > 0),
+                 desc: r.description, status: r.status, credits: 25, lessons: 0 };
+      });
+      localStorage.setItem('sh_admin_modules', JSON.stringify(modules));
+      callback(modules);
+    });
+}
+
+function getAdminModulesLocal() {
+  try { return JSON.parse(localStorage.getItem('sh_admin_modules') || '[]'); } catch(e) { return []; }
+}
+
+// Save course status (active/coming_soon/inactive)
+function dbSetCourseStatus(courseId, status) {
+  localStorage.setItem('sh_course_status_' + courseId, status);
+  var row = { id: 'status_' + courseId, type: 'status', status: status,
+              course_id: courseId, updated_at: new Date().toISOString() };
+  return sbFetch('POST', 'shakkel_content', row);
+}
+
+function dbLoadCourseStatuses(callback) {
+  if (!_sb_ready) { if(callback) callback(); return; }
+  sbFetch('GET', 'shakkel_content', null, 'type=eq.status&limit=50')
+    .then(function(rows) {
+      if (rows) rows.forEach(function(r) {
+        if (r.course_id && r.status) {
+          localStorage.setItem('sh_course_status_' + r.course_id, r.status);
+        }
+      });
+      if(callback) callback();
+    });
+}
+
+
 function loadState() {
   try {
     if (localStorage.getItem('sh_version') !== VERSION) {
