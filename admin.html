@@ -1715,17 +1715,17 @@ function renderBlock(id, type, data) {
       colCountLbl.textContent='عدد الأعمدة:';
       var colCountSel = sel(id+'-cols', [['2','عمودان'],['3','ثلاثة'],['4','أربعة']], String(data.cols||2));
       colCountSel.style.cssText='width:auto;height:30px;font-size:12px';
-      var colCountAddBtn = document.createElement('button');
-      colCountAddBtn.type='button'; colCountAddBtn.className='btn btn-outline btn-sm';
-      colCountAddBtn.textContent='تحديث الأعمدة';
-      colCountAddBtn.style.fontSize='11px';
-      (function(bid){ colCountAddBtn.onclick=function(){
-        var n=parseInt(document.getElementById(bid+'-cols').value)||2;
+      // Auto-rebuild columns when count changes
+      (function(bid){ colCountSel.onchange=function(){
+        var n=parseInt(this.value)||2;
         updateCompareCols(bid, n);
       }; })(id);
       colCountRow.appendChild(colCountLbl);
       colCountRow.appendChild(colCountSel);
-      colCountRow.appendChild(colCountAddBtn);
+      var colHint = document.createElement('span');
+      colHint.style.cssText='font-size:10px;color:var(--text3)';
+      colHint.textContent='يتحدث تلقائياً';
+      colCountRow.appendChild(colHint);
       body.appendChild(colCountRow);
 
       // Columns container
@@ -1891,13 +1891,24 @@ function readBlockData(b) {
     case 'paragraph': return { text: val('text') };
     case 'callout':   return { ctype: val('ctype'), icon: val('icon'), title: val('title'), text: val('text') };
     case 'compare': {
-      var n = parseInt(val('cols-count')) || parseInt(val('cols')) || 2;
+      // Read from hidden count (updated by updateCompareCols) or from select, whichever is larger
+      var nFromCount  = parseInt(val('cols-count')) || 2;
+      var nFromSelect = parseInt(val('cols'))       || 2;
+      var n = Math.max(nFromCount, nFromSelect);
+      // Also scan DOM to find all existing col inputs (catches any that slipped through)
+      var maxCi = n;
+      while (document.getElementById(b.id+'-col-title-'+maxCi)) maxCi++;
+      n = maxCi > n ? maxCi : n;
       var cols = [];
       for (var ci=0; ci<n; ci++) {
+        var titleEl = document.getElementById(b.id+'-col-title-'+ci);
+        var colorEl = document.getElementById(b.id+'-col-color-'+ci);
+        var itemsEl = document.getElementById(b.id+'-col-items-'+ci);
+        if (!titleEl && !itemsEl) break; // no more columns
         cols.push({
-          title: (document.getElementById(b.id+'-col-title-'+ci)||{value:''}).value,
-          color: (document.getElementById(b.id+'-col-color-'+ci)||{value:'warm2'}).value,
-          items: (document.getElementById(b.id+'-col-items-'+ci)||{value:''}).value
+          title: titleEl ? titleEl.value : '',
+          color: colorEl ? colorEl.value : 'warm2',
+          items: itemsEl ? itemsEl.value : ''
         });
       }
       return { cols: n, columns: cols,
