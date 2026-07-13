@@ -554,15 +554,17 @@ function openLesson(lid) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Sync latest content from Supabase, then init
+  // Init immediately so lessons show without waiting for Supabase
+  init();
+  // Then sync from Supabase in background and refresh if needed
   if (typeof dbSyncAllContent === 'function') {
     dbSyncAllContent(function() {
-      dbLoadCourseStatuses(function() {
-        init();
-      });
+      if (typeof dbLoadCourseStatuses === 'function') dbLoadCourseStatuses(null);
+      // Re-apply overrides with fresh data
+      if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
+      // Re-open current lesson to refresh content
+      if (currentLesson) openLesson(currentLesson.id);
     });
-  } else {
-    init();
   }
 });
 </script>
