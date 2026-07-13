@@ -330,10 +330,16 @@
 </aside>
 
 <main class="main-content">
-  <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+  <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
     <h2 id="section-title">الإحصائيات</h2>
-    <button class="btn btn-outline btn-sm" onclick="exportData()">📥 CSV</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary btn-sm" onclick="syncAllToSupabase()" id="sync-btn" style="background:var(--teal)">
+        ☁️ مزامنة كل شيء مع Supabase
+      </button>
+      <button class="btn btn-outline btn-sm" onclick="exportData()">📥 CSV</button>
+    </div>
   </div>
+  <div id="sync-status" style="display:none;padding:12px 16px;border-radius:var(--r);margin-bottom:16px;font-size:13px"></div>
 
   <!-- STATS -->
   <div id="sec-stats">
@@ -1401,9 +1407,11 @@ function saveNewModule() {
   if (!title) { showToast('يرجى كتابة اسم الوحدة'); return; }
 
   var id = 'module_' + Date.now();
+  var newMod = { id: id, title: title, icon: icon, category: category,
+    level: level, price: price, desc: desc,
+    free: price === 0, credits: 25, lessons: 0, duration: '' };
   var modules = getAdminModules();
-  modules.push({ id, title, icon, category, level, price, desc,
-    free: price === 0, credits: 25, lessons: 0, duration: '' });
+  modules.push(newMod);
   saveAdminModules(modules);
 
   // Set initial status
@@ -1500,6 +1508,159 @@ function moveLessonInOrder(courseId, lessonId, direction, builtInLessons, adminA
   saveLessonOrder(courseId, all.map(function(l){ return l.id; }));
   renderContent();
   showToast('✅ تم تغيير ترتيب الدرس');
+}
+
+
+// ── Sync everything from localStorage → Supabase ─────────
+async function syncAllToSupabase() {
+  var btn = document.getElementById('sync-btn');
+  var status = document.getElementById('sync-status');
+
+  if (typeof _sb_ready === 'undefined' || !_sb_ready) {
+    status.style.cssText = 'display:block;background:#FFF3E0;color:#7a5c00;border:1px solid #EBC84C;padding:12px 16px;border-radius:var(--r);margin-bottom:16px;font-size:13px';
+    status.textContent = '⚠️ Supabase غير متصل. تأكد من إضافة المفاتيح في _shared.js';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري المزامنة...';
+  status.style.cssText = 'display:block;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;padding:12px 16px;border-radius:var(--r);margin-bottom:16px;font-size:13px';
+  status.textContent = '⏳ جاري مزامنة المحتوى مع Supabase...';
+
+  var synced = 0, errors = 0;
+
+  function log(msg) {
+    status.textContent = msg;
+  }
+
+  // 1. Sync all lesson content (sh_lesson_[id])
+  log('⏳ مزامنة محتوى الدروس...');
+  var allLessonIds = [];
+  // Built-in courses
+  Object.keys(ADMIN_LESSONS).forEach(function(cid) {
+    (ADMIN_LESSONS[cid] || []).forEach(function(l) { allLessonIds.push({id: l.id, cid: cid}); });
+  });
+  // Admin-added lessons
+  try {
+    var adminMods = JSON.parse(localStorage.getItem('sh_admin_modules') || '[]');
+    adminMods.forEach(function(mod) {
+      var lessons = JSON.parse(localStorage.getItem('sh_admin_lessons_' + mod.id) || '[]');
+      lessons.forEach(function(l) { allLessonIds.push({id: l.id, cid: mod.id}); });
+    });
+    Object.keys(ADMIN_LESSONS).forEach(function(cid) {
+      var adminAdded = JSON.parse(localStorage.getItem('sh_admin_lessons_' + cid) || '[]');
+      adminAdded.forEach(function(l) { allLessonIds.push({id: l.id, cid: cid}); });
+    });
+  } catch(e) {}
+
+  for (var i = 0; i < allLessonIds.length; i++) {
+    var item = allLessonIds[i];
+    var custom = null;
+    try { custom = JSON.parse(localStorage.getItem('sh_lesson_' + item.id) || 'null'); } catch(e) {}
+    // Also check PROTOTYPING_LESSONS and COURSE_LESSONS for built-in content
+    if (!custom || !custom.content) {
+      var builtIn = null;
+      if (typeof PROTOTYPING_LESSONS !== 'undefined') {
+        builtIn = PROTOTYPING_LESSONS.find(function(l){ return l.id === item.id; });
+      }
+      if (!builtIn && typeof COURSE_LESSONS !== 'undefined') {
+        Object.keys(COURSE_LESSONS).forEach(function(cid) {
+          if (!builtIn) builtIn = COURSE_LESSONS[cid].find(function(l){ return l.id === item.id; });
+        });
+      }
+      if (builtIn) {
+        custom = custom || {};
+        if (!custom.title)   custom.title   = builtIn.title   || '';
+        if (!custom.content) custom.content = builtIn.content || '';
+        if (!custom.videoUrl)custom.videoUrl= builtIn.videoUrl|| '';
+        if (!custom.dur)     custom.dur     = builtIn.dur     || '';
+        if (!custom.quiz)    custom.quiz    = builtIn.quiz    || null;
+      }
+    }
+    if (custom) {
+      try {
+        await dbSaveLesson(item.id, item.cid, custom);
+        synced++;
+        log('⏳ دروس: ' + toAr(synced) + ' من ' + toAr(allLessonIds.length) + '...');
+      } catch(e) { errors++; }
+    }
+  }
+
+  // 2. Sync stage content (DT portal)
+  log('⏳ مزامنة مراحل المشاريع...');
+  var stages = ['empathy','define','ideate','prototype','test','iterate'];
+  for (var s = 0; s < stages.length; s++) {
+    var sid = stages[s];
+    var video   = localStorage.getItem('sh_stage_video_'   + sid) || '';
+    var content = localStorage.getItem('sh_stage_content_' + sid) || '';
+    var quizRaw = localStorage.getItem('sh_stage_quiz_'    + sid);
+    var quiz    = null;
+    try { if (quizRaw) quiz = JSON.parse(quizRaw); } catch(e) {}
+    if (video || content || quiz) {
+      try { await dbSaveStage(sid, video, content, quiz); synced++; } catch(e) { errors++; }
+    }
+  }
+
+  // 3. Sync course statuses
+  log('⏳ مزامنة حالات الدورات...');
+  var allCourseIds = (typeof COURSES !== 'undefined' ? COURSES.map(function(c){return c.id;}) : []);
+  try {
+    JSON.parse(localStorage.getItem('sh_admin_modules')||'[]').forEach(function(m){ allCourseIds.push(m.id); });
+  } catch(e) {}
+  for (var c = 0; c < allCourseIds.length; c++) {
+    var st = localStorage.getItem('sh_course_status_' + allCourseIds[c]);
+    if (st) {
+      try { await dbSetCourseStatus(allCourseIds[c], st); synced++; } catch(e) { errors++; }
+    }
+  }
+
+  // 4. Sync admin-added modules
+  log('⏳ مزامنة الوحدات...');
+  try {
+    var mods = JSON.parse(localStorage.getItem('sh_admin_modules') || '[]');
+    for (var m = 0; m < mods.length; m++) {
+      try { await dbSaveModule(mods[m]); synced++; } catch(e) { errors++; }
+    }
+  } catch(e) {}
+
+  // 5. Sync admin lessons lists & deleted lessons & lesson order
+  log('⏳ مزامنة قوائم الدروس...');
+  var allCids = Object.keys(ADMIN_LESSONS);
+  try {
+    JSON.parse(localStorage.getItem('sh_admin_modules')||'[]').forEach(function(m){ allCids.push(m.id); });
+  } catch(e) {}
+  for (var ci = 0; ci < allCids.length; ci++) {
+    var cid = allCids[ci];
+    try {
+      if (localStorage.getItem('sh_admin_lessons_' + cid)) {
+        await dbSaveAdminLessons(cid); synced++;
+      }
+      if (localStorage.getItem('sh_deleted_lessons_' + cid)) {
+        await dbSaveDeletedLessons(cid); synced++;
+      }
+      if (localStorage.getItem('sh_lesson_order_' + cid)) {
+        var order = JSON.parse(localStorage.getItem('sh_lesson_order_' + cid));
+        await sbFetch('POST', 'shakkel_content', {
+          id: 'lesson_order_' + cid, type: 'lesson_order',
+          course_id: cid, content: JSON.stringify(order),
+          updated_at: new Date().toISOString()
+        });
+        synced++;
+      }
+    } catch(e) { errors++; }
+  }
+
+  // Done
+  btn.disabled = false;
+  btn.textContent = '☁️ مزامنة كل شيء مع Supabase';
+
+  if (errors === 0) {
+    status.style.cssText = 'display:block;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:12px 16px;border-radius:var(--r);margin-bottom:16px;font-size:13px';
+    status.textContent = '✅ تمت المزامنة بنجاح! ' + toAr(synced) + ' عنصر تم رفعه إلى Supabase. المتعلمون سيرون المحتوى عند تحديث الصفحة.';
+  } else {
+    status.style.cssText = 'display:block;background:#FFF3E0;color:#7a5c00;border:1px solid #EBC84C;padding:12px 16px;border-radius:var(--r);margin-bottom:16px;font-size:13px';
+    status.textContent = '⚠️ تمت المزامنة مع ' + toAr(errors) + ' أخطاء. تحقق من اتصال Supabase.';
+  }
 }
 
 function exportData(){
