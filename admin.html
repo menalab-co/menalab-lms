@@ -624,32 +624,60 @@ function renderContent(){
     // Lessons list
     var lessonList = document.createElement('div');
     lessonList.style.cssText='display:flex;flex-direction:column;gap:6px';
-    // Built-in lessons (filter out any marked as deleted)
+    // Built-in lessons — ordered and filtered
     var deletedLessons = getDeletedBuiltinLessons(c.id);
-    lessons.filter(function(l){ return !deletedLessons.includes(l.id); }).forEach(function(l, idx){
+    var adminAddedForOrder = getAdminAddedLessons(c.id);
+    var activeLessons = lessons.filter(function(l){ return !deletedLessons.includes(l.id); });
+    var orderedAll = getOrderedLessons(c.id, activeLessons, adminAddedForOrder);
+    var totalOrdered = orderedAll.length;
+    orderedAll.forEach(function(l, idx){
+      var isAdminLesson = adminAddedForOrder.find(function(al){ return al.id === l.id; });
       var custom=JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
-      var hasVideo=!!(custom.videoUrl||'');
+      var hasVideo=!!(custom.videoUrl||l.videoUrl||'');
       var row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--warm3);border-radius:var(--r)';
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;'+(isAdminLesson?'background:#E8F5E9;border:1px solid #C8E6C9;':'background:var(--warm3);')+'border-radius:var(--r)';
       row.innerHTML=
-        '<span style="font-size:11px;color:var(--text3);min-width:20px">'+toAr(idx+1)+'</span>'+
-        '<span style="font-size:13px;flex:1">'+(custom.title||l.title)+'</span>'+
-        (hasVideo?'<span class="badge badge-teal">📹 فيديو</span>':'<span class="badge badge-gray">بدون فيديو</span>');
+        '<span style="font-size:11px;color:var(--text3);min-width:20px;text-align:center">'+toAr(idx+1)+'</span>'+
+        '<span style="font-size:13px;flex:1">'+(custom.title||l.title)+(isAdminLesson?'<span class="badge badge-teal" style="margin-right:4px;font-size:9px">جديد</span>':'')+'</span>'+
+        (hasVideo?'<span class="badge badge-teal" style="font-size:10px">📹</span>':'<span class="badge badge-gray" style="font-size:10px">بدون فيديو</span>');
+
+      // Move up button
+      var upBtn=document.createElement('button');
+      upBtn.title='تحريك لأعلى';
+      upBtn.textContent='▲';
+      upBtn.disabled = idx === 0;
+      upBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:11px;color:var(--text2);flex-shrink:0;'+(idx===0?'opacity:.3;cursor:not-allowed':'');
+      (function(cid,lid,allL,adminL){ upBtn.onclick=function(){ moveLessonInOrder(cid,lid,-1,allL,adminL); }; })(c.id,l.id,activeLessons,adminAddedForOrder);
+
+      // Move down button
+      var dnBtn=document.createElement('button');
+      dnBtn.title='تحريك لأسفل';
+      dnBtn.textContent='▼';
+      dnBtn.disabled = idx === totalOrdered - 1;
+      dnBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:11px;color:var(--text2);flex-shrink:0;'+(idx===totalOrdered-1?'opacity:.3;cursor:not-allowed':'');
+      (function(cid,lid,allL,adminL){ dnBtn.onclick=function(){ moveLessonInOrder(cid,lid,1,allL,adminL); }; })(c.id,l.id,activeLessons,adminAddedForOrder);
+
       var editBtn=document.createElement('button');
       editBtn.className='btn btn-outline btn-sm';
-      editBtn.textContent='✏️ تعديل';
+      editBtn.textContent='✏️';
+      editBtn.title='تعديل الدرس';
       (function(cid,lid){ editBtn.onclick=function(){ openLessonEdit(cid,lid); }; })(c.id,l.id);
+
+      row.appendChild(upBtn);
+      row.appendChild(dnBtn);
       row.appendChild(editBtn);
 
-      // Delete built-in lesson (hides it by marking as deleted in localStorage)
+      // Delete button
       var delBtn=document.createElement('button');
-      delBtn.className='btn btn-sm';
-      delBtn.style.cssText='background:var(--red-light);color:var(--red);border:none;cursor:pointer;padding:5px 8px;border-radius:var(--r)';
+      delBtn.style.cssText='background:none;border:1px solid var(--red);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:11px;color:var(--red);flex-shrink:0';
       delBtn.title='حذف الدرس';
       delBtn.textContent='🗑️';
-      (function(cid,lid){ delBtn.onclick=function(){ deleteBuiltinLesson(cid,lid); }; })(c.id,l.id);
+      if (isAdminLesson) {
+        (function(cid,lid){ delBtn.onclick=function(){ deleteAdminLesson(cid,lid); }; })(c.id,l.id);
+      } else {
+        (function(cid,lid){ delBtn.onclick=function(){ deleteBuiltinLesson(cid,lid); }; })(c.id,l.id);
+      }
       row.appendChild(delBtn);
-
       lessonList.appendChild(row);
     });
     // Admin-added lessons
@@ -1405,6 +1433,55 @@ function restoreBuiltinLesson(courseId, lessonId) {
   localStorage.setItem('sh_deleted_lessons_' + courseId, JSON.stringify(deleted));
   showToast('✅ تمت استعادة الدرس');
   renderContent();
+}
+
+
+// ── Lesson order management ───────────────────────────────
+function getLessonOrder(courseId) {
+  try {
+    return JSON.parse(localStorage.getItem('sh_lesson_order_' + courseId) || 'null');
+  } catch(e) { return null; }
+}
+
+function saveLessonOrder(courseId, orderedIds) {
+  localStorage.setItem('sh_lesson_order_' + courseId, JSON.stringify(orderedIds));
+  // Also save to Supabase
+  if (typeof dbSaveLesson === 'function' && typeof _sb_ready !== 'undefined' && _sb_ready) {
+    var row = {
+      id: 'lesson_order_' + courseId, type: 'lesson_order',
+      course_id: courseId, content: JSON.stringify(orderedIds),
+      updated_at: new Date().toISOString()
+    };
+    if (typeof sbFetch === 'function') sbFetch('POST', 'shakkel_content', row);
+  }
+}
+
+function getOrderedLessons(courseId, builtInLessons, adminAdded) {
+  var all = builtInLessons.concat(adminAdded || []);
+  var order = getLessonOrder(courseId);
+  if (!order || !order.length) return all;
+  // Sort by stored order, append any new lessons not in the order at the end
+  var sorted = [];
+  order.forEach(function(id) {
+    var lesson = all.find(function(l){ return l.id === id; });
+    if (lesson) sorted.push(lesson);
+  });
+  // Add any lessons not yet in the order
+  all.forEach(function(l) {
+    if (!order.includes(l.id)) sorted.push(l);
+  });
+  return sorted;
+}
+
+function moveLessonInOrder(courseId, lessonId, direction, builtInLessons, adminAdded) {
+  var all = getOrderedLessons(courseId, builtInLessons, adminAdded);
+  var idx = all.findIndex(function(l){ return l.id === lessonId; });
+  var newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= all.length) return;
+  var tmp = all[idx]; all[idx] = all[newIdx]; all[newIdx] = tmp;
+  saveLessonOrder(courseId, all.map(function(l){ return l.id; }));
+  renderContent();
+  showToast('✅ تم تغيير ترتيب الدرس');
 }
 
 function exportData(){
