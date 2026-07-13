@@ -107,7 +107,7 @@ function renderPosts(){
   });
   if(!filtered.length) list.innerHTML='<div style="text-align:center;padding:48px;color:var(--text3)">لا توجد منشورات — كن أول من يطرح سؤالاً!</div>';
 }
-function votePost(id,d){var p=getPosts();var post=p.find(function(x){return x.id===id;});if(post){post.votes=(post.votes||0)+d;savePosts(p);renderPosts();}}
+function votePost(id,d){var p=getPosts();var post=p.find(function(x){return x.id===id;});if(post){post.votes=(post.votes||0)+d;if(typeof dbSavePosts==='function')dbSavePosts(p);else savePosts(p);renderPosts();}}
 function toggleReply(id){var el=document.getElementById('reply-'+id);if(el)el.style.display=el.style.display==='block'?'none':'block';}
 function submitReply(id){var inp=document.getElementById('ri-'+id);if(!inp||!inp.value.trim())return;var p=getPosts();var post=p.find(function(x){return x.id===id;});if(post){if(!post.replies)post.replies=[];var u=getUser();post.replies.push({author:u?u.name:'متعلم',text:inp.value.trim()});savePosts(p);inp.value='';renderPosts();}}
 function deletePost(id){if(!confirm('حذف؟'))return;savePosts(getPosts().filter(function(p){return p.id!==id;}));renderPosts();}
@@ -117,10 +117,23 @@ function submitPost(){
   var u=getUser();
   var posts=getPosts();
   posts.unshift({id:'p_'+Date.now(),title,body:document.getElementById('p-body').value.trim(),tag:document.getElementById('p-tag').value,author:u?u.name:'متعلم',date:Date.now(),votes:0,solved:false,replies:[]});
-  savePosts(posts);closeModal('post-modal');document.getElementById('p-title').value='';document.getElementById('p-body').value='';
+  if (typeof dbSavePosts === 'function') dbSavePosts(posts);
+  else savePosts(posts);
+  closeModal('post-modal');document.getElementById('p-title').value='';document.getElementById('p-body').value='';
   addXP(15);renderPosts();showToast('✅ تم نشر المنشور');
 }
-document.addEventListener('DOMContentLoaded',renderPosts);
+document.addEventListener('DOMContentLoaded', function() {
+  // Load from Supabase if available, else localStorage
+  if (typeof dbLoadPosts === 'function') {
+    dbLoadPosts(function(posts) {
+      // Store loaded posts so renderPosts() picks them up
+      if (posts && posts.length) localStorage.setItem('sh_posts', JSON.stringify(posts));
+      renderPosts();
+    });
+  } else {
+    renderPosts();
+  }
+});
 </script>
 </body>
 </html>
