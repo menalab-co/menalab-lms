@@ -800,24 +800,42 @@ function renderContent(){
     } else {
       var lessonList = document.createElement('div');
       lessonList.style.cssText='display:flex;flex-direction:column;gap:6px';
-      adminLessons.forEach(function(l, i) {
+      // Use getOrderedLessons so reordering works for admin modules too
+      var orderedModLessons = getOrderedLessons(mod.id, [], adminLessons);
+      var totalModLessons = orderedModLessons.length;
+      orderedModLessons.forEach(function(l, i) {
         var custom=JSON.parse(localStorage.getItem('sh_lesson_'+l.id)||'{}');
         var hasVideo=!!(custom.videoUrl||l.videoUrl||'');
         var row=document.createElement('div');
         row.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--warm3);border-radius:var(--r)';
         row.innerHTML=
-          '<span style="font-size:11px;color:var(--text3);min-width:20px">'+toAr(i+1)+'</span>'+
+          '<span style="font-size:11px;color:var(--text3);min-width:20px;text-align:center">'+toAr(i+1)+'</span>'+
           '<span style="font-size:13px;flex:1">'+(custom.title||l.title)+'</span>'+
-          (hasVideo?'<span class="badge badge-teal">📹 فيديو</span>':'<span class="badge badge-gray">بدون فيديو</span>');
+          (hasVideo?'<span class="badge badge-teal" style="font-size:10px">📹</span>':'<span class="badge badge-gray" style="font-size:10px">بدون فيديو</span>');
+
+        // Move up
+        var upBtn=document.createElement('button');
+        upBtn.title='تحريك لأعلى'; upBtn.textContent='▲'; upBtn.disabled=i===0;
+        upBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:11px;color:var(--text2);flex-shrink:0;'+(i===0?'opacity:.3;cursor:not-allowed':'');
+        (function(mid,lid,allL){ upBtn.onclick=function(){ moveLessonInOrder(mid,lid,-1,[],allL); }; })(mod.id,l.id,adminLessons);
+
+        // Move down
+        var dnBtn=document.createElement('button');
+        dnBtn.title='تحريك لأسفل'; dnBtn.textContent='▼'; dnBtn.disabled=i===totalModLessons-1;
+        dnBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:11px;color:var(--text2);flex-shrink:0;'+(i===totalModLessons-1?'opacity:.3;cursor:not-allowed':'');
+        (function(mid,lid,allL){ dnBtn.onclick=function(){ moveLessonInOrder(mid,lid,1,[],allL); }; })(mod.id,l.id,adminLessons);
+
         var editBtn=document.createElement('button');
-        editBtn.className='btn btn-outline btn-sm';
-        editBtn.textContent='✏️ تعديل';
+        editBtn.className='btn btn-outline btn-sm'; editBtn.textContent='✏️'; editBtn.title='تعديل';
         (function(mid,lid){ editBtn.onclick=function(){ openLessonEdit(mid,lid); }; })(mod.id,l.id);
+
         var delBtn=document.createElement('button');
-        delBtn.className='btn btn-sm';
-        delBtn.style.cssText='background:var(--red-light);color:var(--red);border:none;cursor:pointer';
-        delBtn.textContent='🗑️';
+        delBtn.style.cssText='background:none;border:1px solid var(--red);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:11px;color:var(--red);flex-shrink:0';
+        delBtn.title='حذف'; delBtn.textContent='🗑️';
         (function(mid,lid){ delBtn.onclick=function(){ deleteAdminLesson(mid,lid); }; })(mod.id,l.id);
+
+        row.appendChild(upBtn);
+        row.appendChild(dnBtn);
         row.appendChild(editBtn);
         row.appendChild(delBtn);
         lessonList.appendChild(row);
