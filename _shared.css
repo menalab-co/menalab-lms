@@ -217,9 +217,9 @@ a{color:var(--blue);text-decoration:none}
 .filter-btn.active{background:var(--ink);color:var(--gold);border-color:var(--ink)}
 
 /* ── Image Carousel ─────────────────────────────────────── */
-.carousel{position:relative;width:100%;border-radius:var(--r2);overflow:hidden;background:var(--white);margin:16px 0;user-select:none}
-.carousel-track{display:flex;transition:transform .35s ease;align-items:flex-start;background:var(--white);will-change:transform}
-.carousel-slide{min-width:100%;position:relative;flex-shrink:0;background:var(--white)}
+.carousel{position:relative;width:100%;border-radius:var(--r2);overflow:hidden;background:transparent;margin:16px 0;user-select:none}
+.carousel-track{display:flex;transition:transform .35s ease;align-items:flex-start;background:transparent;will-change:transform}
+.carousel-slide{min-width:100%;position:relative;flex-shrink:0;background:transparent}
 .carousel-slide img{width:100%;height:auto;display:block;border-radius:var(--r2);background:none}
 .carousel-slide .slide-caption{position:absolute;bottom:0;right:0;left:0;padding:10px 14px;background:linear-gradient(transparent,rgba(0,0,0,.55));color:#fff;font-size:12px;font-weight:500}
 .carousel-btn{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.92);border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:background .15s}
