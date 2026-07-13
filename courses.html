@@ -185,7 +185,14 @@ function enrollCourse(cid) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  if(typeof dbSyncAllContent==='function'){dbSyncAllContent(function(){dbLoadCourseStatuses(null);});}
+  // Always render immediately from localStorage
+  renderCourses();
+  // Then sync from Supabase in background
+  if(typeof dbSyncAllContent==='function'){
+    dbSyncAllContent(function(){
+      if(typeof dbLoadCourseStatuses==='function') dbLoadCourseStatuses(function(){ renderCourses(); });
+    });
+  }
   // Add "live" filter button
   var filterBar = document.querySelector('.filter-bar');
   if (filterBar) {
