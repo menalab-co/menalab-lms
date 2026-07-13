@@ -185,6 +185,23 @@ function applyAdminLessonOverrides() {
         if (custom.quiz && custom.quiz.length) COURSE_LESSONS[cid][idx].quiz = custom.quiz;
       }
     });
+    // Apply custom lesson order if set by admin
+    try {
+      var storedOrder = JSON.parse(localStorage.getItem('sh_lesson_order_' + cid) || 'null');
+      if (storedOrder && storedOrder.length) {
+        var sorted = [];
+        storedOrder.forEach(function(id) {
+          var lesson = COURSE_LESSONS[cid].find(function(l){ return l.id === id; });
+          if (lesson) sorted.push(lesson);
+        });
+        // Append any lessons not in the stored order
+        COURSE_LESSONS[cid].forEach(function(l) {
+          if (!storedOrder.includes(l.id)) sorted.push(l);
+        });
+        COURSE_LESSONS[cid] = sorted;
+      }
+    } catch(e) {}
+
     // Append admin-added lessons to built-in courses
     try {
       var adminAdded = JSON.parse(localStorage.getItem('sh_admin_lessons_' + cid) || '[]');
