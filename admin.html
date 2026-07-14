@@ -85,8 +85,12 @@
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div class="form-group">
-        <label class="form-label">الأيقونة (emoji)</label>
-        <input class="inp" id="am-icon" placeholder="🔆" style="font-size:20px">
+        <label class="form-label">الأيقونة (emoji أو صورة)</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input class="inp" id="am-icon" placeholder="🔆" style="font-size:18px;flex:1">
+          <button type="button" onclick="openIconPicker(function(ic){ document.getElementById('am-icon').value='<img src=&quot;'+ic.src+'&quot; class=&quot;site-icon&quot; style=&quot;width:24px;height:24px&quot;>'; })" class="btn btn-outline btn-sm" style="white-space:nowrap">🖼️ مكتبة</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">اكتب إيموجي أو اختر من مكتبة الأيقونات</div>
       </div>
       <div class="form-group">
         <label class="form-label">التصنيف</label>
@@ -350,6 +354,7 @@
     <button class="nav-item" id="nav-users" onclick="showSection('users')"><span class="nav-icon">👥</span> المستخدمون</button>
     <button class="nav-item" id="nav-requests" onclick="showSection('requests')"><span class="nav-icon">📬</span> الطلبات</button>
     <button class="nav-item" id="nav-notify" onclick="showSection('notify')"><span class="nav-icon">🔔</span> الاهتمامات</button>
+    <button class="nav-item" id="nav-icons" onclick="showSection('icons')"><span class="nav-icon">🖼️</span> مكتبة الأيقونات</button>
     <div class="sidebar-section">النظام</div>
     <a href="index.html" class="nav-item"><span class="nav-icon">🌐</span> عرض الموقع</a>
     <button class="nav-item" onclick="adminLogout()"><span class="nav-icon">🚪</span> خروج</button>
@@ -446,6 +451,27 @@
     <div id="notify-list"></div>
   </div>
 
+  <!-- ICONS LIBRARY -->
+  <div id="sec-icons" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <p style="font-size:13px;color:var(--text2)">ارفع أيقوناتك وسيمكنك استخدامها في الموقع بدل الرموز التعبيرية</p>
+      <label class="btn btn-primary btn-sm" style="cursor:pointer">
+        ⬆️ رفع أيقونات
+        <input type="file" id="icon-upload-input" multiple accept="image/png,image/svg+xml,image/jpeg,image/webp" style="display:none" onchange="handleIconUpload(this)">
+      </label>
+    </div>
+    <div style="background:var(--warm3);border-radius:var(--r2);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2)">
+      💡 <strong>كيفية الاستخدام:</strong> ارفع الأيقونة ← انسخ الكود ← الصقه في حقل الأيقونة في أي موديول أو تحديث
+      <span style="direction:ltr;display:inline-block;margin-right:4px;font-family:monospace;background:var(--white);padding:2px 6px;border-radius:4px">&lt;img src="..." class="site-icon"&gt;</span>
+    </div>
+    <div id="icons-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px"></div>
+    <div id="icons-empty" style="text-align:center;padding:60px;color:var(--text3);display:none">
+      <div style="font-size:48px;margin-bottom:12px">🖼️</div>
+      <p>لا توجد أيقونات بعد<br>اضغط "رفع أيقونات" لإضافة أولى</p>
+    </div>
+  </div>
+
+  <!-- REQUESTS -->
   <!-- REQUESTS -->
   <div id="sec-requests" style="display:none">
     <div class="section-card" style="overflow-x:auto">
@@ -541,13 +567,13 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 function showSection(sec){
-  ['stats','content','qa','events','mentors','users','requests','notify'].forEach(function(s){
+  ['stats','content','qa','events','mentors','users','requests','notify','icons'].forEach(function(s){
     var el=document.getElementById('sec-'+s);
     if(el) el.style.display=s===sec?'':'none';
     var nav=document.getElementById('nav-'+s);
     if(nav) nav.classList.toggle('active',s===sec);
   });
-  var titles={stats:'الإحصائيات',content:'إدارة المحتوى',qa:'مكتبة AI',events:'الفعاليات',mentors:'المرشدون',users:'المستخدمون',requests:'الطلبات',notify:'اهتمامات الدورات'};
+  var titles={stats:'الإحصائيات',content:'إدارة المحتوى',qa:'مكتبة AI',events:'الفعاليات',mentors:'المرشدون',users:'المستخدمون',requests:'الطلبات',notify:'اهتمامات الدورات',icons:'مكتبة الأيقونات'};
   document.getElementById('section-title').textContent=titles[sec]||sec;
 }
 
@@ -559,6 +585,7 @@ function renderAll(){
   renderMentorsAdmin();
   renderStagesContent();
   renderNotifyList();
+  renderIconsGrid();
   // Sync from Supabase on every admin load
   dbSyncAllContent(function(){
     renderContent();
@@ -1862,6 +1889,159 @@ function exportNotifyCSV() {
   a.download = 'shakkel-notify-interests.csv';
   a.click();
   showToast('✅ تم تصدير ' + toAr(rows.length-1) + ' سجل');
+}
+
+
+// ════════════════════════════════════════════════════════
+// ICON LIBRARY
+// Icons are stored as base64 in localStorage: sh_icons = [{id,name,src,type}]
+// ════════════════════════════════════════════════════════
+
+function getIcons() {
+  try { return JSON.parse(localStorage.getItem('sh_icons') || '[]'); } catch(e) { return []; }
+}
+function saveIcons(icons) {
+  localStorage.setItem('sh_icons', JSON.stringify(icons));
+  // Sync to Supabase
+  if (typeof _sb_ready !== 'undefined' && _sb_ready && typeof sbFetch === 'function') {
+    sbFetch('POST', 'shakkel_content', {
+      id: 'icon_library', type: 'icon_library',
+      content: JSON.stringify(icons.map(function(ic){ return {id:ic.id,name:ic.name,type:ic.type,src:ic.src}; })),
+      updated_at: new Date().toISOString()
+    });
+  }
+}
+
+function handleIconUpload(input) {
+  var files = Array.prototype.slice.call(input.files);
+  if (!files.length) return;
+  var icons = getIcons();
+  var loaded = 0;
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var id = 'icon_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+      var name = file.name.replace(/\.[^.]+$/, ''); // remove extension
+      icons.push({ id: id, name: name, src: e.target.result, type: file.type });
+      loaded++;
+      if (loaded === files.length) {
+        saveIcons(icons);
+        renderIconsGrid();
+        showToast('✅ تم رفع ' + toAr(files.length) + ' أيقونة');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = ''; // reset so same file can be re-uploaded
+}
+
+function renderIconsGrid() {
+  var grid = document.getElementById('icons-grid');
+  var empty = document.getElementById('icons-empty');
+  if (!grid) return;
+  var icons = getIcons();
+  if (!icons.length) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  grid.innerHTML = '';
+  icons.forEach(function(icon) {
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--white);border:1.5px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;position:relative';
+    var img = document.createElement('img');
+    img.src = icon.src; img.alt = icon.name;
+    img.style.cssText = 'width:48px;height:48px;object-fit:contain;display:block;margin:0 auto 8px';
+    var namDiv = document.createElement('div');
+    namDiv.style.cssText = 'font-size:11px;font-weight:600;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    namDiv.title = icon.name; namDiv.textContent = icon.name;
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:4px;justify-content:center';
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'btn btn-outline btn-sm';
+    copyBtn.style.cssText = 'font-size:10px;padding:3px 8px';
+    copyBtn.textContent = '📋 نسخ';
+    (function(id){ copyBtn.onclick = function(){ copyIconCode(id); }; })(icon.id);
+    var delBtn = document.createElement('button');
+    delBtn.style.cssText = 'background:none;border:1px solid var(--red);color:var(--red);border-radius:4px;cursor:pointer;font-size:10px;padding:3px 6px';
+    delBtn.textContent = '🗑️';
+    (function(id){ delBtn.onclick = function(){ deleteIcon(id); }; })(icon.id);
+    btnRow.appendChild(copyBtn); btnRow.appendChild(delBtn);
+    card.appendChild(img); card.appendChild(namDiv); card.appendChild(btnRow);
+    grid.appendChild(card);
+  });
+}
+
+function copyIconCode(iconId) {
+  var icons = getIcons();
+  var icon = icons.find(function(ic){ return ic.id === iconId; });
+  if (!icon) return;
+  var code = '<img src="' + icon.src + '" alt="' + icon.name + '" class="site-icon">';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(function(){
+      showToast('✅ تم نسخ كود الأيقونة — الصقه في أي حقل أيقونة');
+    });
+  } else {
+    // Fallback
+    var ta = document.createElement('textarea');
+    ta.value = code;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ تم النسخ — الصقه في حقل الأيقونة');
+  }
+}
+
+function deleteIcon(iconId) {
+  if (!confirm('حذف هذه الأيقونة؟')) return;
+  var icons = getIcons().filter(function(ic){ return ic.id !== iconId; });
+  saveIcons(icons);
+  renderIconsGrid();
+  showToast('تم الحذف');
+}
+
+// Icon picker widget — call this to show a picker modal anywhere
+var _iconPickerCallback = null;
+function openIconPicker(callback) {
+  _iconPickerCallback = callback;
+  var icons = getIcons();
+  if (!icons.length) {
+    showToast('لا توجد أيقونات مرفوعة — ارفع أيقوناتك في مكتبة الأيقونات');
+    return;
+  }
+  var picker = document.getElementById('icon-picker-modal');
+  if (!picker) {
+    picker = document.createElement('div');
+    picker.id = 'icon-picker-modal';
+    picker.className = 'modal-overlay';
+    picker.innerHTML =
+      '<div class="modal-box" style="max-width:500px">' +
+        '<button class="modal-close" id="icon-picker-close-btn">✕</button>' +
+        '<h3 style="margin-bottom:16px">اختر أيقونة</h3>' +
+        '<div id="icon-picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;max-height:400px;overflow-y:auto"></div>' +
+      '</div>';
+    document.body.appendChild(picker);
+    var closeBtn = document.getElementById('icon-picker-close-btn');
+    if (closeBtn) closeBtn.onclick = function(){ closeModal('icon-picker-modal'); };
+  }
+  var grid = document.getElementById('icon-picker-grid');
+  grid.innerHTML = '';
+  icons.forEach(function(icon) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'background:var(--warm3);border:1.5px solid var(--border);border-radius:var(--r2);padding:10px;text-align:center;cursor:pointer;transition:border-color .15s';
+    btn.innerHTML = '<img src="' + icon.src + '" style="width:40px;height:40px;object-fit:contain;display:block;margin:0 auto 4px"><div style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + icon.name + '</div>';
+    btn.onmouseover = function(){ this.style.borderColor='var(--gold)'; };
+    btn.onmouseout  = function(){ this.style.borderColor='var(--border)'; };
+    btn.onclick = function() {
+      if (_iconPickerCallback) _iconPickerCallback(icon);
+      closeModal('icon-picker-modal');
+    };
+    grid.appendChild(btn);
+  });
+  openModal('icon-picker-modal');
 }
 
 function exportData(){
