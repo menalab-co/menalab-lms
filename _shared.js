@@ -15,7 +15,7 @@ const LOGO_SVG = `<svg width="36" height="36" viewBox="0 0 80 80" fill="none" xm
 </svg>`;
 
 // ── Version & State ──────────────────────────────────────
-var VERSION = '5.0';
+var VERSION = '5.1'; // bumped to clear old dt pre-enrollment
 
 // ============================================================
 // SUPABASE CONFIGURATION
@@ -376,6 +376,10 @@ function loadState() {
       localStorage.clear();
       if (user) localStorage.setItem('sh_user', user);
       localStorage.setItem('sh_version', VERSION);
+    }
+    // If no user is logged in, always reset state to prevent stale enrollment
+    if (!localStorage.getItem('sh_user')) {
+      localStorage.removeItem('sh_state');
     }
   } catch(e) {}
 }
