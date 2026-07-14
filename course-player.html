@@ -440,6 +440,36 @@ function init() {
   var params = new URLSearchParams(window.location.search);
   var cid = params.get('course') || 'prototyping';
 
+  // ── Paid course gate ────────────────────────────────────
+  // Check if this is a paid course and user is not enrolled
+  var storedPrice = localStorage.getItem('sh_course_price_' + cid);
+  var courseCost  = storedPrice !== null ? parseInt(storedPrice) : null;
+  var userState   = (typeof getUserState === 'function') ? getUserState() : {};
+  var userEnrolled = (userState.enrolledCourses || []).includes(cid);
+
+  if (courseCost !== null && courseCost > 0 && !userEnrolled) {
+    // Paid course, not enrolled — show payment gate
+    var courseObj = (typeof COURSES !== 'undefined') ? COURSES.find(function(c){ return c.id === cid; }) : null;
+    var courseTitle = courseObj ? courseObj.title : 'الدورة';
+    document.getElementById('player-main').innerHTML =
+      '<div style="text-align:center;padding:60px 24px;max-width:480px;margin:0 auto">' +
+        '<div style="font-size:64px;margin-bottom:16px">💳</div>' +
+        '<h2 style="margin-bottom:8px">' + courseTitle + '</h2>' +
+        '<div style="font-size:32px;font-weight:700;color:var(--gold-dark);margin-bottom:8px">' + (typeof toAr === 'function' ? toAr(courseCost) : courseCost) + ' ر.س</div>' +
+        '<p style="color:var(--text2);margin-bottom:28px;line-height:1.7">هذه دورة مدفوعة. اشترِها للوصول إلى جميع الدروس.</p>' +
+        '<div style="display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto">' +
+          '<button onclick="cpPayment(&quot;card&quot;)" class="btn btn-primary btn-lg btn-full" style="justify-content:center">💳 بطاقة ائتمان / مدى</button>' +
+          '<button onclick="cpPayment(&quot;apple&quot;)" class="btn btn-outline btn-lg btn-full" style="justify-content:center;background:#000;color:#fff;border-color:#000">🍎 Apple Pay</button>' +
+          '<button onclick="cpPayment(&quot;stc&quot;)" class="btn btn-outline btn-lg btn-full" style="justify-content:center">📱 STC Pay</button>' +
+        '</div>' +
+        '<p style="margin-top:20px;font-size:12px;color:var(--text3)">🔒 جميع المدفوعات مشفرة وآمنة</p>' +
+        '<a href="courses.html" style="display:block;margin-top:16px;font-size:12px;color:var(--text3)">← العودة للدورات</a>' +
+      '</div>';
+    var sb = document.getElementById('lessons-sidebar-list');
+    if (sb) sb.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12px;text-align:center">اشترِ الدورة للوصول</div>';
+    return;
+  }
+
   // Load prototyping lessons from _shared.js
   if (typeof PROTOTYPING_LESSONS !== 'undefined') {
     COURSE_LESSONS['prototyping'] = PROTOTYPING_LESSONS;
@@ -607,6 +637,24 @@ function openLesson(lid) {
 
   renderSidebar();
   switchTab('lt-content', 'lp-content', 'tab-btn');
+}
+
+function cpPayment(method) {
+  var cid = new URLSearchParams(window.location.search).get('course') || 'prototyping';
+  var price = parseInt(localStorage.getItem('sh_course_price_' + cid)) || 0;
+  // TODO: replace with real payment gateway (Moyasar recommended for Saudi Arabia)
+  showToast('⏳ جاري معالجة الدفع...');
+  setTimeout(function() {
+    var state = getUserState();
+    if (!state.enrolledCourses) state.enrolledCourses = [];
+    if (!state.enrolledCourses.includes(cid)) {
+      state.enrolledCourses.push(cid);
+      state.aiCredits = (state.aiCredits || 0) + 30;
+      saveUserState(state);
+    }
+    showToast('✅ تمت عملية الدفع! جاري فتح الدورة...');
+    setTimeout(function() { window.location.reload(); }, 800);
+  }, 1500);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
