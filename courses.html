@@ -119,8 +119,8 @@ function renderCourses() {
       });
     });
   } catch(e) {}
-  var state = getUserState();
-  var enrolled = state.enrolledCourses || [];
+  // Only use enrollment from state if user is actually logged in
+  var enrolled = loggedIn ? (getUserState().enrolledCourses || []) : [];
   var filtered = displayCourses.filter(function(c) {
     if (c.inactive) return false; // hidden by admin
     if (activeFilter === 'free') return c.free;
@@ -174,7 +174,7 @@ function renderCourses() {
       badges += '<span class="badge badge-paid" style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:700">💳 ' + toAr(c.price) + ' ر.س</span>';
     }
     badges += '<span class="badge badge-gray">' + c.level + '</span>';
-    if (isEnrolled && isLive) badges += '<span class="badge badge-teal">مسجّل ✓</span>';
+    if (isEnrolled && isLive && loggedIn) badges += '<span class="badge badge-teal">مسجّل ✓</span>';
 
     body.innerHTML =
       '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px">' + badges + '</div>' +
@@ -190,7 +190,7 @@ function renderCourses() {
     var btnLabel = '';
     if (!isLive) {
       btnLabel = '🔔 أبلغني عند الإطلاق';
-    } else if (isEnrolled) {
+    } else if (isEnrolled && loggedIn) {
       btnLabel = '← متابعة الدورة';
     } else if (c.free) {
       btnLabel = 'سجّل الآن — مجاني';
