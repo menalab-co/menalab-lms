@@ -414,6 +414,29 @@ var qState = {qs:[], cur:0, ans:[], done:false};
 
 // ── Init ─────────────────────────────────────────────────
 function init() {
+  // ── Auth gate ──────────────────────────────────────────
+  var currentUser = (typeof getUser === 'function') ? getUser() : null;
+  if (!currentUser) {
+    var cid = new URLSearchParams(window.location.search).get('course') || 'prototyping';
+    var course = (typeof COURSES !== 'undefined') ? COURSES.find(function(c){ return c.id===cid; }) : null;
+    var courseTitle = course ? course.title : 'الدورة';
+    document.getElementById('player-main').innerHTML =
+      '<div style="text-align:center;padding:60px 24px;max-width:480px;margin:0 auto">' +
+        '<div style="font-size:64px;margin-bottom:16px">🔒</div>' +
+        '<h2 style="margin-bottom:8px">للوصول إلى "' + courseTitle + '"</h2>' +
+        '<p style="color:var(--text2);margin-bottom:32px;line-height:1.7">يرجى تسجيل الدخول أو إنشاء حساب مجاني للوصول إلى هذه الدورة.</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">' +
+          '<a href="index.html?next=course-player&course=' + cid + '" class="btn btn-primary btn-lg">تسجيل الدخول ←</a>' +
+          '<a href="index.html?signup=1&next=course-player&course=' + cid + '" class="btn btn-outline btn-lg">إنشاء حساب مجاني</a>' +
+        '</div>' +
+        '<p style="margin-top:24px;font-size:12px;color:var(--text3)">لديك حساب بالفعل؟ <a href="index.html?next=course-player&course=' + cid + '" style="color:var(--gold-dark)">ادخل هنا</a></p>' +
+      '</div>';
+    // Hide sidebar lesson list
+    var sb = document.getElementById('lessons-sidebar-list');
+    if (sb) sb.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12px;text-align:center">سجّل دخولك للوصول</div>';
+    return;
+  }
+
   var params = new URLSearchParams(window.location.search);
   var cid = params.get('course') || 'prototyping';
 
@@ -592,11 +615,21 @@ document.addEventListener('DOMContentLoaded', function() {
   // Then sync from Supabase in background and refresh if needed
   if (typeof dbSyncAllContent === 'function') {
     dbSyncAllContent(function() {
-      if (typeof dbLoadCourseStatuses === 'function') dbLoadCourseStatuses(null);
-      // Re-apply overrides with fresh data
-      if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
-      // Re-open current lesson to refresh content
-      if (currentLesson) openLesson(currentLesson.id);
+      // Also load admin modules from shakkel_modules table
+      if (typeof dbLoadModules === 'function') {
+        dbLoadModules(function(modules) {
+          if (modules && modules.length) {
+            localStorage.setItem('sh_admin_modules', JSON.stringify(modules));
+          }
+          // Re-apply overrides with all fresh data
+          if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
+          if (currentLesson) openLesson(currentLesson.id);
+          else init();
+        });
+      } else {
+        if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
+        if (currentLesson) openLesson(currentLesson.id);
+      }
     });
   }
 });
