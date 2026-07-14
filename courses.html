@@ -63,6 +63,7 @@ function filterCourses(cat) {
 
 function renderCourses() {
   var grid = document.getElementById('courses-grid');
+  var loggedIn = (typeof getUser === 'function') ? !!getUser() : false;
 
   // Build a fresh display list without mutating global COURSES
   var displayCourses = COURSES.map(function(c) {
@@ -110,6 +111,14 @@ function renderCourses() {
     var isEnrolled = enrolled.includes(c.id);
     var isLive = !c.comingSoon;
     var thumbBg = BG_COLORS[c.id] || '#f5f5f0';
+    // Apply admin price override
+    var storedPrice = localStorage.getItem('sh_course_price_' + c.id);
+    if (storedPrice !== null) {
+      c = Object.assign({}, c, {
+        price: parseInt(storedPrice) || 0,
+        free: parseInt(storedPrice) === 0
+      });
+    }
 
     var card = document.createElement('div');
     card.className = 'course-card' + (isLive ? '' : ' coming-soon-card');
@@ -154,7 +163,14 @@ function renderCourses() {
       ? (isEnrolled ? '← متابعة الدورة' : 'سجّل الآن' + (c.free ? ' — مجاني' : ' — ' + toAr(c.price) + ' ر.س'))
       : '🔔 أبلغني عند الإطلاق';
     if (isLive) {
-      (function(cid){ btn.onclick = function(){ enrollCourse(cid); }; })(c.id);
+      (function(cid){ btn.onclick = function(){
+        if (!loggedIn) {
+          // Redirect to home with intent to return to this course
+          window.location.href = 'index.html?next=course-player&course=' + cid;
+        } else {
+          enrollCourse(cid);
+        }
+      }; })(c.id);
     }
 
     body.appendChild(btn);
