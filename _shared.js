@@ -1367,6 +1367,56 @@ function initCarousels(container) {
   });
 }
 
+
+// ── Option C: Check for newly launched courses on login ───
+function checkNotifyLaunches() {
+  // Get all course IDs the user registered interest in
+  var launched = [];
+  try {
+    var allKeys = Object.keys(localStorage);
+    allKeys.forEach(function(key) {
+      if (key.indexOf('sh_notify_') === 0) {
+        var cid = key.replace('sh_notify_', '');
+        var list = JSON.parse(localStorage.getItem(key) || '[]');
+        var user = getUser();
+        // Check if this user is in the notify list
+        var userInterested = user && list.some(function(r){ return r.email === user.email; });
+        if (userInterested) {
+          // Check if course is now active
+          var status = localStorage.getItem('sh_course_status_' + cid) || 'active';
+          var course = (typeof COURSES !== 'undefined') ? COURSES.find(function(c){ return c.id===cid; }) : null;
+          // If status is active and course exists and is live
+          if (status === 'active' && course && !course.comingSoon) {
+            // Check if we already notified them
+            var notifiedKey = 'sh_notify_shown_' + cid;
+            var userEmail = user.email;
+            var shownList = JSON.parse(localStorage.getItem(notifiedKey) || '[]');
+            if (!shownList.includes(userEmail)) {
+              launched.push(course);
+              shownList.push(userEmail);
+              localStorage.setItem(notifiedKey, JSON.stringify(shownList));
+            }
+          }
+        }
+      }
+    });
+  } catch(e) {}
+  return launched;
+}
+
+function showLaunchNotifications() {
+  var launched = checkNotifyLaunches();
+  if (!launched.length) return;
+  // Show a toast for each launched course
+  launched.forEach(function(course, i) {
+    setTimeout(function() {
+      showToast('🎉 الدورة التي أبديت اهتماماً بها أصبحت متاحة: ' + course.title);
+    }, i * 2000);
+  });
+  // Also store for dashboard banner
+  localStorage.setItem('sh_launch_banners', JSON.stringify(launched.map(function(c){ return c.id; })));
+}
+
 // ── Admin content overrides ───────────────────────────────
 function getAdminStageContent(stageId) {
   try {
@@ -1394,6 +1444,10 @@ document.addEventListener('DOMContentLoaded', function() {
   renderLogos();
   renderGreetingBar();
   initChatbot();
+  // Check for newly launched courses the user expressed interest in
+  if (typeof getUser === 'function' && getUser()) {
+    setTimeout(showLaunchNotifications, 1000);
+  }
 });
 
 // ── Community posts DB ────────────────────────────────────
