@@ -349,6 +349,7 @@
     <button class="nav-item" id="nav-mentors" onclick="showSection('mentors')"><span class="nav-icon">🧑‍🏫</span> المرشدون</button>
     <button class="nav-item" id="nav-users" onclick="showSection('users')"><span class="nav-icon">👥</span> المستخدمون</button>
     <button class="nav-item" id="nav-requests" onclick="showSection('requests')"><span class="nav-icon">📬</span> الطلبات</button>
+    <button class="nav-item" id="nav-notify" onclick="showSection('notify')"><span class="nav-icon">🔔</span> الاهتمامات</button>
     <div class="sidebar-section">النظام</div>
     <a href="index.html" class="nav-item"><span class="nav-icon">🌐</span> عرض الموقع</a>
     <button class="nav-item" onclick="adminLogout()"><span class="nav-icon">🚪</span> خروج</button>
@@ -434,6 +435,15 @@
         <tbody id="users-tbody"></tbody>
       </table>
     </div>
+  </div>
+
+  <!-- NOTIFY INTERESTS -->
+  <div id="sec-notify" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <p style="font-size:13px;color:var(--text2)">المتعلمون الذين أبدوا اهتماماً بدورات قادمة</p>
+      <button class="btn btn-outline btn-sm" onclick="exportNotifyCSV()">📥 تصدير CSV</button>
+    </div>
+    <div id="notify-list"></div>
   </div>
 
   <!-- REQUESTS -->
@@ -531,13 +541,13 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 function showSection(sec){
-  ['stats','content','qa','events','mentors','users','requests'].forEach(function(s){
+  ['stats','content','qa','events','mentors','users','requests','notify'].forEach(function(s){
     var el=document.getElementById('sec-'+s);
     if(el) el.style.display=s===sec?'':'none';
     var nav=document.getElementById('nav-'+s);
     if(nav) nav.classList.toggle('active',s===sec);
   });
-  var titles={stats:'الإحصائيات',content:'إدارة المحتوى',qa:'مكتبة AI',events:'الفعاليات',mentors:'المرشدون',users:'المستخدمون',requests:'الطلبات'};
+  var titles={stats:'الإحصائيات',content:'إدارة المحتوى',qa:'مكتبة AI',events:'الفعاليات',mentors:'المرشدون',users:'المستخدمون',requests:'الطلبات',notify:'اهتمامات الدورات'};
   document.getElementById('section-title').textContent=titles[sec]||sec;
 }
 
@@ -548,6 +558,7 @@ function renderAll(){
   renderEventsAdmin();
   renderMentorsAdmin();
   renderStagesContent();
+  renderNotifyList();
   // Sync from Supabase on every admin load
   dbSyncAllContent(function(){
     renderContent();
@@ -1735,6 +1746,122 @@ function saveCoursePrice() {
   closeModal('price-modal');
   showToast('✅ تم حفظ السعر: ' + (isFree ? 'مجاني' : toAr(price) + ' ر.س'));
   renderContent();
+}
+
+
+// ── Notify interests ─────────────────────────────────────
+function renderNotifyList() {
+  var container = document.getElementById('notify-list');
+  if (!container) return;
+
+  // Collect from localStorage (sh_notify_[courseId]) + Supabase
+  var byCourse = {};
+  var allCourseIds = (typeof COURSES !== 'undefined' ? COURSES.map(function(c){return c.id;}) : []);
+  try {
+    JSON.parse(localStorage.getItem('sh_admin_modules')||'[]').forEach(function(m){ allCourseIds.push(m.id); });
+  } catch(e) {}
+
+  allCourseIds.forEach(function(cid) {
+    try {
+      var list = JSON.parse(localStorage.getItem('sh_notify_' + cid) || '[]');
+      if (list.length) byCourse[cid] = list;
+    } catch(e) {}
+  });
+
+  // Also load from Supabase if connected
+  if (typeof _sb_ready !== 'undefined' && _sb_ready && typeof sbFetch === 'function') {
+    sbFetch('GET', 'shakkel_notify', null, 'order=created_at.desc&limit=500')
+      .then(function(rows) {
+        if (!rows || !rows.length) return;
+        rows.forEach(function(r) {
+          if (!byCourse[r.course_id]) byCourse[r.course_id] = [];
+          // Avoid duplicates
+          if (!byCourse[r.course_id].find(function(x){ return x.email === r.email; })) {
+            byCourse[r.course_id].push({ name: r.name, email: r.email, date: new Date(r.created_at).getTime() });
+          }
+        });
+        _renderNotifyHTML(byCourse);
+      });
+  } else {
+    _renderNotifyHTML(byCourse);
+  }
+}
+
+function _renderNotifyHTML(byCourse) {
+  var container = document.getElementById('notify-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  var courseIds = Object.keys(byCourse);
+  if (!courseIds.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">لا توجد اهتمامات مسجّلة بعد</div>';
+    return;
+  }
+
+  courseIds.forEach(function(cid) {
+    var list = byCourse[cid];
+    var course = (typeof COURSES !== 'undefined') ? COURSES.find(function(c){ return c.id===cid; }) : null;
+    var title = course ? course.title : cid;
+    var icon  = course ? course.icon  : '📚';
+    var status = getCourseStatus(cid);
+
+    var section = document.createElement('div');
+    section.className = 'section-card';
+    section.style.marginBottom = '14px';
+
+    // Header
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:12px';
+    hdr.innerHTML =
+      '<span style="font-size:20px">' + icon + '</span>' +
+      '<h4 style="flex:1">' + title + '</h4>' +
+      '<span class="badge ' + (status==='active'?'badge-teal':status==='coming_soon'?'badge-gold':'badge-gray') + '">' +
+        (status==='active'?'🟢 نشطة':status==='coming_soon'?'⏳ قريباً':'⛔ غير نشطة') +
+      '</span>' +
+      '<span class="badge badge-blue">' + toAr(list.length) + ' مهتم</span>';
+    section.appendChild(hdr);
+
+    // Table
+    var table = document.createElement('table');
+    table.className = 'admin-table';
+    table.innerHTML =
+      '<thead><tr><th>#</th><th>الاسم</th><th>البريد الإلكتروني</th><th>التاريخ</th></tr></thead>';
+    var tbody = document.createElement('tbody');
+    list.forEach(function(r, i) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td style="color:var(--text3)">' + toAr(i+1) + '</td>' +
+        '<td>' + (r.name||'—') + '</td>' +
+        '<td dir="ltr" style="font-size:12px">' + r.email + '</td>' +
+        '<td style="font-size:11px;color:var(--text3)">' + (r.date ? new Date(r.date).toLocaleDateString('ar') : '—') + '</td>';
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    section.appendChild(table);
+    container.appendChild(section);
+  });
+}
+
+function exportNotifyCSV() {
+  var rows = [['الدورة','الاسم','البريد الإلكتروني','التاريخ']];
+  var allCourseIds = (typeof COURSES !== 'undefined' ? COURSES.map(function(c){return c.id;}) : []);
+  allCourseIds.forEach(function(cid) {
+    try {
+      var list = JSON.parse(localStorage.getItem('sh_notify_' + cid) || '[]');
+      var course = COURSES.find(function(c){ return c.id===cid; });
+      var title = course ? course.title : cid;
+      list.forEach(function(r) {
+        rows.push([title, r.name||'', r.email, r.date ? new Date(r.date).toLocaleDateString('ar') : '']);
+      });
+    } catch(e) {}
+  });
+  if (rows.length <= 1) { showToast('لا توجد بيانات للتصدير'); return; }
+  var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+  a.download = 'shakkel-notify-interests.csv';
+  a.click();
+  showToast('✅ تم تصدير ' + toAr(rows.length-1) + ' سجل');
 }
 
 function exportData(){
