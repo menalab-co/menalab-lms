@@ -209,7 +209,7 @@ function dbRegisterUser(name, email, password, callback) {
   var user = { id: userId, name: name, email: email.toLowerCase() };
   var state = {
     xp: 0, level: 1, aiCredits: 20, maxCredits: 20,
-    enrolledCourses: ['dt'], completedLessons: [],
+    enrolledCourses: [], completedLessons: [],
     quizScores: {}, earnedBadges: [], projects: []
   };
 
@@ -284,7 +284,7 @@ function dbLoginUser(email, password, callback) {
         level:            r.level || 1,
         aiCredits:        r.ai_credits || 20,
         maxCredits:       r.ai_credits || 20,
-        enrolledCourses:  safeJSON(r.enrolled_courses,  ['dt']),
+        enrolledCourses:  safeJSON(r.enrolled_courses,  []),
         completedLessons: safeJSON(r.completed_lessons, []),
         quizScores:       safeJSON(r.quiz_scores,       {}),
         earnedBadges:     safeJSON(r.earned_badges,     []),
