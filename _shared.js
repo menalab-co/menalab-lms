@@ -147,6 +147,11 @@ function dbSyncAllContent(callback) {
         } else if (r.type === 'deleted_lessons') {
           // Soft-deleted built-in lessons
           if (r.content) localStorage.setItem('sh_deleted_lessons_' + r.course_id, r.content);
+        } else if (r.type === 'price') {
+          // Course price setting
+          if (r.content !== null && r.course_id) {
+            localStorage.setItem('sh_course_price_' + r.course_id, r.content);
+          }
         }
       });
       if(callback) callback();
