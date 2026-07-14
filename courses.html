@@ -134,7 +134,7 @@ function renderCourses() {
     var isEnrolled = enrolled.includes(c.id);
     var isLive = !c.comingSoon;
     var thumbBg = BG_COLORS[c.id] || '#f5f5f0';
-    // Apply admin price override
+    // Apply admin price override FIRST so badges read correct values
     var storedPrice = localStorage.getItem('sh_course_price_' + c.id);
     if (storedPrice !== null) {
       c = Object.assign({}, c, {
@@ -142,6 +142,7 @@ function renderCourses() {
         free: parseInt(storedPrice) === 0
       });
     }
+    // Also check Supabase-synced price (same key, already in localStorage after sync)
 
     var card = document.createElement('div');
     card.className = 'course-card' + (isLive ? '' : ' coming-soon-card');
@@ -198,22 +199,19 @@ function renderCourses() {
     }
     btn.textContent = btnLabel;
     if (isLive) {
-      (function(cid, isFree, coursePrice, enrolled){
+      (function(cid, isFree, coursePrice, alreadyEnrolled){
         btn.onclick = function(){
-          if (enrolled) {
-            // Already enrolled — go straight to course
+          if (alreadyEnrolled) {
             window.location.href = 'course-player.html?course=' + cid;
             return;
           }
           if (!loggedIn) {
-            // Not logged in — redirect to login then back
             window.location.href = 'index.html?next=course-player&course=' + cid;
             return;
           }
           if (isFree) {
             enrollCourse(cid);
           } else {
-            // Paid course — open payment modal
             openPaymentModal(cid, coursePrice);
           }
         };
