@@ -49,6 +49,25 @@
   <div class="courses-grid" id="courses-grid"></div>
 </main>
 </div>
+<!-- NOTIFY MODAL -->
+<div class="modal-overlay" id="notify-modal">
+  <div class="modal-box" style="max-width:420px;text-align:center">
+    <button class="modal-close" onclick="closeModal('notify-modal')">✕</button>
+    <div style="font-size:48px;margin-bottom:12px">🔔</div>
+    <h2 id="notify-modal-title" style="margin-bottom:6px"></h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:24px">سنرسل لك إشعاراً فور إطلاق هذه الدورة</p>
+    <div class="form-group" style="margin-bottom:12px;text-align:right">
+      <label class="form-label">الاسم</label>
+      <input class="inp" id="notify-name" placeholder="اسمك">
+    </div>
+    <div class="form-group" style="margin-bottom:20px;text-align:right">
+      <label class="form-label">البريد الإلكتروني *</label>
+      <input class="inp" id="notify-email" type="email" placeholder="email@example.com" dir="ltr">
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="submitNotify()">أبلغني عند الإطلاق 🔔</button>
+  </div>
+</div>
+
 <!-- PAYMENT MODAL -->
 <div class="modal-overlay" id="payment-modal">
   <div class="modal-box" style="max-width:480px;text-align:center">
@@ -186,10 +205,10 @@ function renderCourses() {
     var btn = document.createElement('button');
     btn.className = 'btn btn-full ' + (isLive ? (isEnrolled ? 'btn-teal' : 'btn-primary') : 'btn-outline');
     btn.style.fontSize = '13px';
-    if (!isLive) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed'; }
+    if (!isLive) { btn.style.opacity = '0.85'; }
     var btnLabel = '';
     if (!isLive) {
-      btnLabel = '🔔 أبلغني عند الإطلاق';
+      btnLabel = isNotified(c.id) ? '✅ مسجّل للإشعار' : '🔔 أبلغني عند الإطلاق';
     } else if (isEnrolled && loggedIn) {
       btnLabel = '← متابعة الدورة';
     } else if (c.free) {
@@ -198,6 +217,10 @@ function renderCourses() {
       btnLabel = 'اشتر الدورة — ' + toAr(c.price) + ' ر.س';
     }
     btn.textContent = btnLabel;
+    if (!isLive) {
+      // Coming soon — notify me button
+      (function(cid, ctitle){ btn.onclick = function(){ openNotifyModal(cid, ctitle); }; })(c.id, c.title);
+    }
     if (isLive) {
       (function(cid, isFree, coursePrice, alreadyEnrolled){
         btn.onclick = function(){
@@ -223,6 +246,64 @@ function renderCourses() {
     card.appendChild(body);
     grid.appendChild(card);
   });
+}
+
+// ── Notify me functions ──────────────────────────────────
+var _notifyCourseId = null;
+
+function openNotifyModal(cid, ctitle) {
+  _notifyCourseId = cid;
+  document.getElementById('notify-modal-title').textContent = ctitle;
+  // Pre-fill if logged in
+  var user = (typeof getUser === 'function') ? getUser() : null;
+  if (user) {
+    document.getElementById('notify-name').value  = user.name  || '';
+    document.getElementById('notify-email').value = user.email || '';
+  } else {
+    document.getElementById('notify-name').value  = '';
+    document.getElementById('notify-email').value = '';
+  }
+  openModal('notify-modal');
+}
+
+function submitNotify() {
+  var name  = document.getElementById('notify-name').value.trim();
+  var email = document.getElementById('notify-email').value.trim();
+  if (!email || !email.includes('@')) {
+    showToast('يرجى إدخال بريد إلكتروني صحيح'); return;
+  }
+  // Save locally
+  var key = 'sh_notify_' + _notifyCourseId;
+  var list = [];
+  try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  if (!list.find(function(r){ return r.email === email; })) {
+    list.push({ name: name, email: email, date: Date.now() });
+    localStorage.setItem(key, JSON.stringify(list));
+  }
+  // Save to Supabase if connected
+  if (typeof sbFetch === 'function' && typeof _sb_ready !== 'undefined' && _sb_ready) {
+    sbFetch('POST', 'shakkel_notify', {
+      id: 'notify_' + _notifyCourseId + '_' + Date.now(),
+      course_id: _notifyCourseId,
+      name: name, email: email,
+      created_at: new Date().toISOString()
+    }).catch(function(){});
+  }
+  closeModal('notify-modal');
+  showToast('✅ شكراً ' + (name||'') + '! سنخبرك فور إطلاق الدورة');
+  // Update button text to show registered
+  if (typeof renderCourses === 'function') renderCourses();
+}
+
+// Check if user already registered for notifications
+function isNotified(cid) {
+  var user = (typeof getUser === 'function') ? getUser() : null;
+  var email = user ? user.email : null;
+  if (!email) return false;
+  try {
+    var list = JSON.parse(localStorage.getItem('sh_notify_' + cid) || '[]');
+    return list.some(function(r){ return r.email === email; });
+  } catch(e) { return false; }
 }
 
 var _pendingPaymentCourse = null;
