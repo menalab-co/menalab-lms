@@ -18,6 +18,8 @@
 
 .coming-soon-card{opacity:.75}
 .coming-soon-card .course-thumb{filter:saturate(.4)}
+.btn-notify{background:rgba(235,200,76,.12);color:#7a5c00;border:1.5px solid var(--gold);font-weight:600}
+.btn-notify:hover{background:rgba(235,200,76,.25);border-color:#c9a93a}
 </style>
 </head>
 <body>
@@ -203,9 +205,9 @@ function renderCourses() {
 
     // Button
     var btn = document.createElement('button');
-    btn.className = 'btn btn-full ' + (isLive ? (isEnrolled ? 'btn-teal' : 'btn-primary') : 'btn-outline');
+    btn.className = 'btn btn-full ' + (isLive ? (isEnrolled ? 'btn-teal' : 'btn-primary') : 'btn-notify');
     btn.style.fontSize = '13px';
-    if (!isLive) { btn.style.opacity = '0.85'; }
+
     var btnLabel = '';
     if (!isLive) {
       btnLabel = isNotified(c.id) ? '✅ مسجّل للإشعار' : '🔔 أبلغني عند الإطلاق';
