@@ -301,38 +301,59 @@ function doSignup() {
   if (!name) { err.textContent = 'يرجى إدخال اسمك'; err.style.display = 'block'; return; }
   if (!email || !email.includes('@')) { err.textContent = 'بريد إلكتروني غير صحيح'; err.style.display = 'block'; return; }
   if (pass.length < 6) { err.textContent = 'كلمة المرور قصيرة جداً'; err.style.display = 'block'; return; }
-  var user = { name: name, email: email, id: 'u_' + Date.now() };
-  setUser(user);
-  var state = getUserState();
-  state.name = name;
-  saveUserState(state);
-  closeModal('signup-modal');
-  showToast('🎉 أهلاً ' + name + '! حسابك جاهز');
-  setTimeout(function() {
-    if (_pendingPath === 'idea') openModal('idea-modal');
-    else if (_pendingPath === 'courses') window.location.href = 'courses.html';
-    else window.location.href = 'dashboard.html';
-    _pendingPath = null;
-  }, 800);
+
+  var signupBtn = document.querySelector('#signup-modal .btn-primary');
+  if (signupBtn) { signupBtn.textContent = 'جاري التسجيل...'; signupBtn.disabled = true; }
+
+  dbRegisterUser(name, email, pass, function(error, user) {
+    if (signupBtn) { signupBtn.textContent = 'إنشاء الحساب ←'; signupBtn.disabled = false; }
+    if (error) { err.textContent = error; err.style.display = 'block'; return; }
+    closeModal('signup-modal');
+    showToast('🎉 أهلاً ' + name + '! حسابك جاهز');
+    setTimeout(function() {
+      if (_pendingPath === 'idea') openModal('idea-modal');
+      else if (_pendingPath === 'courses') window.location.href = 'courses.html';
+      else window.location.href = 'dashboard.html';
+      _pendingPath = null;
+    }, 800);
+  });
 }
 
 function doLogin() {
   var email = document.getElementById('l-email').value.trim();
-  var err = document.getElementById('login-err');
+  var pass  = document.getElementById('l-pass').value;
+  var err   = document.getElementById('login-err');
   err.style.display = 'none';
   if (!email) { err.textContent = 'يرجى إدخال البريد الإلكتروني'; err.style.display = 'block'; return; }
-  var existing = getUser();
-  if (existing && existing.email === email) {
+  if (!pass)  { err.textContent = 'يرجى إدخال كلمة المرور'; err.style.display = 'block'; return; }
+
+  var loginBtn = document.querySelector('#login-modal .btn-primary');
+  if (loginBtn) { loginBtn.textContent = 'جاري الدخول...'; loginBtn.disabled = true; }
+
+  dbLoginUser(email, pass, function(error, user) {
+    if (loginBtn) { loginBtn.textContent = 'دخول ←'; loginBtn.disabled = false; }
+    if (error) { err.textContent = error; err.style.display = 'block'; return; }
     closeModal('login-modal');
-    showToast('مرحباً مجدداً ' + existing.name + '!');
-    setTimeout(function(){ window.location.href = 'dashboard.html'; }, 600);
-  } else {
-    var user = { name: email.split('@')[0], email: email, id: 'u_' + Date.now() };
-    setUser(user);
-    closeModal('login-modal');
-    showToast('مرحباً! ' + user.name);
-    setTimeout(function(){ window.location.href = 'dashboard.html'; }, 600);
-  }
+    showToast('مرحباً ' + user.name + '!');
+    setTimeout(function() {
+      // Check ?next= param first
+      var params = new URLSearchParams(window.location.search);
+      var next = params.get('next');
+      var course = params.get('course');
+      if (next === 'course-player' && course) {
+        window.location.href = 'course-player.html?course=' + course;
+      } else if (next) {
+        window.location.href = next + '.html';
+      } else if (_pendingPath === 'idea') {
+        openModal('idea-modal');
+      } else if (_pendingPath) {
+        window.location.href = _pendingPath + '.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+      _pendingPath = null;
+    }, 600);
+  });
 }
 
 function switchToLogin() { closeModal('signup-modal'); openModal('login-modal'); }
@@ -368,6 +389,17 @@ function playVideo() {
 
 // Render courses preview
 document.addEventListener('DOMContentLoaded', function() {
+  // Auto-open login/signup if redirected here from a protected page
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('next')) {
+    setTimeout(function() {
+      if (params.get('signup') === '1') {
+        openModal('signup-modal');
+      } else {
+        openModal('login-modal');
+      }
+    }, 300);
+  }
   // Hide dashboard nav link if not logged in
   var user = getUser();
   if (!user) {
