@@ -2504,6 +2504,12 @@ function renderBlock(id, type, data) {
       body.style.cssText='text-align:center;color:var(--text3);font-size:12px';
       body.textContent='── فاصل أفقي ──';
       break;
+
+    case 'raw':
+      // Raw HTML block (e.g. carousel) — show preview, preserved as-is
+      body.style.cssText='background:var(--warm3);border-radius:var(--r);padding:8px;font-size:11px;color:var(--text2)';
+      body.textContent = '🎠 كاروسيل صور — ' + (data.html||'').length + ' حرف';
+      break;
   }
 
   el.appendChild(body);
@@ -2745,6 +2751,7 @@ function readBlockData(b) {
     case 'list':      return { ltype: val('ltype'), items: val('items') };
     case 'steps':     return { items: val('items') };
     case 'divider':   return {};
+    case 'raw':       return { html: data.html || '' };
     default: return {};
   }
 }
@@ -2835,6 +2842,11 @@ function buildHTMLFromBlocks() {
           return '<li style="margin-bottom:6px"><strong>' + (i+1) + '.</strong> ' + s.trim() + '</li>';
         }).join('');
         parts.push('<ol style="padding-right:20px;margin:8px 0">' + stepHTML + '</ol>');
+        break;
+
+      case 'raw':
+        // Preserve raw HTML (carousels etc.) exactly as stored
+        parts.push(d.html || '');
         break;
 
       case 'divider':
@@ -2958,9 +2970,14 @@ function parseHTMLToBlocks(rawHTML) {
         });
       }
     }
+    else if (tag === 'div' && (node.className === 'carousel' || node.getAttribute('data-carousel'))) {
+      // Carousel block — preserve as raw HTML, don't lose it
+      addBlock('raw', {html: node.outerHTML});
+    }
     else {
-      // Unknown HTML → paragraph
-      addBlock('paragraph', {text: text.trim()});
+      // Unknown HTML → paragraph (only if has text content)
+      var unknownText = text.trim();
+      if (unknownText) addBlock('paragraph', {text: unknownText});
     }
   });
 }
