@@ -817,8 +817,11 @@ function renderContent(){
     list.appendChild(section);
   });
 
-  // Admin-added modules
-  var adminModules = getAdminModules();
+  // Admin-added modules (exclude any that share IDs with built-in courses)
+  var builtInCourseIds = Object.keys(ADMIN_LESSONS);
+  var adminModules = getAdminModules().filter(function(m){
+    return !builtInCourseIds.includes(m.id);
+  });
   if (adminModules.length) {
     var modHeader = document.createElement('div');
     modHeader.style.cssText='margin:20px 0 10px;display:flex;align-items:center;gap:8px';
