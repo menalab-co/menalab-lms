@@ -2802,9 +2802,18 @@ function parseHTMLToBlocks(rawHTML) {
       var cols = Array.from(node.querySelectorAll(':scope > div'));
       if (cols.length >= 2) {
         var parsedCols = cols.map(function(col) {
-          var items = Array.from(col.querySelectorAll('li')).map(function(li){return li.textContent.trim();}).join('\n');
+          // Support both <li> (old) and <div style="padding..."> (new) item formats
+          var liItems = Array.from(col.querySelectorAll('li')).map(function(li){return li.textContent.trim();});
+          var divItems = Array.from(col.querySelectorAll('div[style*="padding"]')).map(function(d){return d.textContent.trim();});
+          var items = (liItems.length ? liItems : divItems).filter(Boolean).join('\n');
           var strong = col.querySelector('strong');
-          return { title: strong ? strong.textContent.trim() : '', color: 'warm2', items: items };
+          // Try to detect color from background
+          var bg = col.style && col.style.background ? col.style.background : (col.getAttribute('style')||'');
+          var color = 'warm2';
+          if (bg.includes('#FFEBEE') || bg.includes('red-light')) color = 'red-light';
+          else if (bg.includes('#E8F5E9') || bg.includes('teal-light')) color = 'teal-light';
+          else if (bg.includes('#E3F2FD') || bg.includes('blue-light')) color = 'blue-light';
+          return { title: strong ? strong.textContent.trim() : '', color: color, items: items };
         });
         addBlock('compare', {
           cols: cols.length, columns: parsedCols,
