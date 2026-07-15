@@ -67,24 +67,27 @@
     <div id="lesson-xp" style="background:rgba(235,200,76,.15);color:var(--gold-dark);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap"></div>
   </div>
 
-  <!-- Content + Quiz unified (no tabs) -->
+  <!-- Content + تمرين unified -->
   <div id="lp-content">
     <div id="lesson-content-area" style="font-size:16px;line-height:2;color:var(--text)">
       <div class="callout">اختر درساً من القائمة على اليمين لبدء التعلّم</div>
     </div>
-    <div id="complete-btn-area" style="margin-top:24px;display:none">
-      <button class="btn btn-primary btn-lg" id="complete-btn" onclick="completeCurrentLesson()">✅ إكمال الدرس والانتقال للتالي ←</button>
-    </div>
-    <!-- Assessment section below content -->
+    <!-- تمرين section below content -->
     <div id="lesson-quiz-section" style="margin-top:32px;display:none">
       <hr style="border:none;border-top:2px solid var(--border);margin-bottom:24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <span style="font-size:22px">📝</span>
-        <h3 style="margin:0">تقييم الدرس</h3>
+        <span style="font-size:22px">✏️</span>
+        <h3 style="margin:0">تمرين</h3>
       </div>
       <div id="quiz-area">
-        <div class="callout">أكمل قراءة محتوى الدرس أولاً ثم ابدأ التقييم</div>
+        <div class="callout">أكمل قراءة المحتوى أولاً ثم ابدأ التمرين</div>
       </div>
+    </div>
+    <!-- Complete button at very bottom -->
+    <div id="complete-btn-area" style="margin-top:32px;padding-top:24px;border-top:2px solid var(--border);display:none">
+      <button class="btn btn-primary btn-lg btn-full" id="complete-btn" onclick="completeCurrentLesson()" style="justify-content:center">
+        ✅ إكمال الدرس والانتقال للتالي ←
+      </button>
     </div>
   </div>
 </div>
@@ -359,22 +362,72 @@ function selQ(i){qState.ans[qState.cur]=i;renderQ();}
 function nextQ(){if(qState.cur<qState.qs.length-1){qState.cur++;renderQ();}}
 function prevQ(){if(qState.cur>0){qState.cur--;renderQ();}}
 function finishQ(){
-  var correct=qState.qs.filter(function(q,i){return qState.ans[i]===q.a;}).length;
-  var pct=Math.round(correct/qState.qs.length*100);
-  var area=document.getElementById('quiz-questions');
-  qState.done=true;
-  // Save score to state for lesson gating
-  if(currentLesson){
-    var state=getUserState();
-    if(!state.quizScores) state.quizScores={};
-    state.quizScores[currentLesson.id]=Math.max(state.quizScores[currentLesson.id]||0,pct);
-    saveUserState(state);
-  }
-  if(pct>=67){
-    area.innerHTML='<div style="text-align:center;padding:24px;background:var(--teal-light);border-radius:var(--r2);margin-top:16px"><div style="font-size:32px;margin-bottom:8px">🎉</div><div style="font-size:22px;font-weight:700;color:var(--teal)">'+toAr(pct)+'%</div><p style="color:var(--teal);margin-top:4px">أحسنت!</p><button class="btn btn-primary" style="margin-top:12px" onclick="completeCurrentLesson()">إكمال الدرس ←</button></div>';
+  var total = qState.qs.length;
+  var correct = qState.qs.filter(function(q,i){ return qState.ans[i]===q.a; }).length;
+  var pct = Math.round(correct/total*100);
+  var area = document.getElementById('quiz-questions');
+  qState.done = true;
+
+  // Build per-question feedback
+  var feedbackHTML = '<div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">';
+  qState.qs.forEach(function(q, i) {
+    var userAns = qState.ans[i];
+    var isCorrect = userAns === q.a;
+    var bg = isCorrect ? 'var(--teal-light)' : 'var(--red-light)';
+    var borderColor = isCorrect ? 'var(--teal)' : 'var(--red)';
+    var icon = isCorrect ? '✅' : '❌';
+    feedbackHTML +=
+      '<div style="padding:14px;background:'+bg+';border-radius:var(--r2);border-right:3px solid '+borderColor+'">' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:8px">'+icon+' '+q.q+'</div>' +
+        q.opts.map(function(opt, oi) {
+          var isUser    = oi === userAns;
+          var isAnswer  = oi === q.a;
+          var optStyle  = 'padding:6px 10px;border-radius:var(--r);font-size:12px;margin-bottom:4px;';
+          if (isAnswer) optStyle += 'background:var(--teal);color:#fff;font-weight:600;';
+          else if (isUser && !isCorrect) optStyle += 'background:var(--red);color:#fff;text-decoration:line-through;';
+          else optStyle += 'background:rgba(0,0,0,.05);color:var(--text2);';
+          return '<div style="'+optStyle+'">'+
+            (isAnswer ? '✓ ' : isUser&&!isCorrect ? '✗ ' : '') + opt +
+          '</div>';
+        }).join('') +
+        (!isCorrect ? '<div style="font-size:11px;color:var(--teal);margin-top:4px;font-weight:600">الإجابة الصحيحة: '+q.opts[q.a]+'</div>' : '') +
+      '</div>';
+  });
+  feedbackHTML += '</div>';
+
+  if (pct === 100) {
+    // Perfect score — save and show complete button
+    if (currentLesson) {
+      var state = getUserState();
+      if (!state.quizScores) state.quizScores = {};
+      state.quizScores[currentLesson.id] = 100;
+      saveUserState(state);
+    }
+    area.innerHTML =
+      '<div style="text-align:center;padding:24px;background:var(--teal-light);border-radius:var(--r2);margin-bottom:16px">' +
+        '<div style="font-size:40px;margin-bottom:8px">🎉</div>' +
+        '<div style="font-size:26px;font-weight:700;color:var(--teal)">١٠٠٪ ممتاز!</div>' +
+        '<p style="color:var(--teal);margin-top:4px">أجبت على جميع الأسئلة بشكل صحيح</p>' +
+      '</div>' + feedbackHTML;
     addXP(30);
+    // Reveal the complete button
+    var completeBtnArea = document.getElementById('complete-btn-area');
+    if (completeBtnArea) completeBtnArea.style.display = 'block';
+    // Scroll to complete button
+    setTimeout(function(){
+      var btn = document.getElementById('complete-btn');
+      if (btn) btn.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 300);
   } else {
-    area.innerHTML='<div style="text-align:center;padding:20px;background:var(--red-light);border-radius:var(--r2);margin-top:16px"><div style="font-size:22px;font-weight:700;color:var(--red)">'+toAr(pct)+'%</div><p style="color:var(--red);margin-top:4px">راجع المحتوى وحاول مجدداً</p><button class="btn btn-primary" style="margin-top:12px" onclick="startQuiz()">🔄 إعادة</button></div>';
+    // Not 100% — show feedback with retry button
+    var wrongCount = total - correct;
+    area.innerHTML =
+      '<div style="text-align:center;padding:20px;background:var(--red-light);border-radius:var(--r2);margin-bottom:16px">' +
+        '<div style="font-size:32px;margin-bottom:6px">💪</div>' +
+        '<div style="font-size:22px;font-weight:700;color:var(--red)">'+toAr(pct)+'٪</div>' +
+        '<p style="color:var(--red);margin-top:4px">'+toAr(wrongCount)+' '+(wrongCount===1?'سؤال':'أسئلة')+' غلط — حاول مجدداً</p>' +
+        '<button class="btn btn-primary" style="margin-top:12px" onclick="startQuiz()">🔄 أعد المحاولة</button>' +
+      '</div>' + feedbackHTML;
   }
 }
 function sendAI(){
@@ -604,23 +657,33 @@ function openLesson(lid) {
   setTimeout(function(){ initCarousels(document.getElementById('lesson-content-area')); }, 50);
 
   // Complete button
-  document.getElementById('complete-btn-area').style.display = 'block';
   var state = getUserState();
   var isDone = (state.completedLessons||[]).includes(l.id);
+  var hasQuizQ = !!(currentLesson && currentLesson.quiz && currentLesson.quiz.length);
+  var quizPassed = isDone || !hasQuizQ || ((state.quizScores||{})[l.id] >= 100);
+  var completeBtnArea = document.getElementById('complete-btn-area');
   var btn = document.getElementById('complete-btn');
   if (isDone) {
-    btn.textContent = '✅ مكتمل'; btn.disabled = true; btn.style.opacity = '0.6';
-  } else {
+    completeBtnArea.style.display = 'block';
+    btn.textContent = '✅ الدرس مكتمل'; btn.disabled = true; btn.style.opacity = '0.6';
+  } else if (quizPassed) {
+    completeBtnArea.style.display = 'block';
     btn.textContent = '✅ إكمال الدرس والانتقال للتالي ←'; btn.disabled = false; btn.style.opacity = '1';
+  } else {
+    // Has quiz, not passed yet — hide complete btn until 100%
+    completeBtnArea.style.display = 'none';
   }
 
   // Quiz
-  // Show quiz section below content
+  // Show تمرين section + hide complete-btn until 100% scored
   var quizSection = document.getElementById('lesson-quiz-section');
-  if (quizSection) quizSection.style.display = '';
-  document.getElementById('quiz-area').innerHTML =
-    '<button class="btn btn-primary btn-lg" onclick="startQuiz()">ابدأ التقييم ←</button>' +
-    '<div id="quiz-questions"></div>';
+  var hasQuiz = !!(currentLesson && currentLesson.quiz && currentLesson.quiz.length);
+  if (quizSection) quizSection.style.display = hasQuiz ? '' : 'none';
+  if (hasQuiz) {
+    document.getElementById('quiz-area').innerHTML =
+      '<button class="btn btn-primary btn-lg" onclick="startQuiz()" style="margin-bottom:8px">ابدأ التمرين ✏️</button>' +
+      '<div id="quiz-questions"></div>';
+  }
 
   renderSidebar();
   // No tabs anymore - quiz section shown below content
