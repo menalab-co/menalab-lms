@@ -67,39 +67,23 @@
     <div id="lesson-xp" style="background:rgba(235,200,76,.15);color:var(--gold-dark);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap"></div>
   </div>
 
-  <!-- Tabs -->
-  <div class="tab-nav">
-    <button class="tab-btn active" id="lt-content" onclick="switchTab('lt-content','lp-content','tab-btn')">📖 المحتوى</button>
-    <button class="tab-btn" id="lt-quiz" onclick="switchTab('lt-quiz','lp-quiz','tab-btn')">📝 التقييم</button>
-    <button class="tab-btn" id="lt-ai" onclick="switchTab('lt-ai','lp-ai','tab-btn')">🤖 المساعد</button>
-  </div>
-
-  <div class="tab-panel active" id="lp-content">
-    <div id="lesson-content-area" style="font-size:14px;line-height:1.8;color:var(--text2)">
+  <!-- Content + Quiz unified (no tabs) -->
+  <div id="lp-content">
+    <div id="lesson-content-area" style="font-size:16px;line-height:2;color:var(--text)">
       <div class="callout">اختر درساً من القائمة على اليمين لبدء التعلّم</div>
     </div>
     <div id="complete-btn-area" style="margin-top:24px;display:none">
       <button class="btn btn-primary btn-lg" id="complete-btn" onclick="completeCurrentLesson()">✅ إكمال الدرس والانتقال للتالي ←</button>
     </div>
-  </div>
-
-  <div class="tab-panel" id="lp-quiz">
-    <div id="quiz-area">
-      <div class="callout">أكمل قراءة محتوى الدرس أولاً ثم ابدأ التقييم</div>
-    </div>
-  </div>
-
-  <div class="tab-panel" id="lp-ai">
-    <div class="ai-panel">
-      <div id="ai-messages" style="max-height:300px;overflow-y:auto;margin-bottom:12px">
-        <div class="chat-bubble ai">
-          <div class="chat-avatar ai">م</div>
-          <div class="chat-msg">مرحباً! أنا مرشدك في هذه الدورة. اسألني عن أي شيء تحتاج توضيحاً.</div>
-        </div>
+    <!-- Assessment section below content -->
+    <div id="lesson-quiz-section" style="margin-top:32px;display:none">
+      <hr style="border:none;border-top:2px solid var(--border);margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <span style="font-size:22px">📝</span>
+        <h3 style="margin:0">تقييم الدرس</h3>
       </div>
-      <div class="ai-input-row">
-        <input class="ai-input" id="ai-input" placeholder="اسأل سؤالاً..." onkeydown="if(event.key==='Enter')sendAI()">
-        <button class="btn btn-primary btn-sm" onclick="sendAI()">←</button>
+      <div id="quiz-area">
+        <div class="callout">أكمل قراءة محتوى الدرس أولاً ثم ابدأ التقييم</div>
       </div>
     </div>
   </div>
@@ -631,12 +615,15 @@ function openLesson(lid) {
   }
 
   // Quiz
+  // Show quiz section below content
+  var quizSection = document.getElementById('lesson-quiz-section');
+  if (quizSection) quizSection.style.display = '';
   document.getElementById('quiz-area').innerHTML =
     '<button class="btn btn-primary btn-lg" onclick="startQuiz()">ابدأ التقييم ←</button>' +
     '<div id="quiz-questions"></div>';
 
   renderSidebar();
-  switchTab('lt-content', 'lp-content', 'tab-btn');
+  // No tabs anymore - quiz section shown below content
 }
 
 function cpPayment(method) {
