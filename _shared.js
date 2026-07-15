@@ -605,6 +605,22 @@ function initChatbot() {
     </div>`;
   document.body.appendChild(widget);
   updateChatCredits();
+
+  // Show greeting bubble after 2 seconds
+  setTimeout(function() {
+    var existing = document.getElementById('chat-greeting-bubble');
+    if (existing) return;
+    var greeting = document.createElement('div');
+    greeting.id = 'chat-greeting-bubble';
+    greeting.style.cssText = 'position:fixed;bottom:90px;left:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:16px 16px 16px 4px;font-size:13px;font-weight:500;box-shadow:var(--shadow2);max-width:220px;z-index:899;animation:fadeInUp .4s ease;border:1px solid rgba(235,200,76,.3)';
+    greeting.innerHTML = '👋 هل تحتاج مساعدة؟ أنا هنا!<span onclick="this.parentNode.remove()" style="cursor:pointer;margin-right:8px;opacity:.6;font-size:11px"> ✕</span>';
+    document.body.appendChild(greeting);
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+      var el = document.getElementById('chat-greeting-bubble');
+      if (el) { el.style.opacity='0'; el.style.transition='opacity .5s'; setTimeout(function(){ if(el.parentNode)el.remove(); }, 500); }
+    }, 5000);
+  }, 2000);
 }
 
 function toggleChat() {
