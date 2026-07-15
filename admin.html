@@ -2253,7 +2253,7 @@ function renderBlock(id, type, data) {
       var colCountLbl = document.createElement('span');
       colCountLbl.style.cssText='font-size:12px;color:var(--text2);white-space:nowrap';
       colCountLbl.textContent='عدد الأعمدة:';
-      var colCountSel = sel(id+'-cols', [['2','عمودان'],['3','ثلاثة'],['4','أربعة']], String(data.cols||2));
+      var colCountSel = sel('cols', [['2','عمودان'],['3','ثلاثة'],['4','أربعة']], String(data.cols||2));
       colCountSel.style.cssText='width:auto;height:30px;font-size:12px';
       // Auto-rebuild columns when count changes
       (function(bid){ colCountSel.onchange=function(){
