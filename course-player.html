@@ -293,6 +293,11 @@ function completeCurrentLesson(){
     saveUserState(state);
     addXP(currentLesson.xp);
     showToast('✅ ممتاز! +'+toAr(currentLesson.xp)+' XP');
+    // Immediate save to Supabase — don't wait for the 5-second debounce
+    var user = (typeof getUser==='function') ? getUser() : null;
+    if (user && user.id && typeof dbSaveUserState==='function') {
+      dbSaveUserState(user.id, getUserState());
+    }
   }
   renderSidebar();
   var lessons=COURSE_LESSONS[currentCourse.id]||[];
@@ -402,6 +407,11 @@ function finishQ(){
       if (!state.quizScores) state.quizScores = {};
       state.quizScores[currentLesson.id] = 100;
       saveUserState(state);
+      // Immediate Supabase save — quiz score is critical, don't lose it
+      var user = (typeof getUser==='function') ? getUser() : null;
+      if (user && user.id && typeof dbSaveUserState==='function') {
+        dbSaveUserState(user.id, getUserState());
+      }
     }
     area.innerHTML =
       '<div style="text-align:center;padding:24px;background:var(--teal-light);border-radius:var(--r2);margin-bottom:16px">' +
@@ -706,6 +716,15 @@ function cpPayment(method) {
     setTimeout(function() { window.location.reload(); }, 800);
   }, 1500);
 }
+
+window.addEventListener('beforeunload', function() {
+  // Flush any pending state to Supabase before the tab closes
+  var user = (typeof getUser==='function') ? getUser() : null;
+  if (user && user.id && typeof dbSaveUserState==='function' && typeof _sb_ready!=='undefined' && _sb_ready) {
+    clearTimeout(window._saveStateTimer);
+    dbSaveUserState(user.id, getUserState());
+  }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
   // Init immediately so lessons show without waiting for Supabase
