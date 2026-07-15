@@ -335,6 +335,45 @@ function renderQ(){
 function selQ(i){qState.ans[qState.cur]=i;renderQ();}
 function nextQ(){if(qState.cur<qState.qs.length-1){qState.cur++;renderQ();}}
 function prevQ(){if(qState.cur>0){qState.cur--;renderQ();}}
+
+function showPassedQuizState(lesson) {
+  var area = document.getElementById('quiz-area');
+  if (!area) return;
+  var state = getUserState();
+  var quizDate = (state.quizDates || {})[lesson.id] || '';
+  var dateStr = quizDate ? new Date(quizDate).toLocaleDateString('ar-SA') : '';
+
+  // Build history of answers if stored
+  var history = (state.quizHistory || {})[lesson.id] || [];
+
+  var historyHTML = '';
+  if (history.length && lesson.quiz) {
+    historyHTML = '<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">';
+    history.forEach(function(h) {
+      var q = lesson.quiz.find(function(q){ return q.q === h.q; });
+      if (!q) return;
+      historyHTML +=
+        '<div style="padding:12px;background:var(--teal-light);border-radius:var(--r2);border-right:3px solid var(--teal)">' +
+          '<div style="font-size:13px;font-weight:600;margin-bottom:6px">✅ ' + h.q + '</div>' +
+          '<div style="padding:5px 10px;border-radius:var(--r);font-size:12px;background:var(--teal);color:#fff;display:inline-block">' +
+            '✓ ' + h.chosen + '</div>' +
+        '</div>';
+    });
+    historyHTML += '</div>';
+  }
+
+  area.innerHTML =
+    '<div style="text-align:center;padding:20px;background:var(--teal-light);border-radius:var(--r2);margin-bottom:12px">' +
+      '<div style="font-size:36px;margin-bottom:6px">🏆</div>' +
+      '<div style="font-size:18px;font-weight:700;color:var(--teal)">أتممت هذا التمرين بنجاح</div>' +
+      '<div style="font-size:13px;color:var(--teal);margin-top:4px">١٠٠٪' + (dateStr ? ' · ' + dateStr : '') + '</div>' +
+    '</div>' +
+    (historyHTML || '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px">لا يوجد سجل للإجابات</div>') +
+    '<div style="margin-top:12px;padding:10px;background:var(--warm3);border-radius:var(--r);text-align:center;font-size:12px;color:var(--text3)">' +
+      '🔒 تم قفل التمرين — لقد اجتزته بنجاح' +
+    '</div>';
+}
+
 function finishQ(){
   var total = qState.qs.length;
   var correct = qState.qs.filter(function(q,i){ return qState.ans[i]===parseInt(q.a); }).length;
@@ -376,10 +415,17 @@ function finishQ(){
     // Perfect score — save and show complete button
     if (currentLesson) {
       var state = getUserState();
-      if (!state.quizScores) state.quizScores = {};
-      state.quizScores[currentLesson.id] = 100;
+      if (!state.quizScores)  state.quizScores  = {};
+      if (!state.quizDates)   state.quizDates   = {};
+      if (!state.quizHistory) state.quizHistory  = {};
+      state.quizScores[currentLesson.id]  = 100;
+      state.quizDates[currentLesson.id]   = new Date().toISOString();
+      // Save history: which answer the user chose for each question
+      state.quizHistory[currentLesson.id] = qState.qs.map(function(q, i) {
+        return { q: q.q, chosen: q.opts[qState.ans[i]] || '' };
+      });
       saveUserState(state);
-      // Immediate Supabase save — quiz score is critical, don't lose it
+      // Immediate Supabase save
       var user = (typeof getUser==='function') ? getUser() : null;
       if (user && user.id && typeof dbSaveUserState==='function') {
         dbSaveUserState(user.id, getUserState());
@@ -392,6 +438,10 @@ function finishQ(){
         '<p style="color:var(--teal);margin-top:4px">أجبت على جميع الأسئلة بشكل صحيح</p>' +
       '</div>' + feedbackHTML;
     addXP(30);
+    // After 4 seconds, replace with the permanent locked passed state
+    setTimeout(function() {
+      if (currentLesson) showPassedQuizState(currentLesson);
+    }, 4000);
     // Reveal the complete button
     var completeBtnArea = document.getElementById('complete-btn-area');
     if (completeBtnArea) completeBtnArea.style.display = 'block';
@@ -662,9 +712,16 @@ function openLesson(lid) {
   var hasQuiz = !!(currentLesson && currentLesson.quiz && currentLesson.quiz.length);
   if (quizSection) quizSection.style.display = hasQuiz ? '' : 'none';
   if (hasQuiz) {
-    document.getElementById('quiz-area').innerHTML =
-      '<button class="btn btn-primary btn-lg" onclick="startQuiz()" style="margin-bottom:8px">ابدأ التمرين ✏️</button>' +
-      '<div id="quiz-questions"></div>';
+    var state2 = getUserState();
+    var alreadyPassed = (state2.quizScores || {})[l.id] === 100;
+    if (alreadyPassed) {
+      // Already scored 100% — show completed state, no retry
+      showPassedQuizState(l);
+    } else {
+      document.getElementById('quiz-area').innerHTML =
+        '<button class="btn btn-primary btn-lg" onclick="startQuiz()" style="margin-bottom:8px">ابدأ التمرين ✏️</button>' +
+        '<div id="quiz-questions"></div>';
+    }
   }
 
   renderSidebar();
