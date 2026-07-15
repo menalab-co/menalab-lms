@@ -337,7 +337,7 @@ function nextQ(){if(qState.cur<qState.qs.length-1){qState.cur++;renderQ();}}
 function prevQ(){if(qState.cur>0){qState.cur--;renderQ();}}
 function finishQ(){
   var total = qState.qs.length;
-  var correct = qState.qs.filter(function(q,i){ return qState.ans[i]===q.a; }).length;
+  var correct = qState.qs.filter(function(q,i){ return qState.ans[i]===parseInt(q.a); }).length;
   var pct = Math.round(correct/total*100);
   var area = document.getElementById('quiz-questions');
   qState.done = true;
@@ -346,25 +346,28 @@ function finishQ(){
   var feedbackHTML = '<div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">';
   qState.qs.forEach(function(q, i) {
     var userAns = qState.ans[i];
-    var isCorrect = userAns === q.a;
+    var isCorrect = userAns === parseInt(q.a);
     var bg = isCorrect ? 'var(--teal-light)' : 'var(--red-light)';
     var borderColor = isCorrect ? 'var(--teal)' : 'var(--red)';
     var icon = isCorrect ? '✅' : '❌';
     feedbackHTML +=
       '<div style="padding:14px;background:'+bg+';border-radius:var(--r2);border-right:3px solid '+borderColor+'">' +
         '<div style="font-size:13px;font-weight:600;margin-bottom:8px">'+icon+' '+q.q+'</div>' +
-        q.opts.map(function(opt, oi) {
-          var isUser    = oi === userAns;
-          var isAnswer  = oi === q.a;
-          var optStyle  = 'padding:6px 10px;border-radius:var(--r);font-size:12px;margin-bottom:4px;';
-          if (isAnswer) optStyle += 'background:var(--teal);color:#fff;font-weight:600;';
-          else if (isUser && !isCorrect) optStyle += 'background:var(--red);color:#fff;text-decoration:line-through;';
-          else optStyle += 'background:rgba(0,0,0,.05);color:var(--text2);';
-          return '<div style="'+optStyle+'">'+
-            (isAnswer ? '✓ ' : isUser&&!isCorrect ? '✗ ' : '') + opt +
-          '</div>';
-        }).join('') +
-        (!isCorrect ? '<div style="font-size:11px;color:var(--teal);margin-top:4px;font-weight:600">الإجابة الصحيحة: '+q.opts[q.a]+'</div>' : '') +
+        (isCorrect ?
+          // Correct: show user's answer in green
+          q.opts.map(function(opt, oi) {
+            var isUser = oi === userAns;
+            if (!isUser) return '';
+            return '<div style="padding:6px 10px;border-radius:var(--r);font-size:12px;margin-bottom:4px;background:var(--teal);color:#fff;font-weight:600">✓ '+opt+'</div>';
+          }).join('') :
+          // Wrong: show user's wrong answer struck out, but NOT the correct answer
+          q.opts.map(function(opt, oi) {
+            var isUser = oi === userAns;
+            if (!isUser) return '';
+            return '<div style="padding:6px 10px;border-radius:var(--r);font-size:12px;margin-bottom:4px;background:var(--red);color:#fff;text-decoration:line-through">✗ '+opt+'</div>';
+          }).join('') +
+          '<div style="font-size:12px;color:var(--red);margin-top:6px">راجع المحتوى وحاول مجدداً ↩️</div>'
+        ) +
       '</div>';
   });
   feedbackHTML += '</div>';
