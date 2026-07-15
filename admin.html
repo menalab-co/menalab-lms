@@ -852,6 +852,12 @@ function renderContent(){
     (function(mid, mtitle){ addLessonBtn.onclick=function(){ openAddLesson(mid, mtitle); }; })(mod.id, mod.title);
     hdr.appendChild(addLessonBtn);
 
+    var editModBtn = document.createElement('button');
+    editModBtn.className='btn btn-outline btn-sm';
+    editModBtn.textContent='✏️ تعديل';
+    (function(mid){ editModBtn.onclick=function(){ openEditModuleModal(mid); }; })(mod.id);
+    hdr.appendChild(editModBtn);
+
     var delModBtn = document.createElement('button');
     delModBtn.className='btn btn-sm';
     delModBtn.style.cssText='background:var(--red-light);color:var(--red);border:none;cursor:pointer';
@@ -1499,6 +1505,67 @@ function saveNewModule() {
   renderContent();
 }
 
+
+function openEditModuleModal(moduleId) {
+  var modules = getAdminModules();
+  var mod = modules.find(function(m){ return m.id === moduleId; });
+  if (!mod) return;
+  // Reuse the add-module modal with pre-filled values
+  document.getElementById('am-title').value   = mod.title   || '';
+  document.getElementById('am-icon').value    = mod.icon    || '📚';
+  document.getElementById('am-category').value= mod.category|| 'design';
+  document.getElementById('am-level').value   = mod.level   || 'مبتدئ';
+  document.getElementById('am-price').value   = mod.price   || 0;
+  document.getElementById('am-desc').value    = mod.desc    || '';
+  var status = getCourseStatus(moduleId);
+  document.getElementById('am-status').value  = status;
+
+  // Change the modal save button to update instead of create
+  var saveBtn = document.querySelector('#add-module-modal .btn-primary');
+  if (saveBtn) {
+    saveBtn.textContent = 'حفظ التعديلات ←';
+    saveBtn.onclick = function() { saveEditModule(moduleId); };
+  }
+  var modalTitle = document.querySelector('#add-module-modal h3');
+  if (modalTitle) modalTitle.textContent = '✏️ تعديل الوحدة';
+  openModal('add-module-modal');
+}
+
+function saveEditModule(moduleId) {
+  var title    = document.getElementById('am-title').value.trim();
+  var icon     = document.getElementById('am-icon').value.trim() || '📚';
+  var category = document.getElementById('am-category').value;
+  var level    = document.getElementById('am-level').value;
+  var price    = parseInt(document.getElementById('am-price').value) || 0;
+  var desc     = document.getElementById('am-desc').value.trim();
+  var status   = document.getElementById('am-status').value;
+
+  if (!title) { showToast('يرجى كتابة اسم الوحدة'); return; }
+
+  var modules = getAdminModules();
+  var idx = modules.findIndex(function(m){ return m.id === moduleId; });
+  if (idx < 0) return;
+
+  modules[idx] = Object.assign(modules[idx], {
+    title: title, icon: icon, category: category,
+    level: level, price: price, free: price === 0, desc: desc
+  });
+  saveAdminModules(modules);
+  setCourseStatus(moduleId, status);
+  dbSetCourseStatus(moduleId, status);
+  if (typeof dbSaveModule === 'function') dbSaveModule(modules[idx]);
+
+  // Reset modal back to "add" mode
+  var saveBtn = document.querySelector('#add-module-modal .btn-primary');
+  if (saveBtn) { saveBtn.textContent = 'إضافة الوحدة ←'; saveBtn.onclick = saveNewModule; }
+  var modalTitle = document.querySelector('#add-module-modal h3');
+  if (modalTitle) modalTitle.textContent = '📦 وحدة (موديول) جديدة';
+
+  closeModal('add-module-modal');
+  showToast('✅ تم تحديث الوحدة');
+  renderContent();
+}
+
 function deleteAdminModule(moduleId) {
   if (!confirm('حذف هذه الوحدة وجميع دروسها؟')) return;
   var modules = getAdminModules().filter(function(m){ return m.id !== moduleId; });
@@ -2042,6 +2109,60 @@ function openIconPicker(callback) {
   openModal('icon-picker-modal');
 }
 
+
+// ── Icon/emoji picker for callout blocks ─────────────────
+function openIconPickerForCallout(blockId) {
+  var icons = getIcons();
+  if (!icons.length) {
+    showToast('لا توجد أيقونات — ارفع أيقوناتك من مكتبة الأيقونات');
+    return;
+  }
+  openIconPicker(function(icon) {
+    var inpEl = document.getElementById(blockId + '-icon');
+    if (inpEl) {
+      inpEl.value = '<img src="' + icon.src + '" class="site-icon" style="width:20px;height:20px;vertical-align:middle">';
+    }
+  });
+}
+
+var QUICK_EMOJIS = ['💡','ℹ️','✅','⚠️','🔥','⭐','📌','🎯','💬','🔑','📝','🚀','👆','❗','💎','🛠️','✏️','📖','🧠','💪'];
+
+function showEmojiPicker(blockId) {
+  var existing = document.getElementById('emoji-quick-picker');
+  if (existing) { existing.remove(); return; }
+  var picker = document.createElement('div');
+  picker.id = 'emoji-quick-picker';
+  picker.style.cssText = 'position:fixed;z-index:9999;background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:200px;box-shadow:var(--shadow2)';
+  QUICK_EMOJIS.forEach(function(em) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = em;
+    btn.style.cssText = 'font-size:20px;padding:4px;border:none;background:none;cursor:pointer;border-radius:4px;';
+    btn.onmouseover = function(){ this.style.background='var(--warm3)'; };
+    btn.onmouseout  = function(){ this.style.background='none'; };
+    btn.onclick = function() {
+      var inpEl = document.getElementById(blockId + '-icon');
+      if (inpEl) inpEl.value = em;
+      picker.remove();
+    };
+    picker.appendChild(btn);
+  });
+  // Close on outside click
+  setTimeout(function() {
+    document.addEventListener('click', function closePicker(e) {
+      if (!picker.contains(e.target)) { picker.remove(); document.removeEventListener('click', closePicker); }
+    });
+  }, 50);
+  document.body.appendChild(picker);
+  // Position near the emoji button
+  var emojiBtn = document.querySelector('[title="إيموجي سريع"]');
+  if (emojiBtn) {
+    var rect = emojiBtn.getBoundingClientRect();
+    picker.style.top = (rect.bottom + 4) + 'px';
+    picker.style.left = rect.left + 'px';
+  }
+}
+
 function exportData(){
   var state=getUserState();
   var rows=[['نوع','قيمة'],['XP',state.xp],['المشاريع',(state.projects||[]).length],['الدروس المكتملة',(state.completedLessons||[]).length],['AI Credits',state.aiCredits]];
@@ -2236,12 +2357,34 @@ function renderBlock(id, type, data) {
       });
       body.appendChild(ctypeRow);
 
-      var iconRow = div('display:flex;gap:6px;margin-bottom:6px');
+      var iconRow = div('display:flex;gap:6px;margin-bottom:6px;align-items:center');
       var iconInp = inp('icon', data.icon||'💡', 'أيقونة');
-      iconInp.style.cssText='width:60px';
+      iconInp.style.cssText='width:60px;font-size:18px';
       var titleInp = inp('title', data.title||'', 'العنوان (اختياري)');
       titleInp.style.cssText='flex:1';
+
+      // Icon picker button - shows emoji options + custom uploaded icons
+      var iconPickBtn = document.createElement('button');
+      iconPickBtn.type='button';
+      iconPickBtn.textContent='🖼️';
+      iconPickBtn.title='اختر أيقونة';
+      iconPickBtn.style.cssText='padding:4px 8px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;background:var(--warm3);font-size:16px';
+      var iconEmojiBtn = document.createElement('button');
+      iconEmojiBtn.type='button';
+      iconEmojiBtn.title='إيموجي سريع';
+      iconEmojiBtn.textContent='😊';
+      iconEmojiBtn.style.cssText='padding:4px 8px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;background:var(--warm3);font-size:16px';
+      (function(bid) {
+        iconPickBtn.onclick = function() {
+          openIconPickerForCallout(bid);
+        };
+        iconEmojiBtn.onclick = function() {
+          showEmojiPicker(bid);
+        };
+      })(id);
       iconRow.appendChild(iconInp);
+      iconRow.appendChild(iconPickBtn);
+      iconRow.appendChild(iconEmojiBtn);
       iconRow.appendChild(titleInp);
       body.appendChild(iconRow);
       body.appendChild(inp('text', data.text||'', 'نص التنبيه...', 'textarea', 2));
@@ -2704,7 +2847,7 @@ var _origSaveLessonEdit = saveLessonEdit;
 saveLessonEdit = function() {
   var textarea = document.getElementById('lm-content');
   if (_contentMode === 'visual') {
-    // In visual mode: build HTML from blocks + append any carousel rows
+    // Build HTML from all visual blocks (includes both parsed existing + new blocks)
     var blocksHTML = buildHTMLFromBlocks();
     var carouselCode = buildCarouselCode('');
     if (textarea) textarea.value = blocksHTML + (carouselCode ? '\n' + carouselCode : '');
