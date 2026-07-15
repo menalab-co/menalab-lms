@@ -2769,8 +2769,9 @@ function buildHTMLFromBlocks() {
     switch (b.type) {
       case 'heading':
         var tag = d.level || 'h3';
-        var hPrefix = d.icon ? d.icon + ' ' : '';
-        parts.push('<' + tag + '>' + hPrefix + (d.text||'عنوان') + '</' + tag + '>');
+        var hIconAttr = d.icon ? ' data-icon="' + d.icon.replace(/"/g,'&quot;') + '"' : '';
+        var hPrefix = d.icon ? '<span class="block-icon">' + d.icon + '</span> ' : '';
+        parts.push('<' + tag + hIconAttr + '>' + hPrefix + (d.text||'عنوان') + '</' + tag + '>');
         break;
 
       case 'paragraph':
@@ -2798,14 +2799,15 @@ function buildHTMLFromBlocks() {
         };
         var colsHTML = columns.map(function(col) {
           var bg = COLOR_MAP[col.color||'warm2'] || '#f5f5f0';
+          var colIconAttr = col.icon ? ' data-icon="' + col.icon.replace(/"/g,'&quot;') + '"' : '';
           var colHeader = (col.icon || col.title) ?
-            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">' +
-              (col.icon ? '<span style="font-size:20px;flex-shrink:0">' + col.icon + '</span>' : '') +
+            '<div class="col-header" style="display:flex;align-items:center;gap:6px;margin-bottom:8px">' +
+              (col.icon ? '<span class="block-icon" style="font-size:20px;flex-shrink:0">' + col.icon + '</span>' : '') +
               (col.title ? '<strong>' + col.title + '</strong>' : '') +
             '</div>' : '';
-          return '<div style="background:' + bg + ';border-radius:8px;padding:12px">' +
+          return '<div' + colIconAttr + ' style="background:' + bg + ';border-radius:8px;padding:12px">' +
             colHeader +
-            (col.items ? '<div style="margin-top:4px">' + toItems2(col.items) + '</div>' : '') +
+            (col.items ? '<div class="col-items" style="margin-top:4px">' + toItems2(col.items) + '</div>' : '') +
             '</div>';
         }).join('');
         parts.push(
@@ -2857,9 +2859,26 @@ function parseHTMLToBlocks(rawHTML) {
     var html = node.outerHTML || '';
     var text = node.innerText || node.textContent || '';
 
-    if (tag === 'h3') { addBlock('heading', {level:'h3', text: text.trim()}); }
-    else if (tag === 'h4') { addBlock('heading', {level:'h4', text: text.trim()}); }
-    else if (tag === 'p') { addBlock('paragraph', {text: text.trim()}); }
+    if (tag === 'h3' || tag === 'h4') {
+      var hIcon = node.getAttribute('data-icon') || '';
+      // Remove the icon span from text if present
+      var hText = text.trim();
+      if (hIcon) {
+        // Strip the icon span from the beginning of text
+        var iconSpan = node.querySelector('.block-icon');
+        if (iconSpan) hText = hText.replace(iconSpan.textContent, '').replace(/^\s+/, '');
+      }
+      addBlock('heading', {level: tag, icon: hIcon, text: hText});
+    }
+    else if (tag === 'p') {
+      var pIcon = node.getAttribute('data-icon') || '';
+      var pText = text.trim();
+      if (pIcon) {
+        var pIconSpan = node.querySelector('.block-icon');
+        if (pIconSpan) pText = pText.replace(pIconSpan.textContent, '').replace(/^\s+/, '');
+      }
+      addBlock('paragraph', {icon: pIcon, text: pText});
+    }
     else if (tag === 'hr') { addBlock('divider', {}); }
     else if (tag === 'ul') {
       var items = Array.from(node.querySelectorAll('li')).map(function(li){ return li.textContent.trim(); }).join('\n');
@@ -2900,18 +2919,30 @@ function parseHTMLToBlocks(rawHTML) {
       var cols = Array.from(node.querySelectorAll(':scope > div'));
       if (cols.length >= 2) {
         var parsedCols = cols.map(function(col) {
-          // Support both <li> (old) and <div style="padding..."> (new) item formats
-          var liItems = Array.from(col.querySelectorAll('li')).map(function(li){return li.textContent.trim();});
-          var divItems = Array.from(col.querySelectorAll('div[style*="padding"]')).map(function(d){return d.textContent.trim();});
-          var items = (liItems.length ? liItems : divItems).filter(Boolean).join('\n');
+          // Read icon from data-icon attribute
+          var colIcon = col.getAttribute('data-icon') || '';
+          // Get items - try .col-items class first, then li, then div[style*="padding"]
+          var itemsContainer = col.querySelector('.col-items');
+          var items = '';
+          if (itemsContainer) {
+            var itemDivs = Array.from(itemsContainer.querySelectorAll('div'));
+            items = itemDivs.map(function(d){return d.textContent.trim();}).filter(Boolean).join('\n');
+          }
+          if (!items) {
+            var liItems = Array.from(col.querySelectorAll('li')).map(function(li){return li.textContent.trim();});
+            var divItems = Array.from(col.querySelectorAll('div[style*="padding"]')).map(function(d){return d.textContent.trim();});
+            items = (liItems.length ? liItems : divItems).filter(Boolean).join('\n');
+          }
+          // Get title from strong (excluding icon)
           var strong = col.querySelector('strong');
-          // Try to detect color from background
-          var bg = col.style && col.style.background ? col.style.background : (col.getAttribute('style')||'');
+          var title = strong ? strong.textContent.trim() : '';
+          // Detect color from background style
+          var bg = col.getAttribute('style') || '';
           var color = 'warm2';
-          if (bg.includes('#FFEBEE') || bg.includes('red-light')) color = 'red-light';
-          else if (bg.includes('#E8F5E9') || bg.includes('teal-light')) color = 'teal-light';
-          else if (bg.includes('#E3F2FD') || bg.includes('blue-light')) color = 'blue-light';
-          return { title: strong ? strong.textContent.trim() : '', color: color, items: items };
+          if (bg.includes('#FFEBEE')) color = 'red-light';
+          else if (bg.includes('#E8F5E9')) color = 'teal-light';
+          else if (bg.includes('#E3F2FD')) color = 'blue-light';
+          return { icon: colIcon, title: title, color: color, items: items };
         });
         addBlock('compare', {
           cols: cols.length, columns: parsedCols,
