@@ -2774,8 +2774,13 @@ function buildHTMLFromBlocks() {
         parts.push('<' + tag + hIconAttr + '>' + hPrefix + (d.text||'عنوان') + '</' + tag + '>');
         break;
 
-      case 'paragraph':
-        parts.push('<p>' + (d.text||'').split('\n').join('<br>') + '</p>');      break;
+      case 'paragraph': {
+        var pIconAttr = d.icon ? ' data-icon="' + d.icon.replace(/"/g,'&quot;') + '"' : '';
+        var pPrefix = d.icon ? '<span class="block-icon">' + d.icon + '</span> ' : '';
+        var pContent = (d.text||'').split('\n').join('<br>');
+        parts.push('<p' + pIconAttr + '>' + pPrefix + pContent + '</p>');
+        break;
+      }
 
       case 'callout':
         var cc = CALLOUT_COLORS[d.ctype||'gold'];
@@ -2861,23 +2866,25 @@ function parseHTMLToBlocks(rawHTML) {
 
     if (tag === 'h3' || tag === 'h4') {
       var hIcon = node.getAttribute('data-icon') || '';
-      // Remove the icon span from text if present
-      var hText = text.trim();
+      var hHTML = node.innerHTML || '';
       if (hIcon) {
-        // Strip the icon span from the beginning of text
-        var iconSpan = node.querySelector('.block-icon');
-        if (iconSpan) hText = hText.replace(iconSpan.textContent, '').replace(/^\s+/, '');
+        hHTML = hHTML.replace(/<span class="block-icon">.*?<\/span>\s*/g, '');
       }
-      addBlock('heading', {level: tag, icon: hIcon, text: hText});
+      addBlock('heading', {level: tag, icon: hIcon, text: hHTML.trim()});
     }
     else if (tag === 'p') {
       var pIcon = node.getAttribute('data-icon') || '';
-      var pText = text.trim();
+      // Use innerHTML to preserve <strong>, <em> formatting
+      var pHTML = node.innerHTML || '';
+      // Remove the icon span from content
       if (pIcon) {
-        var pIconSpan = node.querySelector('.block-icon');
-        if (pIconSpan) pText = pText.replace(pIconSpan.textContent, '').replace(/^\s+/, '');
+        pHTML = pHTML.replace(/<span class="block-icon">[^<]*<\/span>\s*/g, '');
+        // Also handle img icons
+        pHTML = pHTML.replace(/<span class="block-icon">.*?<\/span>\s*/g, '');
       }
-      addBlock('paragraph', {icon: pIcon, text: pText});
+      // Convert <br> back to newlines for the textarea
+      pHTML = pHTML.replace(/<br\s*\/?>/gi, '\n');
+      addBlock('paragraph', {icon: pIcon, text: pHTML.trim()});
     }
     else if (tag === 'hr') { addBlock('divider', {}); }
     else if (tag === 'ul') {
