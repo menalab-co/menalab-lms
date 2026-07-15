@@ -2127,7 +2127,8 @@ function openIconPickerForCallout(blockId) {
 
 var QUICK_EMOJIS = ['💡','ℹ️','✅','⚠️','🔥','⭐','📌','🎯','💬','🔑','📝','🚀','👆','❗','💎','🛠️','✏️','📖','🧠','💪'];
 
-function showEmojiPicker(blockId) {
+function showEmojiPicker(blockId, fieldSuffix) {
+  fieldSuffix = fieldSuffix || 'icon';
   var existing = document.getElementById('emoji-quick-picker');
   if (existing) { existing.remove(); return; }
   var picker = document.createElement('div');
@@ -2141,7 +2142,7 @@ function showEmojiPicker(blockId) {
     btn.onmouseover = function(){ this.style.background='var(--warm3)'; };
     btn.onmouseout  = function(){ this.style.background='none'; };
     btn.onclick = function() {
-      var inpEl = document.getElementById(blockId + '-icon');
+      var inpEl = document.getElementById(blockId + '-' + fieldSuffix);
       if (inpEl) inpEl.value = em;
       picker.remove();
     };
@@ -2310,11 +2311,37 @@ function renderBlock(id, type, data) {
         [['h3','عنوان رئيسي (H3)'],['h4','عنوان فرعي (H4)']],
         data.level||'h3'));
       body.lastChild.style.marginBottom='6px';
-      body.appendChild(inp('text', data.text, 'نص العنوان...'));
+      var hIconRow = div('display:flex;gap:6px;margin-bottom:6px;align-items:center');
+      var hIconInp = inp('icon', data.icon||'', 'أيقونة (اختياري)');
+      hIconInp.style.cssText='width:80px;font-size:16px';
+      var hIconBtn = makeIconPickerBtn(id, 'icon');
+      var hEmojiBtn = makeEmojiPickerBtn(id, 'icon');
+      hIconRow.appendChild(hIconInp);
+      hIconRow.appendChild(hIconBtn);
+      hIconRow.appendChild(hEmojiBtn);
+      var hIconLbl = document.createElement('span');
+      hIconLbl.style.cssText='font-size:10px;color:var(--text3)';
+      hIconLbl.textContent='أيقونة قبل العنوان';
+      hIconRow.appendChild(hIconLbl);
+      body.appendChild(hIconRow);
+      body.appendChild(inp('text', data.text||'', 'نص العنوان...'));
       break;
 
     case 'paragraph':
-      body.appendChild(inp('text', data.text, 'نص الفقرة...', 'textarea', 3));
+      var pIconRow = div('display:flex;gap:6px;margin-bottom:6px;align-items:center');
+      var pIconInp = inp('icon', data.icon||'', 'أيقونة (اختياري)');
+      pIconInp.style.cssText='width:80px;font-size:16px';
+      var pIconBtn = makeIconPickerBtn(id, 'icon');
+      var pEmojiBtn = makeEmojiPickerBtn(id, 'icon');
+      pIconRow.appendChild(pIconInp);
+      pIconRow.appendChild(pIconBtn);
+      pIconRow.appendChild(pEmojiBtn);
+      var pIconLbl = document.createElement('span');
+      pIconLbl.style.cssText='font-size:10px;color:var(--text3)';
+      pIconLbl.textContent='أيقونة قبل الفقرة';
+      pIconRow.appendChild(pIconLbl);
+      body.appendChild(pIconRow);
+      body.appendChild(inp('text', data.text||'', 'نص الفقرة...', 'textarea', 3));
       var fmtRow = div('display:flex;gap:8px;margin-top:6px;align-items:center');
       var fmtLbl = document.createElement('label');
       fmtLbl.style.cssText='font-size:11px;color:var(--text3)';
@@ -2428,7 +2455,16 @@ function renderBlock(id, type, data) {
           var colData = existingData[ci] || {title:'', color: colColors[ci%4], items:''};
           var col = div('');
           col.appendChild(lbl('العمود '+(ci+1)));
-          var tInp = inp('col-title-'+ci, colData.title, 'العنوان...');
+          var colIconRow = div('display:flex;gap:4px;margin-bottom:4px;align-items:center');
+          var colIconInp = inp('col-icon-'+ci, colData.icon||'', 'أيقونة');
+          colIconInp.style.cssText='width:54px;font-size:16px';
+          var colIconPickBtn = makeIconPickerBtn(id, 'col-icon-'+ci);
+          var colEmojiPickBtn = makeEmojiPickerBtn(id, 'col-icon-'+ci);
+          colIconRow.appendChild(colIconInp);
+          colIconRow.appendChild(colIconPickBtn);
+          colIconRow.appendChild(colEmojiPickBtn);
+          col.appendChild(colIconRow);
+          var tInp = inp('col-title-'+ci, colData.title||'', 'العنوان...');
           tInp.style.marginBottom='4px';
           col.appendChild(tInp);
           var cSel = sel('col-color-'+ci, [
@@ -2499,6 +2535,17 @@ function updateCompareCols(bid, n) {
     var lblEl=document.createElement('div');
     lblEl.className='vb-col-label';lblEl.textContent='العمود '+(ci+1);
     col.appendChild(lblEl);
+    // Icon row for column
+    var cIconRow=document.createElement('div');
+    cIconRow.style.cssText='display:flex;gap:4px;margin-bottom:4px;align-items:center';
+    var cIconInp=document.createElement('input');
+    cIconInp.id=bid+'-col-icon-'+ci;cIconInp.className='vb-input';
+    cIconInp.placeholder='أيقونة';cIconInp.value=colData.icon||'';
+    cIconInp.style.cssText='width:54px;font-size:16px';
+    var cIconPickBtn=makeIconPickerBtn(bid,'col-icon-'+ci);
+    var cEmojiPickBtn=makeEmojiPickerBtn(bid,'col-icon-'+ci);
+    cIconRow.appendChild(cIconInp);cIconRow.appendChild(cIconPickBtn);cIconRow.appendChild(cEmojiPickBtn);
+    col.appendChild(cIconRow);
     var tInp=document.createElement('input');
     tInp.id=bid+'-col-title-'+ci;tInp.className='vb-input';
     tInp.placeholder='العنوان...';tInp.value=colData.title||'';tInp.style.marginBottom='4px';
@@ -2589,6 +2636,31 @@ function insertIconIntoContent(icon) {
   }
 }
 
+
+// ── Reusable icon/emoji picker button factories ────────────
+function makeIconPickerBtn(blockId, fieldSuffix) {
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.textContent = '🖼️'; btn.title = 'اختر من المكتبة';
+  btn.style.cssText = 'padding:4px 7px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;background:var(--warm3);font-size:14px;flex-shrink:0';
+  btn.onclick = function() {
+    var icons = getIcons();
+    if (!icons.length) { showToast('لا توجد أيقونات — ارفع أيقوناتك من مكتبة الأيقونات'); return; }
+    openIconPicker(function(icon) {
+      var el = document.getElementById(blockId + '-' + fieldSuffix);
+      if (el) el.value = '<img src="' + icon.src + '" class="site-icon" style="width:20px;height:20px;vertical-align:middle;margin-left:4px">';
+    });
+  };
+  return btn;
+}
+
+function makeEmojiPickerBtn(blockId, fieldSuffix) {
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.textContent = '😊'; btn.title = 'إيموجي سريع';
+  btn.style.cssText = 'padding:4px 7px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;background:var(--warm3);font-size:14px;flex-shrink:0';
+  btn.onclick = function() { showEmojiPicker(blockId, fieldSuffix); };
+  return btn;
+}
+
 function deleteBlock(id) {
   _blocks = _blocks.filter(function(b){ return b.id !== id; });
   var el = document.getElementById('vb-' + id);
@@ -2639,8 +2711,8 @@ function readBlockData(b) {
     return el ? el.value : '';
   }
   switch (b.type) {
-    case 'heading':   return { level: val('level'), text: val('text') };
-    case 'paragraph': return { text: val('text') };
+    case 'heading':   return { level: val('level'), icon: val('icon'), text: val('text') };
+    case 'paragraph': return { icon: val('icon'), text: val('text') };
     case 'callout':   return { ctype: val('ctype'), icon: val('icon'), title: val('title'), text: val('text') };
     case 'compare': {
       // Read from hidden count (updated by updateCompareCols) or from select, whichever is larger
@@ -2657,7 +2729,9 @@ function readBlockData(b) {
         var colorEl = document.getElementById(b.id+'-col-color-'+ci);
         var itemsEl = document.getElementById(b.id+'-col-items-'+ci);
         if (!titleEl && !itemsEl) break; // no more columns
+        var iconEl = document.getElementById(b.id+'-col-icon-'+ci);
         cols.push({
+          icon:  iconEl  ? iconEl.value  : '',
           title: titleEl ? titleEl.value : '',
           color: colorEl ? colorEl.value : 'warm2',
           items: itemsEl ? itemsEl.value : ''
@@ -2695,7 +2769,8 @@ function buildHTMLFromBlocks() {
     switch (b.type) {
       case 'heading':
         var tag = d.level || 'h3';
-        parts.push('<' + tag + '>' + (d.text||'عنوان') + '</' + tag + '>');
+        var hPrefix = d.icon ? d.icon + ' ' : '';
+        parts.push('<' + tag + '>' + hPrefix + (d.text||'عنوان') + '</' + tag + '>');
         break;
 
       case 'paragraph':
@@ -2723,8 +2798,13 @@ function buildHTMLFromBlocks() {
         };
         var colsHTML = columns.map(function(col) {
           var bg = COLOR_MAP[col.color||'warm2'] || '#f5f5f0';
+          var colHeader = (col.icon || col.title) ?
+            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">' +
+              (col.icon ? '<span style="font-size:20px;flex-shrink:0">' + col.icon + '</span>' : '') +
+              (col.title ? '<strong>' + col.title + '</strong>' : '') +
+            '</div>' : '';
           return '<div style="background:' + bg + ';border-radius:8px;padding:12px">' +
-            (col.title ? '<strong style="display:block;margin-bottom:6px">' + col.title + '</strong>' : '') +
+            colHeader +
             (col.items ? '<div style="margin-top:4px">' + toItems2(col.items) + '</div>' : '') +
             '</div>';
         }).join('');
