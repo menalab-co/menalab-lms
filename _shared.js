@@ -1180,11 +1180,19 @@ function renderCarousel(el, slides, height) {
 
     function go(n) {
       current = (n + slides.length) % slides.length;
-      track.style.transform = 'translateX(-' + (current * 100) + '%)';
+      var slideWidth = el.offsetWidth || 0;
+      track.style.transform = 'translateX(-' + (current * slideWidth) + 'px)';
       dots.forEach(function(d, i) {
         d.className = 'carousel-dot' + (i === current ? ' active' : '');
       });
     }
+    // Recalculate on resize
+    window.addEventListener('resize', function() {
+      var slideWidth = el.offsetWidth || 0;
+      track.style.transition = 'none';
+      track.style.transform = 'translateX(-' + (current * slideWidth) + 'px)';
+      setTimeout(function(){ track.style.transition = 'transform .35s ease'; }, 50);
+    });
   }
 }
 
