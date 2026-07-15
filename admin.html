@@ -2428,16 +2428,16 @@ function renderBlock(id, type, data) {
           var colData = existingData[ci] || {title:'', color: colColors[ci%4], items:''};
           var col = div('');
           col.appendChild(lbl('العمود '+(ci+1)));
-          var tInp = inp(id+'-col-title-'+ci, colData.title, 'العنوان...');
+          var tInp = inp('col-title-'+ci, colData.title, 'العنوان...');
           tInp.style.marginBottom='4px';
           col.appendChild(tInp);
-          var cSel = sel(id+'-col-color-'+ci, [
+          var cSel = sel('col-color-'+ci, [
             ['red-light','🔴 أحمر'],['teal-light','🟢 أخضر'],
             ['blue-light','🔵 أزرق'],['warm2','⚪ رمادي'],['gold-light','🟡 ذهبي']
           ], colData.color||colColors[ci%4]);
           cSel.style.cssText='height:30px;margin-bottom:4px;font-size:11px';
           col.appendChild(cSel);
-          col.appendChild(inp(id+'-col-items-'+ci, colData.items, 'بند واحد في كل سطر...', 'textarea', 3));
+          col.appendChild(inp('col-items-'+ci, colData.items, 'بند واحد في كل سطر...', 'textarea', 3));
           colsContainer.appendChild(col);
         }
       }
@@ -2795,7 +2795,25 @@ function parseHTMLToBlocks(rawHTML) {
       if (html.includes('#1565C0')) ctype = 'blue';
       else if (html.includes('#2E7D32')) ctype = 'teal';
       else if (html.includes('#C62828')) ctype = 'red';
-      addBlock('callout', {ctype: ctype, text: text.trim()});
+      // Extract icon and title from <strong> tag
+      var calloutIcon = '💡', calloutTitle = '', calloutText = text.trim();
+      var strongEl = node.querySelector('strong');
+      if (strongEl) {
+        var strongHTML = strongEl.innerHTML || '';
+        var strongText = strongEl.textContent || '';
+        // Check if icon is an img tag
+        if (strongHTML.includes('<img')) {
+          calloutIcon = strongHTML.replace(/:$/, '').replace(/ $/, '').trim();
+        } else {
+          // First word/char is icon emoji, rest is title
+          var parts2 = strongText.replace(/:$/, '').trim().split(' ');
+          calloutIcon = parts2[0] || '💡';
+          calloutTitle = parts2.slice(1).join(' ');
+        }
+        // Text is everything after the strong element
+        calloutText = text.replace(strongText.replace(/:/, ''), '').trim();
+      }
+      addBlock('callout', {ctype: ctype, icon: calloutIcon, title: calloutTitle, text: calloutText});
     }
     else if (tag === 'div' && html.includes('grid-template-columns')) {
       // Compare block — parse all columns
