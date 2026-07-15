@@ -1143,13 +1143,13 @@ function renderCarousel(el, slides, height) {
   if (slides.length > 1) {
     var prevBtn = document.createElement('button');
     prevBtn.className = 'carousel-btn prev';
-    prevBtn.innerHTML = '›';
+    prevBtn.innerHTML = '‹';
     prevBtn.title = 'السابق';
     prevBtn.onclick = function(e) { e.stopPropagation(); go(current - 1); };
 
     var nextBtn = document.createElement('button');
     nextBtn.className = 'carousel-btn next';
-    nextBtn.innerHTML = '‹';
+    nextBtn.innerHTML = '›';
     nextBtn.title = 'التالي';
     nextBtn.onclick = function(e) { e.stopPropagation(); go(current + 1); };
 
@@ -1174,12 +1174,13 @@ function renderCarousel(el, slides, height) {
     el.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive: true});
     el.addEventListener('touchend', function(e) {
       var diff = touchStartX - e.changedTouches[0].clientX;
+      // Swipe left (diff > 0) = next slide, swipe right (diff < 0) = prev slide
       if (Math.abs(diff) > 40) go(diff > 0 ? current + 1 : current - 1);
     }, {passive: true});
 
     function go(n) {
       current = (n + slides.length) % slides.length;
-      track.style.transform = 'translateX(' + (current * 100) + '%)';
+      track.style.transform = 'translateX(-' + (current * 100) + '%)';
       dots.forEach(function(d, i) {
         d.className = 'carousel-dot' + (i === current ? ' active' : '');
       });
