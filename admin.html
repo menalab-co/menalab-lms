@@ -2817,7 +2817,7 @@ function buildHTMLFromBlocks() {
               (col.icon ? '<span class="block-icon" style="font-size:20px;flex-shrink:0">' + col.icon + '</span>' : '') +
               (col.title ? '<strong>' + col.title + '</strong>' : '') +
             '</div>' : '';
-          return '<div' + colIconAttr + ' style="background:' + bg + ';border-radius:8px;padding:12px">' +
+          return '<div' + colIconAttr + ' style="background:' + bg + ';border-radius:8px;padding:12px;border:1px solid rgba(0,0,0,.08)">' +
             colHeader +
             (col.items ? '<div class="col-items" style="margin-top:4px">' + toItems2(col.items) + '</div>' : '') +
             '</div>';
