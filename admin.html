@@ -2807,7 +2807,7 @@ function buildHTMLFromBlocks() {
         ];
         var toItems2 = function(str) {
           return (str||'').split('\n').filter(function(s){return s.trim();})
-            .map(function(s){ return '<div style="padding:3px 0">' + s.trim() + '</div>'; }).join('');
+            .map(function(s){ return '<div style="padding:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + s.trim() + '</div>'; }).join('');
         };
         var colsHTML = columns.map(function(col) {
           var bg = COLOR_MAP[col.color||'warm2'] || '#f5f5f0';
