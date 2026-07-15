@@ -1145,9 +1145,10 @@ function renderCarousel(el, slides, height) {
 
   el.appendChild(track);
 
-  // Set slide widths after appending to DOM
-  // Use requestAnimationFrame to ensure layout is done
-  setTimeout(setSlideWidths, 0);
+  // Set slide widths — run immediately and also after short delay as backup
+  setSlideWidths();
+  setTimeout(setSlideWidths, 100);
+  setTimeout(setSlideWidths, 500);
   window.addEventListener('resize', setSlideWidths);
 
   if (slides.length > 1) {
