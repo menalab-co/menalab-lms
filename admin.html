@@ -190,10 +190,11 @@
     <div class="form-group" style="margin-bottom:8px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="form-label" style="margin:0">المحتوى <span id="content-has-data" style="display:none;font-size:10px;color:var(--teal);font-weight:600">✓ يحتوي على محتوى</span></label>
-        <div style="display:flex;gap:4px;align-items:center">
+        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
           <span style="font-size:10px;color:var(--text3)">وضع التحرير:</span>
           <button type="button" onclick="setContentMode('visual')" id="mode-visual" class="btn btn-outline btn-sm" style="font-size:11px">🎨 مرئي</button>
           <button type="button" onclick="setContentMode('html')" id="mode-html" class="btn btn-primary btn-sm" style="font-size:11px">💻 HTML</button>
+          <button type="button" onclick="openIconPickerForContent()" class="btn btn-outline btn-sm" style="font-size:11px;border-color:var(--gold);color:var(--gold-dark)">🖼️ أيقونة</button>
         </div>
       </div>
 
@@ -2376,6 +2377,75 @@ function updateCompareCols(bid, n) {
     tArea.placeholder='بند واحد في كل سطر...';tArea.value=colData.items||'';
     col.appendChild(tArea);
     container.appendChild(col);
+  }
+}
+
+
+// ── Insert icon into lesson content ──────────────────────
+function openIconPickerForContent() {
+  var icons = getIcons();
+  if (!icons.length) {
+    showToast('لا توجد أيقونات — ارفع أيقوناتك من مكتبة الأيقونات أولاً');
+    return;
+  }
+  // Build or reuse picker modal
+  var picker = document.getElementById('icon-picker-modal');
+  if (!picker) {
+    picker = document.createElement('div');
+    picker.id = 'icon-picker-modal';
+    picker.className = 'modal-overlay';
+    picker.innerHTML =
+      '<div class="modal-box" style="max-width:500px">' +
+        '<button class="modal-close" id="icon-picker-close-btn">✕</button>' +
+        '<h3 style="margin-bottom:6px">🖼️ اختر أيقونة</h3>' +
+        '<p style="font-size:12px;color:var(--text2);margin-bottom:16px">ستُدرج في موضع المؤشر في المحتوى</p>' +
+        '<div id="icon-picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;max-height:400px;overflow-y:auto"></div>' +
+      '</div>';
+    document.body.appendChild(picker);
+    var closeBtn = document.getElementById('icon-picker-close-btn');
+    if (closeBtn) closeBtn.onclick = function(){ closeModal('icon-picker-modal'); };
+  }
+
+  var grid = document.getElementById('icon-picker-grid');
+  grid.innerHTML = '';
+  icons.forEach(function(icon) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'background:var(--warm3);border:1.5px solid var(--border);border-radius:var(--r2);padding:10px;text-align:center;cursor:pointer;transition:border-color .15s;width:100%';
+    btn.innerHTML =
+      '<img src="' + icon.src + '" style="width:40px;height:40px;object-fit:contain;display:block;margin:0 auto 6px">' +
+      '<div style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + icon.name + '</div>';
+    btn.onmouseover = function(){ this.style.borderColor='var(--gold)'; };
+    btn.onmouseout  = function(){ this.style.borderColor='var(--border)'; };
+    btn.onclick = function() {
+      insertIconIntoContent(icon);
+      closeModal('icon-picker-modal');
+    };
+    grid.appendChild(btn);
+  });
+  openModal('icon-picker-modal');
+}
+
+function insertIconIntoContent(icon) {
+  var iconTag = '<img src="' + icon.src + '" alt="' + icon.name + '" class="site-icon" style="width:28px;height:28px;vertical-align:middle;margin:0 4px">';
+
+  if (_contentMode === 'html') {
+    // Insert at cursor position in textarea
+    var ta = document.getElementById('lm-content');
+    if (!ta) return;
+    var start = ta.selectionStart;
+    var end   = ta.selectionEnd;
+    var before = ta.value.substring(0, start);
+    var after  = ta.value.substring(end);
+    ta.value = before + iconTag + after;
+    // Move cursor after inserted tag
+    ta.selectionStart = ta.selectionEnd = start + iconTag.length;
+    ta.focus();
+    showToast('✓ تم إدراج الأيقونة في المحتوى');
+  } else {
+    // Visual mode — add as a paragraph block with the icon
+    addBlock('paragraph', { text: iconTag + ' ' });
+    showToast('✓ تم إضافة الأيقونة كبلوك');
   }
 }
 
