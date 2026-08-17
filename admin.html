@@ -410,12 +410,39 @@
 
   <!-- QA LIBRARY -->
   <div id="sec-qa" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <p style="font-size:13px;color:var(--text2)">مكتبة الأسئلة والأجوبة المحلية للمساعد الذكي</p>
-      <button class="btn btn-primary btn-sm" onclick="openQAModal(null)">+ إضافة سؤال</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="openQABulkImport()">📥 استيراد مجموعة</button>
+        <button class="btn btn-outline btn-sm" onclick="exportQALibrary()">📤 تصدير</button>
+        <button class="btn btn-primary btn-sm" onclick="openQAModal(null)">+ إضافة سؤال</button>
+      </div>
     </div>
     <div id="qa-list"></div>
   </div>
+
+<!-- QA BULK IMPORT MODAL -->
+<div class="modal-overlay" id="qa-bulk-modal">
+  <div class="modal-box" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('qa-bulk-modal')">✕</button>
+    <h3 style="margin-bottom:6px">📥 استيراد مجموعة أسئلة</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">الصق مصفوفة JSON من الأسئلة. كل سؤال يحتاج حقلين: <code>q</code> (السؤال) و <code>a</code> (الإجابة). يمكن إضافة <code>keys</code> (كلمات مفتاحية اختيارية).</p>
+    <div style="background:var(--warm3);border-radius:var(--r);padding:10px 12px;font-size:11px;direction:ltr;margin-bottom:12px;color:var(--text2)">
+[<br>
+&nbsp;&nbsp;{ "q": "ما هو الـ FDM؟", "a": "Fused Deposition Modeling — طريقة طباعة تعتمد على لحام الخيوط البلاستيكية طبقة فوق طبقة", "keys": ["FDM","طباعة"] },<br>
+&nbsp;&nbsp;{ "q": "ما هي أنواع الطابعات؟", "a": "FDM، SLA، SLS" }<br>
+]
+    </div>
+    <textarea class="inp textarea" id="qa-bulk-input" rows="10" placeholder="الصق JSON هنا..." dir="ltr" style="font-size:12px;font-family:monospace;margin-bottom:12px"></textarea>
+    <div id="qa-bulk-status" style="font-size:12px;color:var(--red);min-height:18px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary btn-full btn-lg" onclick="importQABulk()">استيراد ←</button>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;white-space:nowrap">
+        <input type="checkbox" id="qa-bulk-replace"> استبدال المكتبة الحالية
+      </label>
+    </div>
+  </div>
+</div>
 
   <!-- EVENTS -->
   <div id="sec-events" style="display:none">
@@ -2162,6 +2189,78 @@ function showEmojiPicker(blockId, fieldSuffix) {
     picker.style.top = (rect.bottom + 4) + 'px';
     picker.style.left = rect.left + 'px';
   }
+}
+
+
+// ── QA Bulk Import / Export ───────────────────────────────
+function openQABulkImport() {
+  document.getElementById('qa-bulk-input').value = '';
+  document.getElementById('qa-bulk-status').textContent = '';
+  document.getElementById('qa-bulk-replace').checked = false;
+  openModal('qa-bulk-modal');
+}
+
+function importQABulk() {
+  var raw = document.getElementById('qa-bulk-input').value.trim();
+  var statusEl = document.getElementById('qa-bulk-status');
+  statusEl.style.color = 'var(--red)';
+  statusEl.textContent = '';
+
+  if (!raw) { statusEl.textContent = 'يرجى لصق JSON أولاً'; return; }
+
+  var items;
+  try {
+    items = JSON.parse(raw);
+  } catch(e) {
+    statusEl.textContent = 'خطأ في صيغة JSON: ' + e.message;
+    return;
+  }
+  if (!Array.isArray(items)) {
+    statusEl.textContent = 'يجب أن تكون مصفوفة [ ... ]';
+    return;
+  }
+
+  var valid = [];
+  var skipped = 0;
+  items.forEach(function(item, i) {
+    if (!item.q || !item.a) { skipped++; return; }
+    valid.push({
+      id:   'qa_' + Date.now() + '_' + i,
+      q:    String(item.q).trim(),
+      a:    String(item.a).trim(),
+      keys: Array.isArray(item.keys) ? item.keys.map(function(k){ return String(k).trim(); }) :
+            (item.keys ? String(item.keys).split(',').map(function(k){ return k.trim(); }).filter(Boolean) : [])
+    });
+  });
+
+  if (!valid.length) {
+    statusEl.textContent = 'لا توجد أسئلة صالحة — تأكد من وجود حقلي q و a في كل سؤال';
+    return;
+  }
+
+  var replace = document.getElementById('qa-bulk-replace').checked;
+  var lib = replace ? [] : getQALibrary();
+  lib = lib.concat(valid);
+  saveQALibrary(lib);
+
+  closeModal('qa-bulk-modal');
+  showToast('✅ تم استيراد ' + toAr(valid.length) + ' سؤال' + (skipped ? ' (تم تجاهل ' + toAr(skipped) + ')' : ''));
+  renderQA();
+}
+
+function exportQALibrary() {
+  var lib = getQALibrary();
+  if (!lib.length) { showToast('لا توجد أسئلة للتصدير'); return; }
+  // Export without internal id field
+  var clean = lib.map(function(item) {
+    return { q: item.q, a: item.a, keys: item.keys || [] };
+  });
+  var json = JSON.stringify(clean, null, 2);
+  var a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+  a.download = 'shakkel-qa-library.json';
+  a.click();
+  showToast('✅ تم تصدير ' + toAr(lib.length) + ' سؤال');
 }
 
 function exportData(){
