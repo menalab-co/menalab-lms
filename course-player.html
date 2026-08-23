@@ -771,53 +771,74 @@ window.addEventListener('beforeunload', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-  // First clear stale lesson cache so Supabase always wins
-  if (typeof _sb_ready !== 'undefined' && _sb_ready) {
-    try {
-      var keysToReset = [];
-      for (var ki=0; ki<localStorage.length; ki++) {
-        var k = localStorage.key(ki);
-        if (k && (k.indexOf('sh_lesson_') === 0 || k.indexOf('sh_admin_lessons_') === 0)) {
-          keysToReset.push(k);
-        }
+  // Always clear stale lesson cache so Supabase content wins
+  try {
+    var keysToReset = [];
+    for (var ki = 0; ki < localStorage.length; ki++) {
+      var k = localStorage.key(ki);
+      if (k && (k.indexOf('sh_lesson_') === 0 || k.indexOf('sh_admin_lessons_') === 0)) {
+        keysToReset.push(k);
       }
-      keysToReset.forEach(function(k){ localStorage.removeItem(k); });
-    } catch(e) {}
+    }
+    keysToReset.forEach(function(k){ localStorage.removeItem(k); });
+  } catch(e) {}
+
+  // Show loading spinner while Supabase loads
+  var playerMain = document.getElementById('player-main');
+  var sidebar = document.getElementById('lessons-sidebar-list');
+  var loadingHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'padding:60px 24px;color:var(--text3);gap:12px">' +
+      '<div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);' +
+      'border-radius:50%;animation:spin .8s linear infinite"></div>' +
+      '<div style="font-size:13px">جاري تحميل المحتوى...</div>' +
+    '</div>';
+  if (playerMain) playerMain.innerHTML = loadingHTML;
+  if (sidebar) sidebar.innerHTML = loadingHTML;
+
+  // Add spin animation if not already present
+  if (!document.getElementById('spin-style')) {
+    var st = document.createElement('style');
+    st.id = 'spin-style';
+    st.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(st);
   }
-  // Init immediately so lessons show without waiting for Supabase
-  init();
-  // Then sync from Supabase in background and refresh if needed
-  if (typeof dbSyncAllContent === 'function') {
-    dbSyncAllContent(function() {
-      // Also load admin modules from shakkel_modules table
-      if (typeof dbLoadModules === 'function') {
-        dbLoadModules(function(modules) {
-          if (modules && modules.length) {
-            localStorage.setItem('sh_admin_modules', JSON.stringify(modules));
-          }
-          // Re-apply overrides with all fresh data
-          if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
-          // Only re-render current lesson if its video/content actually changed
-          if (currentLesson) {
-            var lessons = COURSE_LESSONS[currentCourse ? currentCourse.id : ''] || [];
-            var freshLesson = lessons.find(function(l){ return l.id === currentLesson.id; });
-            var videoChanged = freshLesson && freshLesson.videoUrl !== currentLesson.videoUrl;
-            var contentChanged = freshLesson && freshLesson.content !== currentLesson.content;
-            if (videoChanged || contentChanged) {
-              openLesson(currentLesson.id);
-            } else {
-              // Just update sidebar in case lesson list changed
-              renderSidebar();
-            }
-          } else {
-            init();
-          }
-        });
-      } else {
+
+  function afterSync() {
+    // Load admin modules
+    if (typeof dbLoadModules === 'function') {
+      dbLoadModules(function(modules) {
+        if (modules && modules.length) {
+          localStorage.setItem('sh_admin_modules', JSON.stringify(modules));
+        }
         if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
-        if (currentLesson) openLesson(currentLesson.id);
+        init();
+      });
+    } else {
+      if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
+      init();
+    }
+  }
+
+  // Load from Supabase first, fall back to localStorage if unavailable
+  if (typeof dbSyncAllContent === 'function' && typeof _sb_ready !== 'undefined' && _sb_ready) {
+    // Supabase is ready — load fresh content then init
+    dbSyncAllContent(afterSync);
+  } else if (typeof _sb_ready !== 'undefined' && !_sb_ready) {
+    // Supabase not ready yet — wait briefly then try again, fall back to localStorage
+    setTimeout(function() {
+      if (typeof dbSyncAllContent === 'function' && _sb_ready) {
+        dbSyncAllContent(afterSync);
+      } else {
+        // Supabase unavailable — fall back to localStorage
+        if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
+        init();
       }
-    });
+    }, 1500);
+  } else {
+    // No Supabase at all — use localStorage
+    if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
+    init();
   }
 });
 </script>
