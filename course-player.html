@@ -431,25 +431,26 @@ function finishQ(){
         dbSaveUserState(user.id, getUserState());
       }
     }
-    area.innerHTML =
-      '<div style="text-align:center;padding:24px;background:var(--teal-light);border-radius:var(--r2);margin-bottom:16px">' +
-        '<div style="font-size:40px;margin-bottom:8px">🎉</div>' +
-        '<div style="font-size:26px;font-weight:700;color:var(--teal)">١٠٠٪ ممتاز!</div>' +
-        '<p style="color:var(--teal);margin-top:4px">أجبت على جميع الأسئلة بشكل صحيح</p>' +
-      '</div>' + feedbackHTML;
-    addXP(30);
-    // After 4 seconds, replace with the permanent locked passed state
-    setTimeout(function() {
-      if (currentLesson) showPassedQuizState(currentLesson);
-    }, 4000);
-    // Reveal the complete button
+    // Show instant celebration + complete button immediately
     var completeBtnArea = document.getElementById('complete-btn-area');
     if (completeBtnArea) completeBtnArea.style.display = 'block';
-    // Scroll to complete button
-    setTimeout(function(){
-      var btn = document.getElementById('complete-btn');
-      if (btn) btn.scrollIntoView({behavior:'smooth', block:'center'});
-    }, 300);
+
+    area.innerHTML =
+      '<div style="text-align:center;padding:20px;background:var(--teal-light);border-radius:var(--r2);margin-bottom:12px">' +
+        '<div style="font-size:36px;margin-bottom:6px">🎉</div>' +
+        '<div style="font-size:22px;font-weight:700;color:var(--teal)">١٠٠٪ ممتاز!</div>' +
+        '<p style="color:var(--teal);margin-top:2px;font-size:13px">أجبت على جميع الأسئلة بشكل صحيح</p>' +
+      '</div>';
+    addXP(30);
+
+    // Scroll to complete button immediately
+    var btn = document.getElementById('complete-btn');
+    if (btn) btn.scrollIntoView({behavior:'smooth', block:'center'});
+
+    // After 2 seconds, show the full locked passed state with history
+    setTimeout(function() {
+      if (currentLesson) showPassedQuizState(currentLesson);
+    }, 2000);
   } else {
     // Not 100% — show feedback with retry button
     var wrongCount = total - correct;
