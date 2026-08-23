@@ -372,12 +372,32 @@ function dbLoadCourseStatuses(callback) {
 function loadState() {
   try {
     if (localStorage.getItem('sh_version') !== VERSION) {
-      var user = localStorage.getItem('sh_user');
-      localStorage.clear();
-      if (user) localStorage.setItem('sh_user', user);
+      // Version mismatch: clear ONLY content cache keys, NEVER user progress or identity
+      // Content is re-synced from Supabase; progress must be preserved
+      var keysToRemove = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        // Remove content cache but keep: sh_user, sh_state, sh_posts, sh_mentor_reqs
+        if (k && (
+          k.indexOf('sh_lesson_') === 0 ||
+          k.indexOf('sh_course_status_') === 0 ||
+          k.indexOf('sh_lesson_order_') === 0 ||
+          k.indexOf('sh_admin_lessons_') === 0 ||
+          k.indexOf('sh_deleted_lessons_') === 0 ||
+          k.indexOf('sh_course_price_') === 0 ||
+          k.indexOf('sh_admin_modules') === 0 ||
+          k.indexOf('sh_admin_events') === 0 ||
+          k.indexOf('sh_stage_') === 0 ||
+          k.indexOf('sh_icons') === 0
+        )) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach(function(k){ localStorage.removeItem(k); });
       localStorage.setItem('sh_version', VERSION);
     }
-    // If no user is logged in, always reset state to prevent stale enrollment
+    // If no user is logged in, clear enrollment state to prevent stale data
+    // but NEVER clear sh_state when user IS logged in
     if (!localStorage.getItem('sh_user')) {
       localStorage.removeItem('sh_state');
     }
@@ -1043,96 +1063,57 @@ function renderCarousel(el, slides, height) {
   var fixedHeight = height && parseInt(height) > 0 ? parseInt(height) : 0;
   var current = 0;
 
-  // Outer wrapper
+  // Wrapper setup
   el.style.position = 'relative';
+  el.style.borderRadius = 'var(--r2)';
   el.style.overflow = 'hidden';
-  if (fixedHeight) {
-    el.style.height = fixedHeight + 'px';
-  } else {
-    el.style.height = 'auto';
-    el.style.minHeight = '80px';
-  }
+  el.style.background = 'transparent';
 
-  // Track — no width set, will be laid out via slides
+  // Scrollable track using CSS scroll-snap — no JS transforms needed
   var track = document.createElement('div');
-  track.className = 'carousel-track';
-  track.style.cssText = 'display:flex;transition:transform .35s ease;will-change:transform;';
+  track.style.cssText = [
+    'display:flex',
+    'overflow-x:scroll',
+    'scroll-snap-type:x mandatory',
+    '-webkit-overflow-scrolling:touch',
+    'scrollbar-width:none',
+    'transition:none'
+  ].join(';');
+  // Hide scrollbar cross-browser
+  track.id = 'ctrack-' + Math.random().toString(36).slice(2,7);
 
-  function setSlideWidths() {
-    var w = el.offsetWidth;
-    if (!w) return;
-    Array.prototype.forEach.call(track.children, function(slide) {
-      slide.style.width = w + 'px';
-      slide.style.minWidth = w + 'px';
-      slide.style.flexShrink = '0';
-    });
-    // Re-apply current position without animation
-    var prev = track.style.transition;
-    track.style.transition = 'none';
-    track.style.transform = 'translateX(-' + (current * w) + 'px)';
-    setTimeout(function(){ track.style.transition = prev || 'transform .35s ease'; }, 20);
-  }
+  // Add style to hide scrollbar
+  var styleEl = document.createElement('style');
+  styleEl.textContent = '#' + track.id + '::-webkit-scrollbar{display:none}';
+  document.head.appendChild(styleEl);
 
-  slides.forEach(function(slide, idx) {
+  if (fixedHeight) track.style.height = fixedHeight + 'px';
+
+  slides.forEach(function(slide) {
     var slideEl = document.createElement('div');
-    slideEl.className = 'carousel-slide';
-    slideEl.style.cssText = 'position:relative;flex-shrink:0;background:transparent;';
+    slideEl.style.cssText = [
+      'flex:0 0 100%',
+      'width:100%',
+      'scroll-snap-align:start',
+      'position:relative',
+      'background:transparent'
+    ].join(';');
     if (fixedHeight) slideEl.style.height = fixedHeight + 'px';
 
     var rawSrc = slide.src || slide;
     var driveId = extractDriveId(rawSrc);
+    var imgSrc = driveId
+      ? 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w1600'
+      : rawSrc;
 
-    if (driveId) {
-      var thumbnailUrl = 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w1600';
-      var img = document.createElement('img');
-      img.src = thumbnailUrl;
-      img.alt = slide.caption || '';
-      img.style.cssText = 'width:100%;display:block;' + (fixedHeight ? 'height:' + fixedHeight + 'px;object-fit:contain;' : 'height:auto;');
-      img.onerror = function() {
-        this.style.display = 'none';
-        var iframe = document.createElement('iframe');
-        var ih = fixedHeight || 420;
-        iframe.src = 'https://drive.google.com/file/d/' + driveId + '/preview?rm=minimal';
-        iframe.style.cssText = 'width:100%;height:' + ih + 'px;border:none;display:block';
-        iframe.setAttribute('allow', 'autoplay');
-        iframe.setAttribute('allowfullscreen', '');
-        slideEl.appendChild(iframe);
-      };
-      if (!fixedHeight) {
-        img.onload = function() {
-          var w = el.offsetWidth;
-          if (w && this.naturalWidth) {
-            var h = this.naturalHeight * (w / this.naturalWidth);
-            el.style.height = h + 'px';
-            setSlideWidths();
-          }
-        };
-      }
-      slideEl.appendChild(img);
-    } else {
-      var img = document.createElement('img');
-      img.src = rawSrc;
-      img.alt = slide.caption || '';
-      img.style.cssText = 'width:100%;display:block;' + (fixedHeight ? 'height:' + fixedHeight + 'px;object-fit:contain;' : 'height:auto;');
-      img.onerror = function() {
-        slideEl.innerHTML =
-          '<div style="width:100%;padding:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--warm2);color:var(--text3);gap:8px;text-align:center">' +
-            '<span style="font-size:28px">🖼️</span>' +
-            '<span style="font-size:13px;font-weight:600">تعذّر تحميل الصورة</span>' +
-          '</div>';
-      };
-      if (!fixedHeight && idx === 0) {
-        img.onload = function() {
-          var w = el.offsetWidth;
-          if (w && this.naturalWidth) {
-            var h = this.naturalHeight * (w / this.naturalWidth);
-            el.style.height = h + 'px';
-            setSlideWidths();
-          }
-        };
-      }
-      slideEl.appendChild(img);
-    }
+    var img = document.createElement('img');
+    img.src = imgSrc;
+    img.alt = slide.caption || '';
+    img.style.cssText = 'width:100%;display:block;' + (fixedHeight ? 'height:' + fixedHeight + 'px;object-fit:contain;' : 'height:auto;');
+    img.onerror = function() {
+      slideEl.innerHTML = '<div style="padding:40px;text-align:center;background:var(--warm3);color:var(--text3)"><span style="font-size:28px;display:block;margin-bottom:8px">🖼️</span>تعذّر تحميل الصورة</div>';
+    };
+    slideEl.appendChild(img);
 
     if (slide.caption) {
       var cap = document.createElement('div');
@@ -1145,35 +1126,40 @@ function renderCarousel(el, slides, height) {
 
   el.appendChild(track);
 
-  // Set slide widths — run immediately and also after short delay as backup
-  setSlideWidths();
-  setTimeout(setSlideWidths, 100);
-  setTimeout(setSlideWidths, 500);
-  window.addEventListener('resize', setSlideWidths);
-
   if (slides.length > 1) {
-    function go(n) {
+    // Navigation buttons scroll track by container width
+    function goTo(n) {
       current = (n + slides.length) % slides.length;
-      var w = el.offsetWidth || 0;
-      track.style.transform = 'translateX(-' + (current * w) + 'px)';
-      if (prevBtn) prevBtn.style.opacity = current === 0 ? '0.4' : '1';
-      if (nextBtn) nextBtn.style.opacity = current === slides.length - 1 ? '0.4' : '1';
+      var w = track.offsetWidth || track.parentElement.offsetWidth || 400;
+      track.scrollTo({ left: current * w, behavior: 'smooth' });
       dots.forEach(function(d, i) {
         d.className = 'carousel-dot' + (i === current ? ' active' : '');
       });
     }
 
+    // Update dots on scroll
+    track.addEventListener('scroll', function() {
+      var w = track.offsetWidth || 1;
+      var idx = Math.round(track.scrollLeft / w);
+      if (idx !== current) {
+        current = idx;
+        dots.forEach(function(d, i) {
+          d.className = 'carousel-dot' + (i === current ? ' active' : '');
+        });
+      }
+    }, { passive: true });
+
     var prevBtn = document.createElement('button');
     prevBtn.className = 'carousel-btn prev';
     prevBtn.innerHTML = '‹';
     prevBtn.title = 'السابق';
-    prevBtn.onclick = function(e) { e.stopPropagation(); go(current - 1); };
+    prevBtn.onclick = function(e) { e.stopPropagation(); goTo(current - 1); };
 
     var nextBtn = document.createElement('button');
     nextBtn.className = 'carousel-btn next';
     nextBtn.innerHTML = '›';
     nextBtn.title = 'التالي';
-    nextBtn.onclick = function(e) { e.stopPropagation(); go(current + 1); };
+    nextBtn.onclick = function(e) { e.stopPropagation(); goTo(current + 1); };
 
     el.appendChild(prevBtn);
     el.appendChild(nextBtn);
@@ -1184,19 +1170,11 @@ function renderCarousel(el, slides, height) {
     slides.forEach(function(_, i) {
       var dot = document.createElement('button');
       dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-      dot.onclick = function(e) { e.stopPropagation(); go(i); };
+      dot.onclick = function(e) { e.stopPropagation(); goTo(i); };
       dotsRow.appendChild(dot);
       dots.push(dot);
     });
     el.appendChild(dotsRow);
-
-    // Touch swipe
-    var touchStartX = 0;
-    el.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive: true});
-    el.addEventListener('touchend', function(e) {
-      var diff = touchStartX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 40) go(diff > 0 ? current + 1 : current - 1);
-    }, {passive: true});
   }
 }
 
