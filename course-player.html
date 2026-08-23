@@ -709,7 +709,11 @@ function openLesson(lid) {
   // Quiz
   // Show تمرين section + hide complete-btn until 100% scored
   var quizSection = document.getElementById('lesson-quiz-section');
-  var hasQuiz = !!(currentLesson && currentLesson.quiz && currentLesson.quiz.length);
+  // Handle quiz as array or JSON string
+  var lessonQuiz = currentLesson && currentLesson.quiz;
+  if (typeof lessonQuiz === 'string') { try { lessonQuiz = JSON.parse(lessonQuiz); } catch(e) { lessonQuiz = null; } }
+  var hasQuiz = !!(lessonQuiz && lessonQuiz.length);
+  if (hasQuiz && currentLesson) currentLesson.quiz = lessonQuiz; // normalize to array
   if (quizSection) quizSection.style.display = hasQuiz ? '' : 'none';
   if (hasQuiz) {
     var state2 = getUserState();
@@ -756,6 +760,19 @@ window.addEventListener('beforeunload', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+  // First clear stale lesson cache so Supabase always wins
+  if (typeof _sb_ready !== 'undefined' && _sb_ready) {
+    try {
+      var keysToReset = [];
+      for (var ki=0; ki<localStorage.length; ki++) {
+        var k = localStorage.key(ki);
+        if (k && (k.indexOf('sh_lesson_') === 0 || k.indexOf('sh_admin_lessons_') === 0)) {
+          keysToReset.push(k);
+        }
+      }
+      keysToReset.forEach(function(k){ localStorage.removeItem(k); });
+    } catch(e) {}
+  }
   // Init immediately so lessons show without waiting for Supabase
   init();
   // Then sync from Supabase in background and refresh if needed
@@ -769,8 +786,21 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           // Re-apply overrides with all fresh data
           if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
-          if (currentLesson) openLesson(currentLesson.id);
-          else init();
+          // Only re-render current lesson if its video/content actually changed
+          if (currentLesson) {
+            var lessons = COURSE_LESSONS[currentCourse ? currentCourse.id : ''] || [];
+            var freshLesson = lessons.find(function(l){ return l.id === currentLesson.id; });
+            var videoChanged = freshLesson && freshLesson.videoUrl !== currentLesson.videoUrl;
+            var contentChanged = freshLesson && freshLesson.content !== currentLesson.content;
+            if (videoChanged || contentChanged) {
+              openLesson(currentLesson.id);
+            } else {
+              // Just update sidebar in case lesson list changed
+              renderSidebar();
+            }
+          } else {
+            init();
+          }
         });
       } else {
         if (typeof applyAdminLessonOverrides === 'function') applyAdminLessonOverrides();
