@@ -1449,6 +1449,9 @@ function saveNewLesson() {
   // Save lesson data so course-player can find it
   var lessonData = { title: title, type: type, dur: dur, content: '', videoUrl: '', quiz: null };
   localStorage.setItem('sh_lesson_' + lessonId, JSON.stringify(lessonData));
+  // Sync to Supabase immediately
+  if (typeof dbSaveAdminLessons === 'function') dbSaveAdminLessons(courseId);
+  if (typeof dbSaveLesson === 'function') dbSaveLesson(lessonId, courseId, lessonData);
   closeModal('add-lesson-modal');
   showToast('✅ تمت إضافة الدرس: ' + title);
   renderContent();
@@ -1623,6 +1626,7 @@ function deleteBuiltinLesson(courseId, lessonId) {
 function restoreBuiltinLesson(courseId, lessonId) {
   var deleted = getDeletedBuiltinLessons(courseId).filter(function(id){ return id !== lessonId; });
   localStorage.setItem('sh_deleted_lessons_' + courseId, JSON.stringify(deleted));
+  if (typeof dbSaveDeletedLessons === 'function') dbSaveDeletedLessons(courseId);
   showToast('✅ تمت استعادة الدرس');
   renderContent();
 }
