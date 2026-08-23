@@ -313,6 +313,11 @@ function startQuiz(){
   if(!currentLesson||!currentLesson.quiz)return;
   qState={qs:currentLesson.quiz.slice().sort(function(){return Math.random()-.5;}).slice(0,Math.min(3,currentLesson.quiz.length)),cur:0,ans:[],done:false};
   renderQ();
+  // Scroll to quiz questions after render
+  setTimeout(function(){
+    var qa = document.getElementById('quiz-area');
+    if (qa) qa.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 50);
 }
 
 function renderQ(){
