@@ -311,7 +311,7 @@ function showCourseCompletion(){
 
 function startQuiz(){
   if(!currentLesson||!currentLesson.quiz)return;
-  qState={qs:currentLesson.quiz.slice().sort(function(){return Math.random()-.5;}).slice(0,Math.min(3,currentLesson.quiz.length)),cur:0,ans:[],done:false};
+  qState={qs:currentLesson.quiz.slice().sort(function(){return Math.random()-.5;}),cur:0,ans:[],done:false};
   renderQ();
   // Scroll to quiz section
   setTimeout(function(){
