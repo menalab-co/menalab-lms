@@ -313,11 +313,16 @@ function startQuiz(){
   if(!currentLesson||!currentLesson.quiz)return;
   qState={qs:currentLesson.quiz.slice().sort(function(){return Math.random()-.5;}).slice(0,Math.min(3,currentLesson.quiz.length)),cur:0,ans:[],done:false};
   renderQ();
-  // Scroll to quiz questions after render
+  // Scroll to quiz section
   setTimeout(function(){
-    var qa = document.getElementById('quiz-area');
-    if (qa) qa.scrollIntoView({behavior:'smooth', block:'start'});
-  }, 50);
+    var section = document.getElementById('lesson-quiz-section');
+    if (section) {
+      section.scrollIntoView({behavior:'smooth', block:'start'});
+    } else {
+      // Fallback: scroll window by a fixed amount
+      window.scrollBy({top: 400, behavior:'smooth'});
+    }
+  }, 100);
 }
 
 function renderQ(){
