@@ -249,8 +249,12 @@ function isLessonUnlocked(lessonIdx) {
   if(!prev) return true;
   var state=getUserState();
   var done=(state.completedLessons||[]).includes(prev.id);
+  if(!done) return false;
+  // Only require quiz score if the previous lesson actually has a quiz
+  var hasQuiz = !!(prev.quiz && prev.quiz.length);
+  if(!hasQuiz) return true;
   var score=(state.quizScores||{})[prev.id]||0;
-  return done && score>=67; // 67% for courses (softer than DT portal)
+  return score>=100;
 }
 
 function completeCurrentLesson(){
