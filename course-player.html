@@ -281,7 +281,18 @@ function completeCurrentLesson(){
   } else if(idx<lessons.length-1){
     var nextIdx=idx+1;
     if(isLessonUnlocked(nextIdx)){
-      openLesson(lessons[nextIdx].id);
+      // Show loading transition before opening next lesson
+      var playerMain = document.getElementById('player-main');
+      if (playerMain) {
+        playerMain.style.opacity = '0';
+        playerMain.style.transition = 'opacity .3s ease';
+      }
+      setTimeout(function(){
+        openLesson(lessons[nextIdx].id);
+        if (playerMain) {
+          playerMain.style.opacity = '1';
+        }
+      }, 400);
     } else {
       showToast('✅ أكمل اختبار هذا الدرس أولاً لفتح التالي');
     }
