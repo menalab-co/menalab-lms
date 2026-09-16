@@ -372,11 +372,11 @@ function showPassedQuizState(lesson) {
   var history = (state.quizHistory || {})[lesson.id] || [];
 
   var historyHTML = '';
-  if (history.length && lesson.quiz) {
+  if (history.length) {
+    // Show history directly from saved state — no need for lesson.quiz
     historyHTML = '<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">';
     history.forEach(function(h) {
-      var q = lesson.quiz.find(function(q){ return q.q === h.q; });
-      if (!q) return;
+      if (!h.q || !h.chosen) return;
       historyHTML +=
         '<div style="padding:12px;background:var(--teal-light);border-radius:var(--r2);border-right:3px solid var(--teal)">' +
           '<div style="font-size:13px;font-weight:600;margin-bottom:6px">✅ ' + h.q + '</div>' +
