@@ -498,7 +498,7 @@ function renderGreetingBar() {
       '</div>' +
       '<div style="display:flex;align-items:center;gap:8px">' +
         '<a href="index.html?signup=1" style="font-size:11px;background:var(--gold);color:var(--ink);font-weight:700;padding:5px 12px;border-radius:10px;text-decoration:none">إنشاء حساب</a>' +
-        '<a href="index.html" style="font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:10px">تسجيل الدخول</a>' +
+        '<a href="index.html?login=1" style="font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:10px">تسجيل الدخول</a>' +
       '</div>';
     return;
   }
