@@ -489,7 +489,19 @@ function renderGreetingBar() {
   var bar = document.getElementById('greeting-bar');
   if (!bar) return;
   var user = getUser();
-  if (!user) { bar.style.display = 'none'; return; }
+  if (!user) {
+    // Guest — show a subtle login prompt in the top bar
+    bar.style.display = 'flex';
+    bar.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;flex:1">' +
+        '<span style="font-size:12px;color:rgba(255,255,255,.5)">مرحباً بك في شكّل 👋</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<a href="index.html?signup=1" style="font-size:11px;background:var(--gold);color:var(--ink);font-weight:700;padding:5px 12px;border-radius:10px;text-decoration:none">إنشاء حساب</a>' +
+        '<a href="index.html" style="font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:10px">تسجيل الدخول</a>' +
+      '</div>';
+    return;
+  }
   var state = getUserState();
   var level = getLevelFromXP(state.xp);
   var hour = new Date().getHours();
@@ -1018,7 +1030,7 @@ function normalizeVideoUrl(url) {
   if (driveMatch) return 'https://drive.google.com/file/d/' + driveMatch[1] + '/preview';
   var driveOpen = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
   if (driveOpen) return 'https://drive.google.com/file/d/' + driveOpen[1] + '/preview';
-  var ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
+  var ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([a-zA-Z0-9_-]{11})/);
   if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1] + '?rel=0';
   var vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
   if (vimeoMatch) return 'https://player.vimeo.com/video/' + vimeoMatch[1];
