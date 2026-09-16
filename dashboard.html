@@ -99,7 +99,9 @@
       <span>رصيد AI</span><span id="credits-label" style="color:var(--gold)">50</span>
     </div>
     <button onclick="openPurchaseModal('credits')" style="margin-top:8px;width:100%;padding:7px;background:rgba(235,200,76,.1);border:none;border-radius:var(--r);color:var(--gold);font-family:inherit;font-size:12px;cursor:pointer;text-align:right">🔋 شراء رصيد AI</button>
-    <button onclick="doLogout()" style="margin-top:12px;width:100%;padding:7px;background:rgba(255,0,0,.08);border:none;border-radius:var(--r);color:rgba(255,100,100,.7);font-family:inherit;font-size:12px;cursor:pointer;text-align:right">🚪 خروج</button>
+    <div id="auth-sidebar-btn">
+      <!-- Populated by JS below -->
+    </div>
   </div>
 </aside>
 
@@ -230,6 +232,16 @@ function checkLaunchBanners() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Show logout if logged in, login if guest
+  var authBtn = document.getElementById('auth-sidebar-btn');
+  var user = (typeof getUser === 'function') ? getUser() : null;
+  if (authBtn) {
+    if (user) {
+      authBtn.innerHTML = '<button onclick="doLogout()" style="margin-top:12px;width:100%;padding:7px;background:rgba(255,0,0,.08);border:none;border-radius:var(--r);color:rgba(255,100,100,.7);font-family:inherit;font-size:12px;cursor:pointer;text-align:right">🚪 خروج</button>';
+    } else {
+      authBtn.innerHTML = '<a href="index.html" style="display:block;margin-top:12px;width:100%;padding:7px;background:rgba(235,200,76,.12);border:1px solid var(--gold);border-radius:var(--r);color:var(--gold-dark);font-size:12px;cursor:pointer;text-align:center;text-decoration:none">🔑 تسجيل الدخول</a>';
+    }
+  }
   setTimeout(checkLaunchBanners, 500);
   var user = getUser();
   if (!user) {
@@ -337,7 +349,7 @@ function renderProjects(state) {
 function renderEnrolledCourses(state) {
   var container = document.getElementById('courses-container');
   container.innerHTML = '';
-  var enrolled = state.enrolledCourses || ['dt'];
+  var enrolled = (state.enrolledCourses || []).filter(function(cid){ return COURSES.find(function(c){return c.id===cid;}); });
   enrolled.forEach(function(cid) {
     var course = COURSES.find(function(c){return c.id===cid;});
     if (!course) return;
@@ -352,11 +364,26 @@ function renderEnrolledCourses(state) {
         '<div class="progress-track"><div class="progress-fill teal" style="width:'+pct+'%"></div></div>' +
       '</div>' +
       '<span style="font-size:12px;color:var(--text3);font-weight:600">' + toAr(pct) + '%</span>' +
-      '<a href="course-player.html?course=' + cid + '" class="btn btn-outline btn-sm">متابعة</a>';
+      '<a href="course-player.html?course=' + cid + '" class="btn btn-primary btn-sm">← متابعة</a>';
     container.appendChild(card);
   });
   if (!enrolled.length) {
-    container.innerHTML = '<a href="courses.html" class="btn btn-outline btn-full">+ سجّل في دورة</a>';
+    var user2 = (typeof getUser==='function') ? getUser() : null;
+    if (!user2) {
+      container.innerHTML =
+        '<div style="text-align:center;padding:24px;color:var(--text3)">' +
+          '<div style="font-size:36px;margin-bottom:8px">📚</div>' +
+          '<p style="margin-bottom:12px;font-size:13px">لم تنضم إلى أي دورة بعد.<br>أنشئ حساباً للبدء.</p>' +
+          '<a href="index.html" class="btn btn-primary">إنشاء حساب</a>' +
+        '</div>';
+    } else {
+      container.innerHTML =
+        '<div style="text-align:center;padding:24px;color:var(--text3)">' +
+          '<div style="font-size:36px;margin-bottom:8px">📚</div>' +
+          '<p style="margin-bottom:12px;font-size:13px">لم تسجّل في أي دورة بعد.</p>' +
+          '<a href="courses.html" class="btn btn-primary">تصفّح الدورات</a>' +
+        '</div>';
+    }
   }
 }
 
