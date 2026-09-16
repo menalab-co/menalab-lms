@@ -287,6 +287,8 @@ function dbLoginUser(email, password, callback) {
         enrolledCourses:  safeJSON(r.enrolled_courses,  []),
         completedLessons: safeJSON(r.completed_lessons, []),
         quizScores:       safeJSON(r.quiz_scores,       {}),
+        quizHistory:      safeJSON(r.quiz_history,      {}),
+        quizDates:        safeJSON(r.quiz_dates,        {}),
         earnedBadges:     safeJSON(r.earned_badges,     []),
         projects:         safeJSON(r.projects,          [])
       };
