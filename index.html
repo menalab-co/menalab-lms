@@ -418,6 +418,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Auto-open login/signup if redirected here from a protected page
   var params = new URLSearchParams(window.location.search);
+  // Auto-open login or signup modal from URL params
+  if (params.get('login') === '1') {
+    setTimeout(function() { openModal('login-modal'); }, 300);
+  } else if (params.get('signup') === '1' && !params.get('next')) {
+    setTimeout(function() { openModal('signup-modal'); }, 300);
+  }
+
   if (params.get('next')) {
     // If already logged in with a next param, redirect directly
     if (user) {
