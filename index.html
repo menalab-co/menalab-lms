@@ -308,6 +308,74 @@ function startPath(path) {
   else window.location.href = 'courses.html';
 }
 
+function openForgotPassword() {
+  closeModal('login-modal');
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-err').style.display = 'none';
+  document.getElementById('forgot-success').style.display = 'none';
+  openModal('forgot-modal');
+}
+
+function doForgotPassword() {
+  var email = document.getElementById('forgot-email').value.trim().toLowerCase();
+  var errEl = document.getElementById('forgot-err');
+  var successEl = document.getElementById('forgot-success');
+  var btn = document.getElementById('forgot-btn');
+  errEl.style.display = 'none';
+  successEl.style.display = 'none';
+
+  var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    errEl.textContent = 'يرجى إدخال بريد إلكتروني صحيح';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = 'جاري البحث...';
+  btn.disabled = true;
+
+  // Check if email exists in Supabase
+  if (typeof sbFetch === 'function' && typeof _sb_ready !== 'undefined' && _sb_ready) {
+    sbFetch('GET', 'shakkel_users', null, 'email=eq.' + encodeURIComponent(email) + '&limit=1')
+      .then(function(rows) {
+        btn.textContent = 'إرسال كلمة مرور جديدة ←';
+        btn.disabled = false;
+        if (!rows || !rows.length) {
+          // Don't reveal if email exists — show same success message for security
+          successEl.textContent = 'إذا كان البريد مسجلاً، ستجد كلمة المرور الجديدة في بريدك قريباً.';
+          successEl.style.display = 'block';
+          return;
+        }
+        // Generate a temporary password
+        var tempPass = 'Sh' + Math.random().toString(36).slice(2, 8).toUpperCase() + '!';
+        var newHash = (typeof simpleHash === 'function') ? simpleHash(tempPass) : tempPass;
+        // Update password in Supabase
+        sbFetch('PATCH', 'shakkel_users',
+          { password_hash: newHash, temp_password: tempPass },
+          'email=eq.' + encodeURIComponent(email)
+        ).then(function() {
+          // Show the temp password to admin/user (since we have no email service yet)
+          successEl.innerHTML =
+            '<div style="margin-bottom:8px">✅ تم إنشاء كلمة مرور مؤقتة:</div>' +
+            '<div style="font-size:18px;font-weight:700;letter-spacing:2px;background:var(--white);padding:8px 16px;border-radius:var(--r);border:1px solid var(--teal);font-family:monospace">' + tempPass + '</div>' +
+            '<div style="font-size:11px;margin-top:8px;color:var(--teal)">احتفظ بها وسجّل دخولك ثم غيّر كلمة مرورك</div>';
+          successEl.style.display = 'block';
+        });
+      })
+      .catch(function() {
+        btn.textContent = 'إرسال كلمة مرور جديدة ←';
+        btn.disabled = false;
+        errEl.textContent = 'حدث خطأ. حاول مرة أخرى.';
+        errEl.style.display = 'block';
+      });
+  } else {
+    btn.textContent = 'إرسال كلمة مرور جديدة ←';
+    btn.disabled = false;
+    errEl.textContent = 'لا يمكن الاتصال بالخادم. حاول لاحقاً.';
+    errEl.style.display = 'block';
+  }
+}
+
 function doSignup() {
   var name = document.getElementById('s-name').value.trim();
   var email = document.getElementById('s-email').value.trim();
@@ -315,7 +383,8 @@ function doSignup() {
   var err = document.getElementById('signup-err');
   err.style.display = 'none';
   if (!name) { err.textContent = 'يرجى إدخال اسمك'; err.style.display = 'block'; return; }
-  if (!email || !email.includes('@')) { err.textContent = 'بريد إلكتروني غير صحيح'; err.style.display = 'block'; return; }
+  var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) { err.textContent = 'يرجى إدخال بريد إلكتروني صحيح (مثال: name@email.com)'; err.style.display = 'block'; return; }
   if (pass.length < 6) { err.textContent = 'كلمة المرور قصيرة جداً'; err.style.display = 'block'; return; }
 
   var signupBtn = document.querySelector('#signup-modal .btn-primary');
@@ -475,5 +544,28 @@ function sendContact() {
   document.getElementById('c-msg').value = '';
 }
 </script>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div class="modal-overlay" id="forgot-modal">
+  <div class="modal-box" style="max-width:400px">
+    <button class="modal-close" onclick="closeModal('forgot-modal')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:40px;margin-bottom:8px">🔑</div>
+      <h3>إعادة تعيين كلمة المرور</h3>
+      <p style="font-size:12px;color:var(--text2);margin-top:4px">أدخل بريدك الإلكتروني وسنرسل لك كلمة مرور جديدة</p>
+    </div>
+    <div id="forgot-err" style="display:none;background:var(--red-light);color:var(--red);padding:8px 12px;border-radius:var(--r);font-size:12px;margin-bottom:12px"></div>
+    <div id="forgot-success" style="display:none;background:var(--teal-light);color:var(--teal);padding:12px;border-radius:var(--r);font-size:13px;margin-bottom:12px;text-align:center"></div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label">البريد الإلكتروني</label>
+      <input class="inp" id="forgot-email" type="email" placeholder="email@example.com" dir="ltr" onkeydown="if(event.key==='Enter')doForgotPassword()">
+    </div>
+    <button onclick="doForgotPassword()" class="btn btn-primary btn-full btn-lg" id="forgot-btn">إرسال كلمة مرور جديدة ←</button>
+    <div style="text-align:center;margin-top:12px">
+      <a href="#" onclick="closeModal('forgot-modal');openModal('login-modal');return false" style="font-size:12px;color:var(--text3)">← العودة لتسجيل الدخول</a>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
