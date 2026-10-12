@@ -517,12 +517,99 @@ function renderGreetingBar() {
     '<div style="display:flex;align-items:center;gap:8px">' +
       '<div style="font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px">🔋<span id="gb-credits" style="color:var(--gold)">' + toAr(state.aiCredits||0) + '</span> رصيد AI</div>' +
       '<a href="dashboard.html" style="font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:10px">لوحة التحكم</a>' +
+      '<button onclick="openChangePassword()" style="font-size:11px;background:none;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:rgba(255,255,255,.4);cursor:pointer;padding:3px 8px">🔑 كلمة المرور</button>' +
       '<button onclick="doLogout()" style="font-size:11px;background:none;border:none;color:rgba(255,100,100,.5);cursor:pointer">خروج</button>' +
     '</div>';
   bar.style.display = 'flex';
 }
 
 function doLogout() { localStorage.removeItem('sh_user'); window.location.href = 'index.html'; }
+
+// ── Change Password ───────────────────────────────────────
+function openChangePassword() {
+  // Inject modal if not already present
+  if (!document.getElementById('change-pass-modal')) {
+    var m = document.createElement('div');
+    m.id = 'change-pass-modal';
+    m.className = 'modal-overlay';
+    m.innerHTML =
+      '<div class="modal-box" style="max-width:380px">' +
+        '<button class="modal-close" onclick="closeModal(\'change-pass-modal\')">✕</button>' +
+        '<h3 style="margin-bottom:6px">🔑 تغيير كلمة المرور</h3>' +
+        '<p style="font-size:13px;color:var(--text3);margin-bottom:20px">أدخل كلمة المرور الحالية ثم كلمة المرور الجديدة</p>' +
+        '<div class="form-group">' +
+          '<label class="form-label">كلمة المرور الحالية</label>' +
+          '<input class="inp" id="cp-old" type="password" dir="ltr" placeholder="كلمة المرور الحالية">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">كلمة المرور الجديدة</label>' +
+          '<input class="inp" id="cp-new" type="password" dir="ltr" placeholder="٨ أحرف على الأقل" onkeydown="if(event.key===\'Enter\')doChangePassword()">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">تأكيد كلمة المرور الجديدة</label>' +
+          '<input class="inp" id="cp-confirm" type="password" dir="ltr" placeholder="أعد كتابة كلمة المرور الجديدة" onkeydown="if(event.key===\'Enter\')doChangePassword()">' +
+        '</div>' +
+        '<div id="cp-err" style="display:none;color:var(--red);font-size:12px;margin-bottom:12px;padding:8px;background:rgba(220,53,69,.08);border-radius:var(--r)"></div>' +
+        '<div id="cp-ok" style="display:none;color:#2E7D32;font-size:12px;margin-bottom:12px;padding:8px;background:rgba(46,125,50,.08);border-radius:var(--r)"></div>' +
+        '<button onclick="doChangePassword()" class="btn btn-primary btn-full">تغيير كلمة المرور</button>' +
+      '</div>';
+    document.body.appendChild(m);
+  }
+  // Clear fields
+  ['cp-old','cp-new','cp-confirm'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  document.getElementById('cp-err').style.display = 'none';
+  document.getElementById('cp-ok').style.display = 'none';
+  openModal('change-pass-modal');
+}
+
+function doChangePassword() {
+  var oldPass    = (document.getElementById('cp-old')     || {}).value || '';
+  var newPass    = (document.getElementById('cp-new')     || {}).value || '';
+  var confirmPass= (document.getElementById('cp-confirm') || {}).value || '';
+  var err = document.getElementById('cp-err');
+  var ok  = document.getElementById('cp-ok');
+  err.style.display = 'none';
+  ok.style.display  = 'none';
+
+  if (!oldPass) { err.textContent = 'يرجى إدخال كلمة المرور الحالية'; err.style.display='block'; return; }
+  if (newPass.length < 8) { err.textContent = 'كلمة المرور الجديدة يجب أن تكون ٨ أحرف على الأقل'; err.style.display='block'; return; }
+  if (newPass !== confirmPass) { err.textContent = 'كلمتا المرور غير متطابقتين'; err.style.display='block'; return; }
+
+  var user = getUser();
+  if (!user) { err.textContent = 'يجب تسجيل الدخول أولاً'; err.style.display='block'; return; }
+
+  var oldHash = simpleHash(oldPass);
+  var newHash = simpleHash(newPass);
+
+  // Verify old password against Supabase
+  sbFetch('GET', 'shakkel_users', null,
+    'id=eq.' + user.id + '&password_hash=eq.' + encodeURIComponent(oldHash) + '&limit=1')
+    .then(function(rows) {
+      if (!rows || !rows.length) {
+        err.textContent = 'كلمة المرور الحالية غير صحيحة';
+        err.style.display = 'block';
+        return;
+      }
+      // Update password
+      return sbFetch('PATCH', 'shakkel_users',
+        { password_hash: newHash, temp_password: null },
+        'id=eq.' + user.id)
+        .then(function() {
+          ok.textContent = '✅ تم تغيير كلمة المرور بنجاح!';
+          ok.style.display = 'block';
+          ['cp-old','cp-new','cp-confirm'].forEach(function(id){
+            var el = document.getElementById(id); if(el) el.value = '';
+          });
+          setTimeout(function(){ closeModal('change-pass-modal'); }, 2000);
+        });
+    })
+    .catch(function() {
+      err.textContent = 'حدث خطأ في الاتصال. حاول مرة أخرى.';
+      err.style.display = 'block';
+    });
+}
 
 // ── AI Credits system ─────────────────────────────────────
 var CREDIT_PACKS = [
